@@ -1,11 +1,13 @@
 using System.Text;
 using DotNetEnv;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using SmartTravelAssistant.API.Configuration;
+using SmartTravelAssistant.API.Data;
 using SmartTravelAssistant.API.Hubs;
-using SmartTravelAssistant.API.Repositories.InMemory;
+using SmartTravelAssistant.API.Repositories;
 using SmartTravelAssistant.API.Repositories.Interfaces;
 using SmartTravelAssistant.API.Services.Auth;
 using SmartTravelAssistant.API.Services.Interfaces;
@@ -76,8 +78,11 @@ builder.Services
 
 builder.Services.AddAuthorization();
 
-builder.Services.AddSingleton<IUserRepository, InMemoryUserRepository>();
-builder.Services.AddSingleton<IRefreshTokenRepository, InMemoryRefreshTokenRepository>();
+builder.Services.AddDbContext<ApplicationDbContext>(options =>
+    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+builder.Services.AddScoped<IUserRepository, UserRepository>();
+builder.Services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IRealtimeNotificationService, RealtimeNotificationService>();
 
@@ -124,5 +129,3 @@ app.MapHub<NotificationsHub>("/hubs/notifications");
 app.MapGet("/api/ping", () => Results.Ok(new { status = "ok" })).AllowAnonymous();
 
 app.Run();
-
-
