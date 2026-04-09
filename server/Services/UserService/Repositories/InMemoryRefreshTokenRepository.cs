@@ -10,21 +10,23 @@ public sealed class InMemoryRefreshTokenRepository : IRefreshTokenRepository
 
     public Task<RefreshToken> AddAsync(RefreshToken token, CancellationToken cancellationToken = default)
     {
-        _tokens[token.Token] = token;
+        var key = Guid.NewGuid().ToString("N");
+        _tokens[key] = token;
         return Task.FromResult(token);
     }
 
     public Task<RefreshToken?> GetByTokenAsync(string token, CancellationToken cancellationToken = default)
     {
-        _tokens.TryGetValue(token, out var refreshToken);
+        var refreshToken = _tokens.Values.FirstOrDefault(x => BCrypt.Net.BCrypt.Verify(token, x.TokenHash));
         return Task.FromResult(refreshToken);
     }
 
     public Task RevokeAsync(string token, CancellationToken cancellationToken = default)
     {
-        if (_tokens.TryGetValue(token, out var refreshToken))
+        var refreshToken = _tokens.Values.FirstOrDefault(x => BCrypt.Net.BCrypt.Verify(token, x.TokenHash));
+        if (refreshToken is not null)
         {
-            refreshToken.IsRevoked = true;
+            refreshToken.RevokedAt = DateTime.UtcNow;
         }
 
         return Task.CompletedTask;

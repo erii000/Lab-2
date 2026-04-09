@@ -1,10 +1,12 @@
 using System.Text;
 using DotNetEnv;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using TravelAssistant.Services.UserService.Configuration;
-using TravelAssistant.Services.UserService.Repositories.InMemory;
+using TravelAssistant.Services.UserService.Data;
+using TravelAssistant.Services.UserService.Repositories;
 using TravelAssistant.Services.UserService.Repositories.Interfaces;
 using TravelAssistant.Services.UserService.Services.Auth;
 using TravelAssistant.Services.UserService.Services.Interfaces;
@@ -16,6 +18,11 @@ if (File.Exists(envPath))
 }
 
 var builder = WebApplication.CreateBuilder(args);
+var rootEnvPath = Path.GetFullPath(Path.Combine(Directory.GetCurrentDirectory(), "..", "..", "global-settings.env"));
+if (File.Exists(rootEnvPath))
+{
+    Env.Load(rootEnvPath);
+}
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
@@ -45,8 +52,17 @@ builder.Services
 
 builder.Services.AddAuthorization();
 
-builder.Services.AddSingleton<IUserRepository, InMemoryUserRepository>();
-builder.Services.AddSingleton<IRefreshTokenRepository, InMemoryRefreshTokenRepository>();
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+if (string.IsNullOrWhiteSpace(connectionString))
+{
+    throw new InvalidOperationException("ConnectionStrings:DefaultConnection is missing for UserService.");
+}
+
+builder.Services.AddDbContext<ApplicationDbContext>(options => options.UseSqlServer(connectionString));
+builder.Services.AddHealthChecks();
+
+builder.Services.AddScoped<IUserRepository, SqlUserRepository>();
+builder.Services.AddScoped<IRefreshTokenRepository, SqlRefreshTokenRepository>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 
 var app = builder.Build();
@@ -62,6 +78,7 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+app.MapHealthChecks("/health");
 app.MapGet("/api/ping", () => Results.Ok(new { status = "ok", service = "UserService" }));
 
 app.Run();

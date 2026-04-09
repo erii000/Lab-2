@@ -7,7 +7,6 @@ using Microsoft.IdentityModel.Tokens;
 using TravelAssistant.Services.UserService.Configuration;
 using TravelAssistant.Services.UserService.Contracts.Auth;
 using TravelAssistant.Services.UserService.Models.Entities;
-using TravelAssistant.Services.UserService.Models.Enums;
 using TravelAssistant.Services.UserService.Repositories.Interfaces;
 using TravelAssistant.Services.UserService.Services.Interfaces;
 
@@ -15,6 +14,8 @@ namespace TravelAssistant.Services.UserService.Services.Auth;
 
 public sealed class AuthService : IAuthService
 {
+    private const string DefaultTravelerRole = "Traveler";
+
     private readonly IUserRepository _userRepository;
     private readonly IRefreshTokenRepository _refreshTokenRepository;
     private readonly JwtOptions _jwtOptions;
@@ -39,11 +40,10 @@ public sealed class AuthService : IAuthService
 
         var user = new User
         {
-            Name = request.Name.Trim(),
-            Surname = request.Surname.Trim(),
+            FirstName = request.Name.Trim(),
+            LastName = request.Surname.Trim(),
             Email = request.Email.Trim().ToLowerInvariant(),
             PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password),
-            Role = UserRole.Traveler,
             IsActive = true
         };
 
@@ -69,7 +69,7 @@ public sealed class AuthService : IAuthService
         var token = await _refreshTokenRepository.GetByTokenAsync(request.RefreshToken, cancellationToken)
             ?? throw new UnauthorizedAccessException("Invalid refresh token.");
 
-        if (token.IsRevoked || token.ExpiresAt <= DateTime.UtcNow)
+        if (token.RevokedAt is not null || token.ExpiresAt <= DateTime.UtcNow)
         {
             throw new UnauthorizedAccessException("Refresh token expired or revoked.");
         }
@@ -77,7 +77,7 @@ public sealed class AuthService : IAuthService
         var user = await _userRepository.GetByIdAsync(token.UserId, cancellationToken)
             ?? throw new UnauthorizedAccessException("User not found.");
 
-        await _refreshTokenRepository.RevokeAsync(token.Token, cancellationToken);
+        await _refreshTokenRepository.RevokeAsync(request.RefreshToken, cancellationToken);
         return await CreateAuthResponseAsync(user, cancellationToken);
     }
 
@@ -86,13 +86,12 @@ public sealed class AuthService : IAuthService
         var expiresAt = DateTime.UtcNow.AddMinutes(_jwtOptions.AccessTokenMinutes);
         var accessToken = CreateAccessToken(user, expiresAt);
 
+        var refreshTokenValue = Convert.ToBase64String(Guid.NewGuid().ToByteArray());
         var refreshToken = new RefreshToken
         {
-            Token = Convert.ToBase64String(Guid.NewGuid().ToByteArray()),
+            TokenHash = BCrypt.Net.BCrypt.HashPassword(refreshTokenValue),
             ExpiresAt = DateTime.UtcNow.AddDays(_jwtOptions.RefreshTokenDays),
-            UserId = user.Id,
-            IsRevoked = false,
-            CreatedBy = "system"
+            UserId = user.Id
         };
 
         await _refreshTokenRepository.AddAsync(refreshToken, cancellationToken);
@@ -100,7 +99,7 @@ public sealed class AuthService : IAuthService
         return new AuthResponse
         {
             AccessToken = accessToken,
-            RefreshToken = refreshToken.Token,
+            RefreshToken = refreshTokenValue,
             ExpiresAtUtc = expiresAt
         };
     }
@@ -114,7 +113,7 @@ public sealed class AuthService : IAuthService
         {
             new Claim(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
             new Claim(JwtRegisteredClaimNames.Email, user.Email),
-            new Claim(ClaimTypes.Role, user.Role.ToString()),
+            new Claim(ClaimTypes.Role, DefaultTravelerRole),
             new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
         };
 

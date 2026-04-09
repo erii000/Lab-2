@@ -3,11 +3,13 @@
 This backlog is ready to import into Jira/Trello/GitHub Projects.
 
 Board columns:
+
 - To Do
 - In Progress
 - Done
 
 Required fields per card:
+
 - Owner (A, B, or C)
 - Deadline
 - Acceptance Criteria
@@ -17,6 +19,7 @@ Required fields per card:
 ## Member A (Security, Gateway, User Service)
 
 1. Setup JWT access token configuration in `UserService`
+
 - Owner: A
 - Priority: High
 - Acceptance:
@@ -25,6 +28,7 @@ Required fields per card:
   - Swagger auth button works
 
 2. Implement refresh token rotation
+
 - Owner: A
 - Priority: High
 - Acceptance:
@@ -33,6 +37,7 @@ Required fields per card:
   - Invalid/expired refresh token returns 401
 
 3. Implement user registration endpoint
+
 - Owner: A
 - Priority: High
 - Acceptance:
@@ -41,6 +46,7 @@ Required fields per card:
   - DTO validation applied
 
 4. Implement login endpoint
+
 - Owner: A
 - Priority: High
 - Acceptance:
@@ -48,6 +54,7 @@ Required fields per card:
   - Wrong credentials return 401
 
 5. Configure role-based authorization policies
+
 - Owner: A
 - Priority: High
 - Acceptance:
@@ -55,6 +62,7 @@ Required fields per card:
   - Sensitive routes protected via `[Authorize(Roles=...)]`
 
 6. Implement `GET /api/v1/users/me`
+
 - Owner: A
 - Priority: Medium
 - Acceptance:
@@ -62,6 +70,7 @@ Required fields per card:
   - Requires authenticated JWT
 
 7. Implement `PUT /api/v1/users/me`
+
 - Owner: A
 - Priority: Medium
 - Acceptance:
@@ -69,6 +78,7 @@ Required fields per card:
   - Persists profile edits
 
 8. Implement admin list endpoint `GET /api/v1/users`
+
 - Owner: A
 - Priority: Medium
 - Acceptance:
@@ -76,6 +86,7 @@ Required fields per card:
   - Admin-only access
 
 9. API Gateway route forwarding baseline
+
 - Owner: A
 - Priority: High
 - Acceptance:
@@ -83,6 +94,7 @@ Required fields per card:
   - Health endpoint for each upstream
 
 10. CORS hardening
+
 - Owner: A
 - Priority: High
 - Acceptance:
@@ -90,6 +102,7 @@ Required fields per card:
   - No wildcard origin in production
 
 11. Security middleware + global exception format
+
 - Owner: A
 - Priority: Medium
 - Acceptance:
@@ -97,6 +110,7 @@ Required fields per card:
   - Unauthorized/forbidden handled consistently
 
 12. Auth Swagger/OpenAPI documentation
+
 - Owner: A
 - Priority: Medium
 - Acceptance:
@@ -108,6 +122,7 @@ Required fields per card:
 ## Member B (Itinerary, Booking, Payment, Integrations)
 
 13. Create itinerary domain models and repository
+
 - Owner: B
 - Priority: High
 - Acceptance:
@@ -115,6 +130,7 @@ Required fields per card:
   - Repository methods for create/get/update
 
 14. Implement itinerary generation service
+
 - Owner: B
 - Priority: High
 - Acceptance:
@@ -122,6 +138,7 @@ Required fields per card:
   - Uses user preferences + destination + date range
 
 15. Implement itinerary query endpoints
+
 - Owner: B
 - Priority: Medium
 - Acceptance:
@@ -129,6 +146,7 @@ Required fields per card:
   - `GET /api/v1/itineraries/user/{userId}`
 
 16. Implement booking creation flow
+
 - Owner: B
 - Priority: High
 - Acceptance:
@@ -136,6 +154,7 @@ Required fields per card:
   - Validation for required fields
 
 17. Implement booking status transitions
+
 - Owner: B
 - Priority: Medium
 - Acceptance:
@@ -143,6 +162,7 @@ Required fields per card:
   - Valid transitions only
 
 18. Setup payment provider integration (Stripe/PayPal)
+
 - Owner: B
 - Priority: High
 - Acceptance:
@@ -150,6 +170,7 @@ Required fields per card:
   - Keys read from env vars
 
 19. Implement payment webhook handling
+
 - Owner: B
 - Priority: High
 - Acceptance:
@@ -158,6 +179,7 @@ Required fields per card:
   - Idempotent processing
 
 20. Implement payment query endpoints
+
 - Owner: B
 - Priority: Medium
 - Acceptance:
@@ -165,6 +187,7 @@ Required fields per card:
   - `GET /api/v1/payments/user/{userId}`
 
 21. Integrate weather external API client
+
 - Owner: B
 - Priority: Medium
 - Acceptance:
@@ -172,6 +195,7 @@ Required fields per card:
   - Retry and timeout policy
 
 22. Integrate flight status API client
+
 - Owner: B
 - Priority: Medium
 - Acceptance:
@@ -179,6 +203,7 @@ Required fields per card:
   - Error handling for provider failures
 
 23. Integrate transport options API client
+
 - Owner: B
 - Priority: Medium
 - Acceptance:
@@ -186,6 +211,7 @@ Required fields per card:
   - Estimated time and price normalized
 
 24. Payment logs persistence
+
 - Owner: B
 - Priority: Medium
 - Acceptance:
@@ -197,6 +223,7 @@ Required fields per card:
 ## Member C (Real-Time, Notifications, Search, Import/Export, Audit)
 
 25. Setup SignalR notification hub
+
 - Owner: C
 - Priority: High
 - Acceptance:
@@ -204,6 +231,7 @@ Required fields per card:
   - Connected clients receive test broadcast
 
 26. Implement notification publish service
+
 - Owner: C
 - Priority: High
 - Acceptance:
@@ -211,6 +239,7 @@ Required fields per card:
   - Notification type and timestamp included
 
 27. Implement `POST /api/v1/notifications/broadcast`
+
 - Owner: C
 - Priority: Medium
 - Acceptance:
@@ -218,6 +247,7 @@ Required fields per card:
   - Broadcast reaches all connected clients
 
 28. Implement user notification endpoints
+
 - Owner: C
 - Priority: Medium
 - Acceptance:
@@ -225,36 +255,42 @@ Required fields per card:
   - `PATCH /api/v1/notifications/{id}/read`
 
 29. Implement advanced search (users list)
+
 - Owner: C
 - Priority: High
 - Acceptance:
   - Filters + sorting + pagination + text search
 
 30. Implement advanced search (itineraries list)
+
 - Owner: C
 - Priority: High
 - Acceptance:
   - Destination/date/status filters + text search
 
 31. Implement advanced search (bookings list)
+
 - Owner: C
 - Priority: High
 - Acceptance:
   - Status/provider/date filters + sorting
 
 32. Implement advanced search (payments list)
+
 - Owner: C
 - Priority: High
 - Acceptance:
   - Status/method/date/amount filters + sorting
 
 33. Implement advanced search (notifications list)
+
 - Owner: C
 - Priority: High
 - Acceptance:
   - Type/read-state/date filters + text search
 
 34. Implement export APIs (CSV/Excel/JSON) for 5 lists
+
 - Owner: C
 - Priority: High
 - Acceptance:
@@ -262,6 +298,7 @@ Required fields per card:
   - At least users, itineraries, bookings, payments, notifications
 
 35. Implement import APIs (CSV/Excel/JSON) for 5 lists
+
 - Owner: C
 - Priority: High
 - Acceptance:
@@ -269,6 +306,7 @@ Required fields per card:
   - No partial corruption on failure
 
 36. Implement audit log service
+
 - Owner: C
 - Priority: Medium
 - Acceptance:
@@ -280,26 +318,75 @@ Required fields per card:
 ## Cross-Team Tasks
 
 37. Final README with setup/run instructions
+
 - Owner: A+B+C (A lead)
 - Priority: High
 - Acceptance:
   - Local setup, env vars, migrations, run commands documented
 
 38. OpenAPI completion and Postman collection
+
 - Owner: A+B+C (B lead)
 - Priority: High
 - Acceptance:
   - All endpoints documented with examples and status codes
 
 39. ERD update for final schema
+
 - Owner: B+C (B lead)
 - Priority: Medium
 - Acceptance:
   - Tables and relationships match implemented DB
 
 40. Docker compose for local microservice stack
+
 - Owner: A+B+C (C lead)
 - Priority: High
 - Acceptance:
   - Gateway + key services + MSSQL + Redis + MongoDB boot together
 
+Database Ownership Map (Microservices)
+
+User Service: (erioni)
+Users
+RefreshTokens
+Roles
+Permissions
+UserRoles
+RolePermissions
+TravelPreferences
+EmergencyContacts
+
+ItineraryService: (almira)
+Itineraries
+Trips
+TripDestinations
+TripParticipants
+Destinations
+Wishlists (optional: could be RecommendationsService if you create one)
+
+BookingService: (almira)
+Bookings
+Hotels
+Flights
+TransportOptions
+SavedTrips (optional: can stay in ItineraryService depending on flow)
+
+PaymentService: (almira)
+Payments
+Expenses
+
+NotificationService: (doni)
+Notifications
+
+RealTimeCommunicationService (doni)
+ChatMessages (if chat is real-time module)
+
+WeatherExternalDataService: (doni)
+WeatherData
+
+SupportService: (doni)  
+SupportTickets
+
+AuditService: (doni)
+AuditLogs
