@@ -1,10 +1,10 @@
 using DotNetEnv;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
-using TravelAssistant.Services.ItineraryService.Data;
+using TravelAssistant.Services.PaymentService.Data;
 
-var envPath = Path.Combine(Directory.GetCurrentDirectory(), ".env");
 var rootEnvPath = Path.GetFullPath(Path.Combine(Directory.GetCurrentDirectory(), "..", "..", "global-settings.env"));
+var envPath = Path.Combine(Directory.GetCurrentDirectory(), ".env");
 var envFiles = new[] { rootEnvPath, envPath }.Where(File.Exists).ToArray();
 if (envFiles.Length > 0)
 {
@@ -17,13 +17,13 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
 {
-    options.SwaggerDoc("v1", new OpenApiInfo { Title = "Itinerary Service API", Version = "v1" });
+    options.SwaggerDoc("v1", new OpenApiInfo { Title = "Payment Service API", Version = "v1" });
 });
 
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 if (string.IsNullOrWhiteSpace(connectionString))
 {
-    throw new InvalidOperationException("ConnectionStrings:DefaultConnection is missing for ItineraryService.");
+    throw new InvalidOperationException("ConnectionStrings:DefaultConnection is missing for PaymentService.");
 }
 
 builder.Services.AddDbContext<ApplicationDbContext>(options => options.UseSqlServer(connectionString));
@@ -36,10 +36,13 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+else
+{
+    app.UseHttpsRedirection();
+}
 
-app.UseHttpsRedirection();
 app.MapControllers();
 app.MapHealthChecks("/health");
-app.MapGet("/api/ping", () => Results.Ok(new { status = "ok", service = "ItineraryService" }));
+app.MapGet("/api/ping", () => Results.Ok(new { status = "ok", service = "PaymentService" }));
 
 app.Run();

@@ -32,13 +32,15 @@ public sealed class DiagnosticsController : ControllerBase
         var itineraries = await _dbContext.Itineraries.CountAsync(cancellationToken);
         var trips = await _dbContext.Trips.CountAsync(cancellationToken);
         var destinations = await _dbContext.Destinations.CountAsync(cancellationToken);
+        var tripDestinations = await _dbContext.TripDestinations.CountAsync(cancellationToken);
+        var tripParticipants = await _dbContext.TripParticipants.CountAsync(cancellationToken);
 
         return Ok(new
         {
             status = "up",
             service = "ItineraryService",
             database = "connected",
-            counts = new { itineraries, trips, destinations }
+            counts = new { itineraries, trips, destinations, tripDestinations, tripParticipants }
         });
     }
 }

@@ -12,17 +12,14 @@ using TravelAssistant.Services.UserService.Services.Auth;
 using TravelAssistant.Services.UserService.Services.Interfaces;
 
 var envPath = Path.Combine(Directory.GetCurrentDirectory(), ".env");
-if (File.Exists(envPath))
+var rootEnvPath = Path.GetFullPath(Path.Combine(Directory.GetCurrentDirectory(), "..", "..", "global-settings.env"));
+var envFiles = new[] { rootEnvPath, envPath }.Where(File.Exists).ToArray();
+if (envFiles.Length > 0)
 {
-    Env.Load(envPath);
+    Env.LoadMulti(envFiles);
 }
 
 var builder = WebApplication.CreateBuilder(args);
-var rootEnvPath = Path.GetFullPath(Path.Combine(Directory.GetCurrentDirectory(), "..", "..", "global-settings.env"));
-if (File.Exists(rootEnvPath))
-{
-    Env.Load(rootEnvPath);
-}
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
