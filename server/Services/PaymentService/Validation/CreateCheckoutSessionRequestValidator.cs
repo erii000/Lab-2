@@ -18,11 +18,15 @@ public sealed class CreateCheckoutSessionRequestValidator : AbstractValidator<Cr
         RuleFor(x => x.Amount)
             .NotNull()
             .GreaterThan(0)
-            .When(x => string.Equals(x.PaymentProvider, "Stripe", StringComparison.OrdinalIgnoreCase))
-            .WithMessage("Amount is required for Stripe until booking totals are integrated.");
+            .When(x =>
+                string.Equals(x.PaymentProvider, "Stripe", StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(x.PaymentProvider, "PayPal", StringComparison.OrdinalIgnoreCase))
+            .WithMessage("Amount is required for Stripe/PayPal until booking totals are integrated.");
 
         RuleFor(x => x.Currency)
             .NotEmpty()
-            .When(x => string.Equals(x.PaymentProvider, "Stripe", StringComparison.OrdinalIgnoreCase));
+            .When(x =>
+                string.Equals(x.PaymentProvider, "Stripe", StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(x.PaymentProvider, "PayPal", StringComparison.OrdinalIgnoreCase));
     }
 }

@@ -5,9 +5,15 @@ namespace TravelAssistant.Services.PaymentService.Services.Payments;
 public sealed class PaymentCheckoutOrchestrator : IPaymentCheckoutService
 {
     private readonly StripePaymentCheckoutService _stripePaymentCheckoutService;
+    private readonly PayPalCheckoutService _payPalCheckoutService;
 
-    public PaymentCheckoutOrchestrator(StripePaymentCheckoutService stripePaymentCheckoutService) =>
+    public PaymentCheckoutOrchestrator(
+        StripePaymentCheckoutService stripePaymentCheckoutService,
+        PayPalCheckoutService payPalCheckoutService)
+    {
         _stripePaymentCheckoutService = stripePaymentCheckoutService;
+        _payPalCheckoutService = payPalCheckoutService;
+    }
 
     public Task<CreateCheckoutSessionResponse> CreateCheckoutAsync(
         int userId,
@@ -18,7 +24,7 @@ public sealed class PaymentCheckoutOrchestrator : IPaymentCheckoutService
             return _stripePaymentCheckoutService.CreateCheckoutAsync(userId, request, cancellationToken);
 
         if (string.Equals(request.PaymentProvider, "PayPal", StringComparison.OrdinalIgnoreCase))
-            throw new NotSupportedException("PayPal checkout is not wired in this deployment. Use Stripe or extend PaymentCheckoutOrchestrator.");
+            return _payPalCheckoutService.CreateCheckoutAsync(userId, request, cancellationToken);
 
         throw new NotSupportedException($"Payment provider '{request.PaymentProvider}' is not supported.");
     }

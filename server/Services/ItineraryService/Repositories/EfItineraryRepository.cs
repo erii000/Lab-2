@@ -34,6 +34,12 @@ public sealed class EfItineraryRepository : IItineraryRepository
         return Task.CompletedTask;
     }
 
+    public Task UpdateAsync(Itinerary itinerary, CancellationToken cancellationToken = default)
+    {
+        _dbContext.Itineraries.Update(itinerary);
+        return Task.CompletedTask;
+    }
+
     public Task SaveChangesAsync(CancellationToken cancellationToken = default) =>
         _dbContext.SaveChangesAsync(cancellationToken);
 }
