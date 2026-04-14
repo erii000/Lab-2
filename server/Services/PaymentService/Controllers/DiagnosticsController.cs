@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
@@ -6,6 +7,7 @@ using TravelAssistant.Services.PaymentService.Data;
 namespace TravelAssistant.Services.PaymentService.Controllers;
 
 [ApiController]
+[AllowAnonymous]
 [Route("api/diagnostics")]
 public sealed class DiagnosticsController : ControllerBase
 {
