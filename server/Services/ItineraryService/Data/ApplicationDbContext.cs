@@ -11,6 +11,9 @@ public sealed class ApplicationDbContext : DbContext
     }
 
     public DbSet<Itinerary> Itineraries => Set<Itinerary>();
+    public DbSet<ItineraryDay> ItineraryDays => Set<ItineraryDay>();
+    public DbSet<ItineraryDayActivity> ItineraryDayActivities => Set<ItineraryDayActivity>();
+    public DbSet<TravelPreference> TravelPreferences => Set<TravelPreference>();
     public DbSet<Trip> Trips => Set<Trip>();
     public DbSet<Destination> Destinations => Set<Destination>();
     public DbSet<TripDestination> TripDestinations => Set<TripDestination>();
@@ -23,12 +26,56 @@ public sealed class ApplicationDbContext : DbContext
             entity.ToTable("Itineraries");
             entity.HasKey(x => x.Id);
             entity.Property(x => x.Title).HasMaxLength(100).IsRequired();
-            entity.Property(x => x.Description).HasMaxLength(255);
+            entity.Property(x => x.Destination).HasMaxLength(120).IsRequired();
+            entity.Property(x => x.Country).HasMaxLength(100);
+            entity.Property(x => x.Description).HasMaxLength(2000);
             entity.Property(x => x.StartDate).HasColumnType("date").IsRequired();
             entity.Property(x => x.EndDate).HasColumnType("date").IsRequired();
             entity.Property(x => x.CreatedAt).HasColumnType("datetime").IsRequired();
             entity.Property(x => x.UpdatedAt).HasColumnType("datetime");
             entity.HasIndex(x => x.UserId).HasDatabaseName("IX_Itineraries_UserId");
+
+            entity.HasMany(x => x.Days)
+                .WithOne(x => x.Itinerary)
+                .HasForeignKey(x => x.ItineraryId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<ItineraryDay>(entity =>
+        {
+            entity.ToTable("ItineraryDays");
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.TransportSuggestion).HasMaxLength(200).IsRequired();
+            entity.Property(x => x.MealSuggestion).HasMaxLength(200).IsRequired();
+            entity.Property(x => x.CreatedAt).HasColumnType("datetime2").IsRequired();
+            entity.HasIndex(x => x.ItineraryId).HasDatabaseName("IX_ItineraryDays_ItineraryId");
+
+            entity.HasMany(x => x.Activities)
+                .WithOne(x => x.ItineraryDay)
+                .HasForeignKey(x => x.ItineraryDayId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<ItineraryDayActivity>(entity =>
+        {
+            entity.ToTable("ItineraryDayActivities");
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.Description).HasMaxLength(500).IsRequired();
+            entity.HasIndex(x => x.ItineraryDayId).HasDatabaseName("IX_ItineraryDayActivities_DayId");
+        });
+
+        modelBuilder.Entity<TravelPreference>(entity =>
+        {
+            entity.ToTable("TravelPreferences");
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.PreferredTransport).HasMaxLength(100);
+            entity.Property(x => x.PreferredAccommodation).HasMaxLength(100);
+            entity.Property(x => x.BudgetMin).HasColumnType("decimal(10,2)");
+            entity.Property(x => x.BudgetMax).HasColumnType("decimal(10,2)");
+            entity.Property(x => x.FavoriteDestinationType).HasMaxLength(100);
+            entity.Property(x => x.CreatedAt).HasColumnType("datetime2");
+            entity.Property(x => x.UpdatedAt).HasColumnType("datetime2");
+            entity.HasIndex(x => x.UserId).HasDatabaseName("IX_TravelPreferences_UserId");
         });
 
         modelBuilder.Entity<Trip>(entity =>

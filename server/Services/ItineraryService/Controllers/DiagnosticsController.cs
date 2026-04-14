@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using TravelAssistant.Services.ItineraryService.Data;
@@ -5,6 +6,7 @@ using TravelAssistant.Services.ItineraryService.Data;
 namespace TravelAssistant.Services.ItineraryService.Controllers;
 
 [ApiController]
+[AllowAnonymous]
 [Route("api/diagnostics")]
 public sealed class DiagnosticsController : ControllerBase
 {
@@ -34,13 +36,15 @@ public sealed class DiagnosticsController : ControllerBase
         var destinations = await _dbContext.Destinations.CountAsync(cancellationToken);
         var tripDestinations = await _dbContext.TripDestinations.CountAsync(cancellationToken);
         var tripParticipants = await _dbContext.TripParticipants.CountAsync(cancellationToken);
+        var itineraryDays = await _dbContext.ItineraryDays.CountAsync(cancellationToken);
+        var itineraryDayActivities = await _dbContext.ItineraryDayActivities.CountAsync(cancellationToken);
 
         return Ok(new
         {
             status = "up",
             service = "ItineraryService",
             database = "connected",
-            counts = new { itineraries, trips, destinations, tripDestinations, tripParticipants }
+            counts = new { itineraries, itineraryDays, itineraryDayActivities, trips, destinations, tripDestinations, tripParticipants }
         });
     }
 }
