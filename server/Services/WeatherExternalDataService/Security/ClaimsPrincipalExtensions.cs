@@ -1,0 +1,14 @@
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+
+namespace TravelAssistant.Services.WeatherExternalDataService.Security;
+
+public static class ClaimsPrincipalExtensions
+{
+    public static int? GetUserId(this ClaimsPrincipal principal)
+    {
+        var value = principal.FindFirstValue(JwtRegisteredClaimNames.Sub)
+            ?? principal.FindFirstValue(ClaimTypes.NameIdentifier);
+        return int.TryParse(value, out var id) ? id : null;
+    }
+}
