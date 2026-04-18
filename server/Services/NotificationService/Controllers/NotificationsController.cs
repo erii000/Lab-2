@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using TravelAssistant.Services.NotificationService.Contracts.Notifications;
-using TravelAssistant.Services.NotificationService.Services.Interfaces;
+using TravelAssistant.Services.NotificationService.Interfaces;
+using TravelAssistant.Services.NotificationService.Models;
 
 namespace TravelAssistant.Services.NotificationService.Controllers;
 
@@ -10,22 +10,43 @@ namespace TravelAssistant.Services.NotificationService.Controllers;
 [Authorize]
 public sealed class NotificationsController : ControllerBase
 {
-    private readonly IRealtimeNotificationService _notificationService;
+    private readonly INotificationService _notificationService;
 
-    public NotificationsController(IRealtimeNotificationService notificationService)
+    public NotificationsController(INotificationService notificationService)
     {
         _notificationService = notificationService;
     }
 
-    [HttpPost("broadcast")]
+    [HttpGet]
     [Authorize(Roles = "Admin")]
-    [ProducesResponseType(StatusCodes.Status202Accepted)]
-    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-    [ProducesResponseType(StatusCodes.Status403Forbidden)]
-    public async Task<IActionResult> Broadcast([FromBody] SendNotificationRequest request, CancellationToken cancellationToken)
+    public async Task<IActionResult> GetAll(CancellationToken cancellationToken)
     {
-        await _notificationService.BroadcastTravelUpdateAsync(request.Title, request.Message, request.Type, cancellationToken);
-        return Accepted(new { status = "sent" });
+        var data = await _notificationService.GetAllAsync(cancellationToken);
+        return Ok(data);
+    }
+
+    [HttpGet("user/{userId:int}")]
+    public async Task<IActionResult> GetByUserId(int userId, CancellationToken cancellationToken)
+    {
+        var data = await _notificationService.GetByUserIdAsync(userId, cancellationToken);
+        return Ok(data);
+    }
+
+    [HttpPatch("{id:int}/read")]
+    public async Task<IActionResult> MarkAsRead(int id, CancellationToken cancellationToken)
+    {
+        var updated = await _notificationService.MarkAsReadAsync(id, cancellationToken);
+
+        if (updated == null)
+            return NotFound(new { message = "Notification not found" });
+
+        return Ok(updated);
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> Create([FromBody] Notification notification, CancellationToken cancellationToken)
+    {
+        var created = await _notificationService.CreateAsync(notification, cancellationToken);
+        return CreatedAtAction(nameof(GetByUserId), new { userId = created.UserId }, created);
     }
 }
-
