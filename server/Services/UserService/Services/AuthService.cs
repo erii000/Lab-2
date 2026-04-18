@@ -111,6 +111,9 @@ public sealed class AuthService : IAuthService
 
         var claims = new[]
         {
+            new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
+            new Claim("First Name: ", user.FirstName),
+            new Claim("Last Name: ", user.LastName),
             new Claim(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
             new Claim(JwtRegisteredClaimNames.Email, user.Email),
             new Claim(ClaimTypes.Role, DefaultTravelerRole),
@@ -126,5 +129,7 @@ public sealed class AuthService : IAuthService
 
         return new JwtSecurityTokenHandler().WriteToken(token);
     }
+
+
 }
 
