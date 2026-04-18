@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 18
-VisualStudioVersion = 18.4.11620.152
+# Visual Studio Version 17
+VisualStudioVersion = 17.14.36616.10 d17.14
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Backend", "Backend", "{1AE8ACA6-933B-BF2A-3671-3E2EAC007D16}"
 EndProject
@@ -21,8 +21,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Frontend", "Frontend", "{CE
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "client", "client\client.csproj", "{4E4E6CCB-DA94-4954-B206-B4D931581D09}"
 EndProject
-<<<<<<< Updated upstream
-=======
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BookingService", "server\Services\BookingService\BookingService.csproj", "{184275A8-F06C-47E1-B031-E384ACC1E1D7}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PaymentService", "server\Services\PaymentService\PaymentService.csproj", "{F535C8D5-72C5-4048-8CCE-CCB7808C46C0}"
@@ -35,9 +33,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ItineraryService", "server\
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WeatherExternalDataService", "server\Services\WeatherExternalDataService\WeatherExternalDataService.csproj", "{1907D63A-6C81-40D6-9618-925688B0840F}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AuditService", "AuditService\AuditService.csproj", "{00782DAE-83B2-4FCB-9325-DFF763683DCD}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AuditService", "server\Services\AuditService\AuditService.csproj", "{7C3115F5-0100-A9C9-1A33-00255026ED93}"
 EndProject
->>>>>>> Stashed changes
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -108,8 +105,6 @@ Global
 		{4E4E6CCB-DA94-4954-B206-B4D931581D09}.Release|x64.Build.0 = Release|Any CPU
 		{4E4E6CCB-DA94-4954-B206-B4D931581D09}.Release|x86.ActiveCfg = Release|Any CPU
 		{4E4E6CCB-DA94-4954-B206-B4D931581D09}.Release|x86.Build.0 = Release|Any CPU
-<<<<<<< Updated upstream
-=======
 		{184275A8-F06C-47E1-B031-E384ACC1E1D7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{184275A8-F06C-47E1-B031-E384ACC1E1D7}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{184275A8-F06C-47E1-B031-E384ACC1E1D7}.Debug|x64.ActiveCfg = Debug|Any CPU
@@ -158,19 +153,18 @@ Global
 		{1907D63A-6C81-40D6-9618-925688B0840F}.Release|x64.Build.0 = Release|Any CPU
 		{1907D63A-6C81-40D6-9618-925688B0840F}.Release|x86.ActiveCfg = Release|Any CPU
 		{1907D63A-6C81-40D6-9618-925688B0840F}.Release|x86.Build.0 = Release|Any CPU
-		{00782DAE-83B2-4FCB-9325-DFF763683DCD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{00782DAE-83B2-4FCB-9325-DFF763683DCD}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{00782DAE-83B2-4FCB-9325-DFF763683DCD}.Debug|x64.ActiveCfg = Debug|Any CPU
-		{00782DAE-83B2-4FCB-9325-DFF763683DCD}.Debug|x64.Build.0 = Debug|Any CPU
-		{00782DAE-83B2-4FCB-9325-DFF763683DCD}.Debug|x86.ActiveCfg = Debug|Any CPU
-		{00782DAE-83B2-4FCB-9325-DFF763683DCD}.Debug|x86.Build.0 = Debug|Any CPU
-		{00782DAE-83B2-4FCB-9325-DFF763683DCD}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{00782DAE-83B2-4FCB-9325-DFF763683DCD}.Release|Any CPU.Build.0 = Release|Any CPU
-		{00782DAE-83B2-4FCB-9325-DFF763683DCD}.Release|x64.ActiveCfg = Release|Any CPU
-		{00782DAE-83B2-4FCB-9325-DFF763683DCD}.Release|x64.Build.0 = Release|Any CPU
-		{00782DAE-83B2-4FCB-9325-DFF763683DCD}.Release|x86.ActiveCfg = Release|Any CPU
-		{00782DAE-83B2-4FCB-9325-DFF763683DCD}.Release|x86.Build.0 = Release|Any CPU
->>>>>>> Stashed changes
+		{7C3115F5-0100-A9C9-1A33-00255026ED93}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7C3115F5-0100-A9C9-1A33-00255026ED93}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7C3115F5-0100-A9C9-1A33-00255026ED93}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{7C3115F5-0100-A9C9-1A33-00255026ED93}.Debug|x64.Build.0 = Debug|Any CPU
+		{7C3115F5-0100-A9C9-1A33-00255026ED93}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{7C3115F5-0100-A9C9-1A33-00255026ED93}.Debug|x86.Build.0 = Debug|Any CPU
+		{7C3115F5-0100-A9C9-1A33-00255026ED93}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7C3115F5-0100-A9C9-1A33-00255026ED93}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7C3115F5-0100-A9C9-1A33-00255026ED93}.Release|x64.ActiveCfg = Release|Any CPU
+		{7C3115F5-0100-A9C9-1A33-00255026ED93}.Release|x64.Build.0 = Release|Any CPU
+		{7C3115F5-0100-A9C9-1A33-00255026ED93}.Release|x86.ActiveCfg = Release|Any CPU
+		{7C3115F5-0100-A9C9-1A33-00255026ED93}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -183,15 +177,12 @@ Global
 		{39997A7F-C7A7-4F99-B316-9B54758AFA52} = {3C755975-A7BD-44BC-C8F9-5B13F14529BF}
 		{556C351B-6945-4562-9944-C9876207E4D0} = {3C755975-A7BD-44BC-C8F9-5B13F14529BF}
 		{4E4E6CCB-DA94-4954-B206-B4D931581D09} = {CE609670-85B9-0D16-FB54-ED063D5D8A6D}
-<<<<<<< Updated upstream
-=======
 		{184275A8-F06C-47E1-B031-E384ACC1E1D7} = {3C755975-A7BD-44BC-C8F9-5B13F14529BF}
 		{F535C8D5-72C5-4048-8CCE-CCB7808C46C0} = {3C755975-A7BD-44BC-C8F9-5B13F14529BF}
 		{D256F550-A13F-C4C1-EAE9-61991241801C} = {DAD03CFC-D5FA-AC94-41C7-9ABAB326F09E}
 		{737BB122-A800-4BC6-8228-C9CDA3A52024} = {D256F550-A13F-C4C1-EAE9-61991241801C}
 		{1907D63A-6C81-40D6-9618-925688B0840F} = {D256F550-A13F-C4C1-EAE9-61991241801C}
-		{00782DAE-83B2-4FCB-9325-DFF763683DCD} = {3C755975-A7BD-44BC-C8F9-5B13F14529BF}
->>>>>>> Stashed changes
+		{7C3115F5-0100-A9C9-1A33-00255026ED93} = {3C755975-A7BD-44BC-C8F9-5B13F14529BF}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {1AB81851-7279-47D6-AE2D-BA4A086BC2E7}
