@@ -155,21 +155,63 @@ export default function BookingPage() {
       <AppModal
         open={checkoutOpen}
         onClose={() => setCheckoutOpen(false)}
-        title="Payment flow"
-        subtitle="Stripe / your PSP mounts here — this modal proves layout only."
+        title="Confirm your booking"
+        subtitle="Review your trip details before secure payment."
         actions={
           <>
             <Button onClick={() => setCheckoutOpen(false)}>Cancel</Button>
             <Button variant="contained" color="secondary" onClick={() => setCheckoutOpen(false)}>
-              Confirm (mock)
+              Pay now
             </Button>
           </>
         }
       >
-        <Typography variant="body2" color="text.secondary">
-          Embed payment element, 3DS handling, and itinerary lock after success. Until then, teammates can iterate on UX
-          without blocking on PSP keys.
-        </Typography>
+        <Stack spacing={1.5}>
+          <Typography variant="body2" color="text.secondary">
+            You are booking <strong>Round-trip flight + boutique hotel</strong> for your selected itinerary dates.
+          </Typography>
+          <Stack spacing={0.8}>
+            <Typography variant="body2" color="text.secondary">
+              Traveler: 1 adult
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              Included: cabin bag, hotel breakfast, free cancellation for 24 hours
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              Payment method: card (3D Secure supported)
+            </Typography>
+          </Stack>
+          <Divider />
+          <Stack spacing={0.6}>
+            <Stack direction="row" justifyContent="space-between">
+              <Typography variant="body2" color="text.secondary">
+                Subtotal
+              </Typography>
+              <Typography variant="body2" fontWeight={700}>
+                €248
+              </Typography>
+            </Stack>
+            <Stack direction="row" justifyContent="space-between">
+              <Typography variant="body2" color="text.secondary">
+                Taxes & fees
+              </Typography>
+              <Typography variant="body2" fontWeight={700}>
+                €14
+              </Typography>
+            </Stack>
+            <Stack direction="row" justifyContent="space-between">
+              <Typography variant="subtitle2" color="text.secondary">
+                Total
+              </Typography>
+              <Typography variant="subtitle1" fontWeight={800}>
+                €262
+              </Typography>
+            </Stack>
+          </Stack>
+          <Typography variant="caption" color="text.secondary">
+            By continuing, you agree to provider terms and cancellation policy. A confirmation email will be sent after successful payment.
+          </Typography>
+        </Stack>
       </AppModal>
     </Container>
   );
