@@ -20,6 +20,19 @@ export default function LoginPage() {
   });
   const [submitError, setSubmitError] = useState({});
 
+  const handleFieldChange = (field) => (event) => {
+    const nextValue = event.target.value;
+    setForm((current) => ({ ...current, [field]: nextValue }));
+    setSubmitError((current) => {
+      if (!current[field]) {
+        return current;
+      }
+      const next = { ...current };
+      delete next[field];
+      return next;
+    });
+  };
+
   const handleSubmit = (event) => {
     event.preventDefault();
 
@@ -51,9 +64,7 @@ export default function LoginPage() {
         autoComplete="email"
         placeholder="you@company.com"
         value={form.email}
-        onChange={(event) =>
-          setForm((current) => ({ ...current, email: event.target.value }))
-        }
+        onChange={handleFieldChange("email")}
         validate={validateBusinessEmail}
         externalError={submitError.email}
       />
@@ -64,11 +75,10 @@ export default function LoginPage() {
         required
         autoComplete="current-password"
         value={form.password}
-        onChange={(event) =>
-          setForm((current) => ({ ...current, password: event.target.value }))
-        }
+        onChange={handleFieldChange("password")}
         validate={validateLoginPassword}
         externalError={submitError.password}
+        helperText="Use at least 8 characters."
       />
       <Stack direction={{ xs: "column", sm: "row" }} justifyContent="space-between" alignItems={{ xs: "flex-start", sm: "center" }} sx={{ mt: -0.5 }} spacing={0.5}>
         <FormControlLabel

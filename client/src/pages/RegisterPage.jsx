@@ -14,6 +14,19 @@ export default function RegisterPage() {
   });
   const [submitError, setSubmitError] = useState({});
 
+  const handleFieldChange = (field) => (event) => {
+    const nextValue = event.target.value;
+    setForm((current) => ({ ...current, [field]: nextValue }));
+    setSubmitError((current) => {
+      if (!current[field]) {
+        return current;
+      }
+      const next = { ...current };
+      delete next[field];
+      return next;
+    });
+  };
+
   const handleSubmit = (event) => {
     event.preventDefault();
 
@@ -59,9 +72,7 @@ export default function RegisterPage() {
         autoComplete="name"
         placeholder="Your full name"
         value={form.fullName}
-        onChange={(event) =>
-          setForm((current) => ({ ...current, fullName: event.target.value }))
-        }
+        onChange={handleFieldChange("fullName")}
         validate={validateFullName}
         externalError={submitError.fullName}
       />
@@ -73,9 +84,7 @@ export default function RegisterPage() {
         autoComplete="email"
         placeholder="you@company.com"
         value={form.email}
-        onChange={(event) =>
-          setForm((current) => ({ ...current, email: event.target.value }))
-        }
+        onChange={handleFieldChange("email")}
         validate={validateBusinessEmail}
         externalError={submitError.email}
       />
@@ -86,11 +95,10 @@ export default function RegisterPage() {
         required
         autoComplete="new-password"
         value={form.password}
-        onChange={(event) =>
-          setForm((current) => ({ ...current, password: event.target.value }))
-        }
+        onChange={handleFieldChange("password")}
         validate={validateStrongPassword}
         externalError={submitError.password}
+        helperText="Minimum 8 characters, with 1 uppercase letter and 1 number."
       />
       <AppInput
         label="Confirm password"
@@ -99,9 +107,7 @@ export default function RegisterPage() {
         required
         autoComplete="new-password"
         value={form.confirmPassword}
-        onChange={(event) =>
-          setForm((current) => ({ ...current, confirmPassword: event.target.value }))
-        }
+        onChange={handleFieldChange("confirmPassword")}
         validate={(value) => validateConfirmPassword(form.password, value)}
         externalError={submitError.confirmPassword}
       />
