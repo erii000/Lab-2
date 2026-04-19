@@ -10,6 +10,7 @@ import DestinationDetailPage from "./pages/DestinationDetailPage.jsx";
 import HomePage from "./pages/HomePage.jsx";
 import ItineraryPlannerPage from "./pages/ItineraryPlannerPage.jsx";
 import LoginPage from "./pages/LoginPage.jsx";
+import NotificationsPage from "./pages/NotificationsPage.jsx";
 import RegisterPage from "./pages/RegisterPage.jsx";
 import SearchPage from "./pages/SearchPage.jsx";
 import { appTheme } from "./theme/theme.js";
@@ -38,6 +39,7 @@ function App() {
             <Route path="itinerary" element={<ItineraryPlannerPage />} />
             <Route path="booking" element={<BookingPage />} />
             <Route path="assistant" element={<AiAssistantPage />} />
+            <Route path="notifications" element={<NotificationsPage />} />
             <Route path="about" element={<AboutHelpPage />} />
           </Route>
 

@@ -89,6 +89,10 @@ export const ExpandMoreRounded = mk(
   "M16.59 8.59 12 13.17 7.41 8.59 6 10l6 6 6-6z",
 );
 
+export const NotificationsOutlined = mk(
+  "M12 22a2 2 0 0 0 1.99-1.8L14 20h-4a2 2 0 0 0 2 2m6-6V11a6 6 0 0 0-5-5.91V4a1 1 0 1 0-2 0v1.09A6 6 0 0 0 6 11v5l-2 2v1h16v-1z",
+);
+
 export const SendRounded = mk(
   "M2.01 21 23 12 2.01 3 2 10l15 2-15 2z",
 );

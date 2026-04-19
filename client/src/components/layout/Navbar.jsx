@@ -1,4 +1,4 @@
-import { BrandMonogramLogo, MenuIcon } from "../../ui/icons.jsx";
+import { BrandMonogramLogo, MenuIcon, NotificationsOutlined } from "../../ui/icons.jsx";
 import {
   AppBar,
   Box,
@@ -139,6 +139,20 @@ export default function Navbar() {
             )}
 
             <Stack direction="row" spacing={1} alignItems="center">
+              <IconButton
+                color="inherit"
+                component={RouterLink}
+                to="/notifications"
+                aria-label="Notifications"
+                sx={{
+                  border: `1px solid ${alpha(theme.palette.primary.main, 0.34)}`,
+                  color: location.pathname === "/notifications" ? "primary.main" : alpha("#fff", 0.9),
+                  bgcolor: location.pathname === "/notifications" ? alpha(theme.palette.primary.main, 0.12) : "transparent",
+                  "&:hover": { bgcolor: alpha(theme.palette.primary.main, 0.16) },
+                }}
+              >
+                <NotificationsOutlined />
+              </IconButton>
               <Button
                 variant="outlined"
                 color="inherit"
