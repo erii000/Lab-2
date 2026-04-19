@@ -13,6 +13,7 @@ import DestinationDetailPage from "./pages/DestinationDetailPage.jsx";
 import HomePage from "./pages/HomePage.jsx";
 import ItineraryPlannerPage from "./pages/ItineraryPlannerPage.jsx";
 import LoginPage from "./pages/LoginPage.jsx";
+import NotFoundPage from "./pages/NotFoundPage.jsx";
 import NotificationsPage from "./pages/NotificationsPage.jsx";
 import RegisterPage from "./pages/RegisterPage.jsx";
 import SearchPage from "./pages/SearchPage.jsx";
@@ -56,6 +57,7 @@ function AppRoutes() {
           <Route path="assistant" element={<AiAssistantPage />} />
           <Route path="notifications" element={<NotificationsPage />} />
           <Route path="about" element={<AboutHelpPage />} />
+          <Route path="404" element={<NotFoundPage />} />
         </Route>
 
         <Route element={<AuthLayout />}>
@@ -63,7 +65,7 @@ function AppRoutes() {
           <Route path="register" element={<RegisterPage />} />
         </Route>
 
-        <Route path="*" element={<Navigate to="/" replace />} />
+        <Route path="*" element={<Navigate to="/404" replace />} />
       </Routes>
     </BrowserRouter>
   );
