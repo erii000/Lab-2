@@ -6,25 +6,70 @@ import {
   FormControlLabel,
   Link,
   Stack,
-  TextField,
   Typography,
 } from "@mui/material";
 import { alpha } from "@mui/material/styles";
+import { useState } from "react";
 import { Link as RouterLink } from "react-router-dom";
+import AppInput from "../components/common/AppInput.jsx";
 
 export default function LoginPage() {
+  const [form, setForm] = useState({
+    email: "",
+    password: "",
+  });
+  const [submitError, setSubmitError] = useState({});
+
+  const handleSubmit = (event) => {
+    event.preventDefault();
+
+    const nextErrors = {};
+    const emailError = validateBusinessEmail(form.email);
+    const passwordError = validateLoginPassword(form.password);
+
+    if (emailError) {
+      nextErrors.email = emailError;
+    }
+    if (passwordError) {
+      nextErrors.password = passwordError;
+    }
+
+    setSubmitError(nextErrors);
+    if (Object.keys(nextErrors).length > 0) {
+      return;
+    }
+  };
+
   return (
-    <Stack spacing={2.5} component="form" onSubmit={(e) => e.preventDefault()} sx={{ width: "100%" }}>
+    <Stack spacing={2.5} component="form" onSubmit={handleSubmit} sx={{ width: "100%" }}>
       <BoxTitle />
-      <TextField
+      <AppInput
         label="Business email"
+        name="email"
         type="email"
-        fullWidth
         required
         autoComplete="email"
         placeholder="you@company.com"
+        value={form.email}
+        onChange={(event) =>
+          setForm((current) => ({ ...current, email: event.target.value }))
+        }
+        validate={validateBusinessEmail}
+        externalError={submitError.email}
       />
-      <TextField label="Password" type="password" fullWidth required autoComplete="current-password" />
+      <AppInput
+        label="Password"
+        name="password"
+        type="password"
+        required
+        autoComplete="current-password"
+        value={form.password}
+        onChange={(event) =>
+          setForm((current) => ({ ...current, password: event.target.value }))
+        }
+        validate={validateLoginPassword}
+        externalError={submitError.password}
+      />
       <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mt: -0.5 }}>
         <FormControlLabel
           control={<Checkbox size="small" defaultChecked />}
@@ -80,4 +125,25 @@ function BoxTitle() {
       </Typography>
     </Stack>
   );
+}
+
+function validateBusinessEmail(value) {
+  if (!value.trim()) {
+    return "Business email is required.";
+  }
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(value)) {
+    return "Enter a valid email address.";
+  }
+  return "";
+}
+
+function validateLoginPassword(value) {
+  if (!value) {
+    return "Password is required.";
+  }
+  if (value.length < 8) {
+    return "Password must be at least 8 characters.";
+  }
+  return "";
 }
