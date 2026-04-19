@@ -4,6 +4,7 @@ import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import MainLayout from "./layouts/MainLayout.jsx";
 import AuthLayout from "./layouts/AuthLayout.jsx";
 import { NotificationsProvider } from "./context/NotificationsContext.jsx";
+import { ToastProvider } from "./context/ToastContext.jsx";
 import AboutHelpPage from "./pages/AboutHelpPage.jsx";
 import AiAssistantPage from "./pages/AiAssistantPage.jsx";
 import BookingPage from "./pages/BookingPage.jsx";
@@ -31,29 +32,31 @@ function App() {
   return (
     <ThemeProvider theme={appTheme}>
       <CssBaseline />
-      <NotificationsProvider>
-        <BrowserRouter>
-          <Routes>
-            <Route element={<MainLayout apiStatus={apiStatus} />}>
-              <Route index element={<HomePage />} />
-              <Route path="search" element={<SearchPage />} />
-              <Route path="destination/:id" element={<DestinationDetailPage />} />
-              <Route path="itinerary" element={<ItineraryPlannerPage />} />
-              <Route path="booking" element={<BookingPage />} />
-              <Route path="assistant" element={<AiAssistantPage />} />
-              <Route path="notifications" element={<NotificationsPage />} />
-              <Route path="about" element={<AboutHelpPage />} />
-            </Route>
+      <ToastProvider>
+        <NotificationsProvider>
+          <BrowserRouter>
+            <Routes>
+              <Route element={<MainLayout apiStatus={apiStatus} />}>
+                <Route index element={<HomePage />} />
+                <Route path="search" element={<SearchPage />} />
+                <Route path="destination/:id" element={<DestinationDetailPage />} />
+                <Route path="itinerary" element={<ItineraryPlannerPage />} />
+                <Route path="booking" element={<BookingPage />} />
+                <Route path="assistant" element={<AiAssistantPage />} />
+                <Route path="notifications" element={<NotificationsPage />} />
+                <Route path="about" element={<AboutHelpPage />} />
+              </Route>
 
-            <Route element={<AuthLayout />}>
-              <Route path="login" element={<LoginPage />} />
-              <Route path="register" element={<RegisterPage />} />
-            </Route>
+              <Route element={<AuthLayout />}>
+                <Route path="login" element={<LoginPage />} />
+                <Route path="register" element={<RegisterPage />} />
+              </Route>
 
-            <Route path="*" element={<Navigate to="/" replace />} />
-          </Routes>
-        </BrowserRouter>
-      </NotificationsProvider>
+              <Route path="*" element={<Navigate to="/" replace />} />
+            </Routes>
+          </BrowserRouter>
+        </NotificationsProvider>
+      </ToastProvider>
     </ThemeProvider>
   );
 }

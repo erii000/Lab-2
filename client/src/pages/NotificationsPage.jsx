@@ -16,10 +16,12 @@ import { alpha } from "@mui/material/styles";
 import { useMemo, useState } from "react";
 import SectionHeading from "../components/common/SectionHeading.jsx";
 import { useNotifications } from "../context/NotificationsContext.jsx";
+import { useToast } from "../context/ToastContext.jsx";
 
 export default function NotificationsPage() {
   const [filter, setFilter] = useState("all");
   const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications();
+  const { showToast } = useToast();
 
   const filteredNotifications = useMemo(() => {
     if (filter === "unread") {
@@ -121,8 +123,20 @@ export default function NotificationsPage() {
               <Button
                 size="small"
                 variant="outlined"
-                disabled={unreadCount === 0}
-                onClick={markAllAsRead}
+                onClick={() => {
+                  if (unreadCount === 0) {
+                    showToast({
+                      message: "There are no unread notifications.",
+                      severity: "error",
+                    });
+                    return;
+                  }
+                  markAllAsRead();
+                  showToast({
+                    message: "All notifications marked as read.",
+                    severity: "success",
+                  });
+                }}
                 sx={{ borderColor: (theme) => alpha(theme.palette.primary.main, 0.38) }}
               >
                 Mark all as read
@@ -151,6 +165,11 @@ export default function NotificationsPage() {
                       onClick={() => {
                         if (item.unread) {
                           markAsRead(item.id);
+                          showToast({
+                            message: "Notification marked as read.",
+                            severity: "success",
+                            autoHideDuration: 2200,
+                          });
                         }
                       }}
                       sx={{
