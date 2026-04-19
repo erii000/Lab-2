@@ -71,7 +71,7 @@ export default function NotificationsPage() {
             alignItems={{ xs: "flex-start", sm: "center" }}
             sx={{ mb: 2 }}
           >
-            <Stack direction="row" spacing={1.2} alignItems="center">
+            <Stack direction="row" spacing={1.2} alignItems="center" sx={{ flexWrap: "wrap" }} useFlexGap>
               <Avatar
                 sx={{
                   width: 36,
@@ -95,7 +95,7 @@ export default function NotificationsPage() {
               <Chip color="primary" label={`${unreadCount} unread`} size="small" />
             </Stack>
 
-            <Stack direction="row" spacing={1} alignItems="center">
+            <Stack direction="row" spacing={1} alignItems="center" sx={{ flexWrap: "wrap" }} useFlexGap>
               <ToggleButtonGroup
                 exclusive
                 size="small"

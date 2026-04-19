@@ -132,7 +132,7 @@ export default function RegisterPage() {
       >
         Continue with Google
       </Button>
-      <Stack direction="row" spacing={1} alignItems="center" sx={{ mt: -0.5 }}>
+      <Stack direction="row" spacing={1} alignItems="center" sx={{ mt: -0.5, flexWrap: "wrap" }} useFlexGap>
         <VerifiedRounded sx={{ fontSize: 18, color: "primary.main" }} />
         <Typography variant="caption" color="text.secondary">
           Role-based access and onboarding steps can be attached post-registration

@@ -70,7 +70,7 @@ export default function LoginPage() {
         validate={validateLoginPassword}
         externalError={submitError.password}
       />
-      <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mt: -0.5 }}>
+      <Stack direction={{ xs: "column", sm: "row" }} justifyContent="space-between" alignItems={{ xs: "flex-start", sm: "center" }} sx={{ mt: -0.5 }} spacing={0.5}>
         <FormControlLabel
           control={<Checkbox size="small" defaultChecked />}
           label={<Typography variant="caption" color="text.secondary">Keep me signed in</Typography>}
@@ -98,7 +98,7 @@ export default function LoginPage() {
       >
         Continue with Google
       </Button>
-      <Stack direction="row" spacing={1} alignItems="center" sx={{ mt: -0.5 }}>
+      <Stack direction="row" spacing={1} alignItems="center" sx={{ mt: -0.5, flexWrap: "wrap" }} useFlexGap>
         <VerifiedRounded sx={{ fontSize: 18, color: "primary.main" }} />
         <Typography variant="caption" color="text.secondary">
           Secure token authentication · optional 2FA can be enabled later

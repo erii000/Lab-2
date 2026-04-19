@@ -100,7 +100,7 @@ export default function SearchPage() {
           ) : (
             <Box
               sx={{
-                height: 480,
+                height: { xs: 300, sm: 380, md: 480 },
                 borderRadius: 2,
                 border: (t) => `1px dashed ${t.palette.divider}`,
                 bgcolor: alpha("#0369a1", 0.06),

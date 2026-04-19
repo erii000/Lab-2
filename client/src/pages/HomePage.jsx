@@ -168,13 +168,15 @@ export default function HomePage() {
           title="Quick suggestions"
           subtitle="Pick a destination and start planning immediately."
         />
-        <Stack direction="row" spacing={1.5} alignItems="center" sx={{ pb: 0.5 }}>
+        <Stack direction="row" spacing={{ xs: 0.8, sm: 1.5 }} alignItems="center" sx={{ pb: 0.5 }}>
           <IconButton
             aria-label="Previous destinations"
             onClick={() => setSlideStart((s) => Math.max(0, Math.min(s, maxStart) - 1))}
             disabled={startIndex <= 0}
             sx={{
               flexShrink: 0,
+              width: { xs: 34, sm: 40 },
+              height: { xs: 34, sm: 40 },
               border: (t) => `1px solid ${alpha(t.palette.primary.main, 0.35)}`,
               bgcolor: alpha("#121826", 0.85),
               color: "primary.main",
@@ -259,6 +261,8 @@ export default function HomePage() {
             disabled={startIndex >= maxStart}
             sx={{
               flexShrink: 0,
+              width: { xs: 34, sm: 40 },
+              height: { xs: 34, sm: 40 },
               border: (t) => `1px solid ${alpha(t.palette.primary.main, 0.35)}`,
               bgcolor: alpha("#121826", 0.85),
               color: "primary.main",
@@ -344,7 +348,7 @@ export default function HomePage() {
                 Your assistant is ready with destination ideas, AI itineraries, and booking-ready planning.
               </Typography>
             </Box>
-            <Stack direction={{ xs: "column", sm: "row" }} spacing={2} sx={{ minWidth: { sm: 360 } }}>
+            <Stack direction={{ xs: "column", sm: "row" }} spacing={2} sx={{ width: { xs: "100%", sm: "auto" }, minWidth: { sm: 360 } }}>
               <Button component={RouterLink} to="/itinerary" variant="contained" color="secondary" size="large" fullWidth>
                 Create my trip
               </Button>

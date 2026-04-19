@@ -31,7 +31,15 @@ export default function FiltersPanel({
   }
 
   return (
-    <Paper variant="outlined" sx={{ p: 2, borderRadius: 2, position: "sticky", top: 88 }}>
+    <Paper
+      variant="outlined"
+      sx={{
+        p: 2,
+        borderRadius: 2,
+        position: { xs: "static", md: "sticky" },
+        top: { md: 88 },
+      }}
+    >
       <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 2 }}>
         <FilterListRounded color="primary" />
         <Typography variant="subtitle1" fontWeight={700}>

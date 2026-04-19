@@ -60,7 +60,16 @@ export default function AuthLayout() {
             }}
           >
             <Stack direction={{ xs: "column", md: "row" }} spacing={0}>
-              <Box sx={{ flex: { md: "0 0 46%" }, minHeight: { xs: 170, md: 520 }, position: "relative", borderRadius: 3, overflow: "hidden" }}>
+              <Box
+                sx={{
+                  flex: { md: "0 0 46%" },
+                  minHeight: { xs: 150, md: 520 },
+                  position: "relative",
+                  borderRadius: 3,
+                  overflow: "hidden",
+                  display: { xs: "none", sm: "block" },
+                }}
+              >
                 <CardMedia
                   component="img"
                   image="https://images.unsplash.com/photo-1503220317375-aaad61436b1b?auto=format&fit=crop&w=1400&q=80"
@@ -84,7 +93,7 @@ export default function AuthLayout() {
                 </Stack>
               </Box>
 
-              <Box sx={{ flex: 1, px: { xs: 1, md: 3 }, py: { xs: 2, md: 1 }, display: "flex", alignItems: "center" }}>
+              <Box sx={{ flex: 1, px: { xs: 0, md: 3 }, py: { xs: 0.5, md: 1 }, display: "flex", alignItems: "center" }}>
                 <Outlet />
               </Box>
             </Stack>

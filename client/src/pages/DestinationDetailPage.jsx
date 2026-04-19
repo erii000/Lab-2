@@ -11,6 +11,8 @@ import {
   Rating,
   Stack,
   Typography,
+  useMediaQuery,
+  useTheme,
 } from "@mui/material";
 import { alpha } from "@mui/material/styles";
 import { Link as RouterLink, useParams } from "react-router-dom";
@@ -18,6 +20,8 @@ import SectionHeading from "../components/common/SectionHeading.jsx";
 import { getDestinationDetail } from "../data/mockDestinations.js";
 
 export default function DestinationDetailPage() {
+  const theme = useTheme();
+  const isSmDown = useMediaQuery(theme.breakpoints.down("sm"));
   const { id } = useParams();
   const dest = getDestinationDetail(id);
 
@@ -48,7 +52,7 @@ export default function DestinationDetailPage() {
             <Typography variant="overline" color="secondary">
               Destination
             </Typography>
-            <Typography variant="h3" component="h1">
+            <Typography variant="h3" component="h1" sx={{ fontSize: { xs: "1.9rem", md: "3rem" }, lineHeight: 1.15 }}>
               {dest.title}
             </Typography>
             <Stack direction="row" spacing={1} alignItems="center">
@@ -74,7 +78,7 @@ export default function DestinationDetailPage() {
         <Grid container spacing={4} sx={{ mt: 2 }}>
           <Grid size={{ xs: 12, md: 7 }}>
             <SectionHeading title="Gallery" subtitle="Swipe-ready on mobile — replace with carousel if preferred." />
-            <ImageList variant="masonry" cols={2} gap={12}>
+            <ImageList variant="masonry" cols={isSmDown ? 1 : 2} gap={12}>
               {(dest.gallery ?? [dest.image]).map((src) => (
                 <ImageListItem key={src}>
                   <Box

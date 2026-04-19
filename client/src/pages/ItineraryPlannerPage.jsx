@@ -23,6 +23,8 @@ import {
   Stack,
   Tooltip,
   Typography,
+  useMediaQuery,
+  useTheme,
 } from "@mui/material";
 import { alpha } from "@mui/material/styles";
 import { Link as RouterLink } from "react-router-dom";
@@ -49,6 +51,8 @@ const demoDays = [
 ];
 
 export default function ItineraryPlannerPage() {
+  const theme = useTheme();
+  const isMdDown = useMediaQuery(theme.breakpoints.down("md"));
   const total = demoDays.flatMap((d) => d.activities).reduce((s, a) => s + a.cost, 0);
 
   return (
@@ -106,7 +110,7 @@ export default function ItineraryPlannerPage() {
           <Stack spacing={3}>
             {demoDays.map((day) => (
               <Paper key={day.day} sx={{ p: 2, borderRadius: 2 }}>
-                <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
+                <Stack direction={{ xs: "column", sm: "row" }} justifyContent="space-between" alignItems={{ xs: "flex-start", sm: "center" }} sx={{ mb: 2 }} spacing={1}>
                   <Box>
                     <Typography variant="overline" color="secondary">
                       Day {day.day}
@@ -129,18 +133,20 @@ export default function ItineraryPlannerPage() {
                         alignItems: "stretch",
                       }}
                       secondaryAction={
-                        <Stack direction="row" spacing={0.5}>
-                          <Tooltip title="Edit">
-                            <IconButton edge="end" aria-label="edit">
-                              <EditRounded fontSize="small" />
-                            </IconButton>
-                          </Tooltip>
-                          <Tooltip title="Remove">
-                            <IconButton edge="end" aria-label="remove">
-                              <DeleteOutlineRounded fontSize="small" />
-                            </IconButton>
-                          </Tooltip>
-                        </Stack>
+                        !isMdDown ? (
+                          <Stack direction="row" spacing={0.5}>
+                            <Tooltip title="Edit">
+                              <IconButton edge="end" aria-label="edit">
+                                <EditRounded fontSize="small" />
+                              </IconButton>
+                            </Tooltip>
+                            <Tooltip title="Remove">
+                              <IconButton edge="end" aria-label="remove">
+                                <DeleteOutlineRounded fontSize="small" />
+                              </IconButton>
+                            </Tooltip>
+                          </Stack>
+                        ) : null
                       }
                     >
                       <DragIndicatorRounded
@@ -156,6 +162,20 @@ export default function ItineraryPlannerPage() {
                         <Typography variant="caption" color="text.secondary">
                           {act.time} · €{act.cost}
                         </Typography>
+                        {isMdDown ? (
+                          <Stack direction="row" spacing={0.5} sx={{ mt: 0.8 }}>
+                            <Tooltip title="Edit">
+                              <IconButton aria-label="edit" size="small">
+                                <EditRounded fontSize="small" />
+                              </IconButton>
+                            </Tooltip>
+                            <Tooltip title="Remove">
+                              <IconButton aria-label="remove" size="small">
+                                <DeleteOutlineRounded fontSize="small" />
+                              </IconButton>
+                            </Tooltip>
+                          </Stack>
+                        ) : null}
                       </Box>
                     </ListItem>
                   ))}
@@ -169,7 +189,7 @@ export default function ItineraryPlannerPage() {
         </Grid>
 
         <Grid size={{ xs: 12, lg: 4 }}>
-          <Paper sx={{ p: 3, borderRadius: 2, position: "sticky", top: 96 }}>
+          <Paper sx={{ p: 3, borderRadius: 2, position: { xs: "static", lg: "sticky" }, top: { lg: 96 } }}>
             <Typography variant="h6" gutterBottom>
               Trip summary
             </Typography>

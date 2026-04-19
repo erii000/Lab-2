@@ -49,7 +49,7 @@ export default function Navbar() {
 
   const drawer = useMemo(
     () => (
-      <Box sx={{ width: 280, pt: 2 }} role="presentation">
+      <Box sx={{ width: { xs: "min(86vw, 320px)", sm: 320 }, pt: 2 }} role="presentation">
         <Typography variant="subtitle2" color="text.secondary" sx={{ px: 2, pb: 1 }}>
           Navigate
         </Typography>
@@ -67,9 +67,39 @@ export default function Navbar() {
             </ListItemButton>
           ))}
         </List>
+        <Divider sx={{ mt: 0.5 }} />
+        <Stack spacing={1.1} sx={{ p: 2 }}>
+          <Button
+            variant="outlined"
+            component={RouterLink}
+            to="/login"
+            onClick={() => setMobileOpen(false)}
+            sx={{
+              borderColor: alpha(theme.palette.primary.main, 0.45),
+              color: alpha("#fff", 0.92),
+              "&:hover": { borderColor: theme.palette.primary.main, bgcolor: alpha(theme.palette.primary.main, 0.12) },
+            }}
+          >
+            Log in
+          </Button>
+          <Button
+            variant="contained"
+            component={RouterLink}
+            to="/register"
+            onClick={() => setMobileOpen(false)}
+            sx={{
+              bgcolor: "primary.main",
+              color: "#111318",
+              fontWeight: 700,
+              "&:hover": { bgcolor: "primary.light" },
+            }}
+          >
+            Get started
+          </Button>
+        </Stack>
       </Box>
     ),
-    [location.pathname],
+    [location.pathname, theme.palette.primary.main],
   );
 
   return (
@@ -85,14 +115,14 @@ export default function Navbar() {
         }}
       >
         <Container maxWidth="xl">
-          <Toolbar disableGutters sx={{ minHeight: { xs: 62, md: 72 }, gap: 2 }}>
+          <Toolbar disableGutters sx={{ minHeight: { xs: 62, md: 72 }, gap: { xs: 1, md: 2 } }}>
             <Stack
               direction="row"
               spacing={1.25}
               alignItems="center"
               component={RouterLink}
               to="/"
-              sx={{ textDecoration: "none", minWidth: { md: 260 } }}
+              sx={{ textDecoration: "none", minWidth: { xs: 0, md: 260 }, flexShrink: 1 }}
             >
               <Box
                 sx={{
@@ -109,7 +139,7 @@ export default function Navbar() {
               >
                 <BrandMonogramLogo sx={{ fontSize: 30 }} />
               </Box>
-              <Box>
+              <Box sx={{ display: { xs: "none", sm: "block" } }}>
                 <Typography
                   variant="subtitle1"
                   sx={{ fontWeight: 800, letterSpacing: "-0.02em", color: "common.white", lineHeight: 1.1 }}
@@ -151,7 +181,7 @@ export default function Navbar() {
               <Box sx={{ flexGrow: 1 }} />
             )}
 
-            <Stack direction="row" spacing={1} alignItems="center">
+            <Stack direction="row" spacing={0.6} alignItems="center" sx={{ flexShrink: 0 }}>
               <IconButton
                 color="inherit"
                 aria-label="Notifications"
@@ -279,32 +309,36 @@ export default function Navbar() {
                   </Button>
                 </Box>
               </Menu>
-              <Button
-                variant="outlined"
-                color="inherit"
-                component={RouterLink}
-                to="/login"
-                sx={{
-                  borderColor: alpha(theme.palette.primary.main, 0.45),
-                  color: alpha("#fff", 0.92),
-                  "&:hover": { borderColor: theme.palette.primary.main, bgcolor: alpha(theme.palette.primary.main, 0.12) },
-                }}
-              >
-                Log in
-              </Button>
-              <Button
-                variant="contained"
-                component={RouterLink}
-                to="/register"
-                sx={{
-                  bgcolor: "primary.main",
-                  color: "#111318",
-                  fontWeight: 700,
-                  "&:hover": { bgcolor: "primary.light" },
-                }}
-              >
-                Get started
-              </Button>
+              {isMdUp && (
+                <>
+                  <Button
+                    variant="outlined"
+                    color="inherit"
+                    component={RouterLink}
+                    to="/login"
+                    sx={{
+                      borderColor: alpha(theme.palette.primary.main, 0.45),
+                      color: alpha("#fff", 0.92),
+                      "&:hover": { borderColor: theme.palette.primary.main, bgcolor: alpha(theme.palette.primary.main, 0.12) },
+                    }}
+                  >
+                    Log in
+                  </Button>
+                  <Button
+                    variant="contained"
+                    component={RouterLink}
+                    to="/register"
+                    sx={{
+                      bgcolor: "primary.main",
+                      color: "#111318",
+                      fontWeight: 700,
+                      "&:hover": { bgcolor: "primary.light" },
+                    }}
+                  >
+                    Get started
+                  </Button>
+                </>
+              )}
               {!isMdUp && (
                 <IconButton color="inherit" edge="end" onClick={() => setMobileOpen(true)}>
                   <MenuIcon />

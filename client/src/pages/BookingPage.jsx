@@ -108,11 +108,11 @@ export default function BookingPage() {
             ))}
           </Stack>
 
-          <Stack direction="row" spacing={2} sx={{ mt: 2 }} alignItems="center">
+          <Stack direction={{ xs: "column", sm: "row" }} spacing={1.2} sx={{ mt: 2 }} alignItems={{ xs: "stretch", sm: "center" }}>
             <Typography variant="body2" color="text.secondary">
               Sort by
             </Typography>
-            <FormControl size="small" sx={{ minWidth: 160 }}>
+            <FormControl size="small" sx={{ minWidth: { sm: 160 } }}>
               <InputLabel id="sort-label">Sort</InputLabel>
               <Select labelId="sort-label" label="Sort" defaultValue="price">
                 <MenuItem value="price">Price</MenuItem>
@@ -124,7 +124,7 @@ export default function BookingPage() {
         </Grid>
 
         <Grid size={{ xs: 12, md: 4 }}>
-          <Paper sx={{ p: 3, position: "sticky", top: 96 }}>
+          <Paper sx={{ p: 3, position: { xs: "static", md: "sticky" }, top: { md: 96 } }}>
             <Typography variant="h6" gutterBottom>
               Booking summary
             </Typography>
