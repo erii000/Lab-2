@@ -11,6 +11,7 @@ import {
 import { alpha } from "@mui/material/styles";
 import { useState } from "react";
 import { Link as RouterLink } from "react-router-dom";
+import AppButton from "../components/common/AppButton.jsx";
 import AppInput from "../components/common/AppInput.jsx";
 
 export default function LoginPage() {
@@ -89,9 +90,9 @@ export default function LoginPage() {
           Need help?
         </Link>
       </Stack>
-      <Button type="submit" variant="contained" color="primary" size="large" fullWidth sx={{ py: 1.15, fontWeight: 800 }}>
+      <AppButton type="submit" tone="primary" size="large" fullWidth sx={{ py: 1.15, fontWeight: 800 }}>
         Log in
-      </Button>
+      </AppButton>
       <Stack direction="row" alignItems="center" spacing={2}>
         <Divider sx={{ flex: 1 }} />
         <Typography variant="caption" color="text.secondary">

@@ -1,6 +1,7 @@
 import { Box, Button, Chip, Container, Stack, Typography } from "@mui/material";
 import { alpha } from "@mui/material/styles";
 import { Link as RouterLink } from "react-router-dom";
+import AppButton from "../components/common/AppButton.jsx";
 import SectionHeading from "../components/common/SectionHeading.jsx";
 
 export default function NotFoundPage() {
@@ -32,12 +33,12 @@ export default function NotFoundPage() {
             The link may be outdated, mistyped, or moved. Use one of the options below to continue planning your trip.
           </Typography>
           <Stack direction={{ xs: "column", sm: "row" }} spacing={1.2}>
-            <Button component={RouterLink} to="/" variant="contained" color="primary">
+            <AppButton component={RouterLink} to="/" tone="primary">
               Back to Home
-            </Button>
-            <Button component={RouterLink} to="/search" variant="outlined">
+            </AppButton>
+            <AppButton component={RouterLink} to="/search" tone="secondary">
               Explore Destinations
-            </Button>
+            </AppButton>
             <Button component={RouterLink} to="/assistant" variant="text">
               Open Assistant
             </Button>
