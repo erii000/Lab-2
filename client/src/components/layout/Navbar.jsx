@@ -1,6 +1,7 @@
 import { BrandMonogramLogo, MenuIcon, NotificationsOutlined } from "../../ui/icons.jsx";
 import {
   AppBar,
+  Badge,
   Box,
   Button,
   Container,
@@ -18,6 +19,7 @@ import {
 import { alpha, useTheme } from "@mui/material/styles";
 import { useMemo, useState } from "react";
 import { Link as RouterLink, useLocation } from "react-router-dom";
+import { useNotifications } from "../../context/NotificationsContext.jsx";
 
 const navLinks = [
   { label: "Home", to: "/", description: "Landing & quick search" },
@@ -33,6 +35,7 @@ export default function Navbar() {
   const isMdUp = useMediaQuery(theme.breakpoints.up("md"));
   const location = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const { unreadCount } = useNotifications();
 
   const drawer = useMemo(
     () => (
@@ -151,7 +154,21 @@ export default function Navbar() {
                   "&:hover": { bgcolor: alpha(theme.palette.primary.main, 0.16) },
                 }}
               >
-                <NotificationsOutlined />
+                <Badge
+                  badgeContent={unreadCount}
+                  color="primary"
+                  max={99}
+                  overlap="circular"
+                  sx={{
+                    "& .MuiBadge-badge": {
+                      fontWeight: 700,
+                      border: `1px solid ${alpha(theme.palette.primary.main, 0.75)}`,
+                      boxShadow: "0 0 0 2px rgba(9, 12, 18, 0.9)",
+                    },
+                  }}
+                >
+                  <NotificationsOutlined />
+                </Badge>
               </IconButton>
               <Button
                 variant="outlined"

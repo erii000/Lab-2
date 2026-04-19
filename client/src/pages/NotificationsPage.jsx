@@ -2,6 +2,7 @@ import { NotificationsOutlined } from "../ui/icons.jsx";
 import {
   Avatar,
   Box,
+  Button,
   Chip,
   Container,
   Divider,
@@ -14,68 +15,18 @@ import {
 import { alpha } from "@mui/material/styles";
 import { useMemo, useState } from "react";
 import SectionHeading from "../components/common/SectionHeading.jsx";
-
-const notificationHistory = [
-  {
-    id: "n-1001",
-    title: "Your itinerary is ready",
-    body: "AI has generated your 5-day Rome plan with flights, stays, and dining recommendations.",
-    timestamp: "Today, 09:12",
-    category: "Itinerary",
-    unread: true,
-  },
-  {
-    id: "n-1002",
-    title: "Price drop detected",
-    body: "Return flights to Tokyo dropped by 14% compared to yesterday. Great time to book.",
-    timestamp: "Today, 07:45",
-    category: "Deals",
-    unread: true,
-  },
-  {
-    id: "n-1003",
-    title: "Booking confirmed",
-    body: "Your boutique hotel reservation in Barcelona was successfully confirmed.",
-    timestamp: "Yesterday, 18:30",
-    category: "Booking",
-    unread: false,
-  },
-  {
-    id: "n-1004",
-    title: "Weather advisory",
-    body: "Light rain expected in Paris during your trip dates. Consider indoor alternatives on day 3.",
-    timestamp: "Yesterday, 11:08",
-    category: "Weather",
-    unread: false,
-  },
-  {
-    id: "n-1005",
-    title: "Document reminder",
-    body: "Your passport expires in 5 months. Some destinations require 6+ months validity.",
-    timestamp: "Apr 15, 16:42",
-    category: "Reminder",
-    unread: false,
-  },
-  {
-    id: "n-1006",
-    title: "Trip collaboration update",
-    body: "Mariam added two activities to your Dubai itinerary: desert safari and marina dinner.",
-    timestamp: "Apr 12, 13:27",
-    category: "Collaboration",
-    unread: false,
-  },
-];
+import { useNotifications } from "../context/NotificationsContext.jsx";
 
 export default function NotificationsPage() {
   const [filter, setFilter] = useState("all");
-  const unreadCount = notificationHistory.filter((item) => item.unread).length;
+  const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications();
 
   const filteredNotifications = useMemo(() => {
     if (filter === "unread") {
-      return notificationHistory.filter((item) => item.unread);
+      return notifications.filter((item) => item.unread);
     }
-    return notificationHistory;
-  }, [filter]);
+    return notifications;
+  }, [filter, notifications]);
 
   const groupedNotifications = useMemo(() => {
     return filteredNotifications.reduce((groups, item) => {
@@ -134,7 +85,7 @@ export default function NotificationsPage() {
                 Full Notification History
               </Typography>
               <Chip
-                label={`${notificationHistory.length} total`}
+                label={`${notifications.length} total`}
                 size="small"
                 sx={{ borderColor: (theme) => alpha(theme.palette.primary.main, 0.38) }}
                 variant="outlined"
@@ -142,30 +93,41 @@ export default function NotificationsPage() {
               <Chip color="primary" label={`${unreadCount} unread`} size="small" />
             </Stack>
 
-            <ToggleButtonGroup
-              exclusive
-              size="small"
-              value={filter}
-              onChange={(_, value) => {
-                if (value) {
-                  setFilter(value);
-                }
-              }}
-              sx={{
-                "& .MuiToggleButton-root": {
-                  px: 2,
-                  borderColor: (theme) => alpha(theme.palette.primary.main, 0.35),
-                  color: "text.secondary",
-                },
-                "& .Mui-selected": {
-                  bgcolor: (theme) => alpha(theme.palette.primary.main, 0.15),
-                  color: "primary.main",
-                },
-              }}
-            >
-              <ToggleButton value="all">All</ToggleButton>
-              <ToggleButton value="unread">Unread</ToggleButton>
-            </ToggleButtonGroup>
+            <Stack direction="row" spacing={1} alignItems="center">
+              <ToggleButtonGroup
+                exclusive
+                size="small"
+                value={filter}
+                onChange={(_, value) => {
+                  if (value) {
+                    setFilter(value);
+                  }
+                }}
+                sx={{
+                  "& .MuiToggleButton-root": {
+                    px: 2,
+                    borderColor: (theme) => alpha(theme.palette.primary.main, 0.35),
+                    color: "text.secondary",
+                  },
+                  "& .Mui-selected": {
+                    bgcolor: (theme) => alpha(theme.palette.primary.main, 0.15),
+                    color: "primary.main",
+                  },
+                }}
+              >
+                <ToggleButton value="all">All</ToggleButton>
+                <ToggleButton value="unread">Unread</ToggleButton>
+              </ToggleButtonGroup>
+              <Button
+                size="small"
+                variant="outlined"
+                disabled={unreadCount === 0}
+                onClick={markAllAsRead}
+                sx={{ borderColor: (theme) => alpha(theme.palette.primary.main, 0.38) }}
+              >
+                Mark all as read
+              </Button>
+            </Stack>
           </Stack>
 
           <Divider sx={{ borderColor: (theme) => alpha(theme.palette.primary.main, 0.2), mb: 2 }} />
@@ -186,6 +148,11 @@ export default function NotificationsPage() {
                   {items.map((item) => (
                     <Paper
                       key={item.id}
+                      onClick={() => {
+                        if (item.unread) {
+                          markAsRead(item.id);
+                        }
+                      }}
                       sx={{
                         p: 2,
                         borderRadius: 2.2,
