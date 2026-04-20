@@ -8,6 +8,7 @@ using TravelAssistant.Services.UserService.Configuration;
 using TravelAssistant.Services.UserService.Data;
 using TravelAssistant.Services.UserService.Repositories;
 using TravelAssistant.Services.UserService.Repositories.Interfaces;
+using TravelAssistant.Services.UserService.Services;
 using TravelAssistant.Services.UserService.Services.Auth;
 using TravelAssistant.Services.UserService.Services.Interfaces;
 
@@ -90,6 +91,7 @@ builder.Services.AddHealthChecks();
 builder.Services.AddScoped<IUserRepository, SqlUserRepository>();
 builder.Services.AddScoped<IRefreshTokenRepository, SqlRefreshTokenRepository>();
 builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<IUserSearchService, UserSearchService>();
 
 var app = builder.Build();
 
