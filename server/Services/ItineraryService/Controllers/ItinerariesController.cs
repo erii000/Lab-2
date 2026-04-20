@@ -1,7 +1,9 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using TravelAssistant.Services.ItineraryService.Contracts.Itineraries;
 using TravelAssistant.Services.ItineraryService.DTOs.Itineraries;
 using TravelAssistant.Services.ItineraryService.Security;
+using TravelAssistant.Services.ItineraryService.Services.Interfaces;
 using TravelAssistant.Services.ItineraryService.Services.ItineraryPlanning;
 
 namespace TravelAssistant.Services.ItineraryService.Controllers;
@@ -12,9 +14,15 @@ namespace TravelAssistant.Services.ItineraryService.Controllers;
 public sealed class ItinerariesController : ControllerBase
 {
     private readonly IItineraryPlanningService _itineraryPlanningService;
+    private readonly IItinerarySearchService _itinerarySearchService;
 
-    public ItinerariesController(IItineraryPlanningService itineraryPlanningService) =>
+    public ItinerariesController(
+        IItineraryPlanningService itineraryPlanningService,
+        IItinerarySearchService itinerarySearchService)
+    {
         _itineraryPlanningService = itineraryPlanningService;
+        _itinerarySearchService = itinerarySearchService;
+    }
 
     [HttpPost("generate")]
     [ProducesResponseType(typeof(GenerateItineraryResponse), StatusCodes.Status201Created)]
@@ -60,5 +68,13 @@ public sealed class ItinerariesController : ControllerBase
 
         var list = await _itineraryPlanningService.ListForUserAsync(userId, requester.Value, User.IsAdmin(), cancellationToken);
         return Ok(list);
+    }
+
+    [HttpGet("search")]
+    [Authorize(Roles = "Admin")]
+    public async Task<IActionResult> Search([FromQuery] ItinerarySearchRequest request, CancellationToken cancellationToken)
+    {
+        var data = await _itinerarySearchService.SearchAsync(request, cancellationToken);
+        return Ok(data);
     }
 }

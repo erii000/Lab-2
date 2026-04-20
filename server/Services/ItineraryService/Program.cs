@@ -9,6 +9,8 @@ using Microsoft.OpenApi.Models;
 using TravelAssistant.Services.ItineraryService.Configuration;
 using TravelAssistant.Services.ItineraryService.Data;
 using TravelAssistant.Services.ItineraryService.Repositories;
+using TravelAssistant.Services.ItineraryService.Services;
+using TravelAssistant.Services.ItineraryService.Services.Interfaces;
 using TravelAssistant.Services.ItineraryService.Services.ItineraryPlanning;
 using TravelAssistant.Services.ItineraryService.Validation;
 
@@ -27,6 +29,7 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
 {
     options.SwaggerDoc("v1", new OpenApiInfo { Title = "Itinerary Service API", Version = "v1" });
+
     options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
         Description = "JWT Authorization header using the Bearer scheme.",
@@ -36,12 +39,17 @@ builder.Services.AddSwaggerGen(options =>
         Scheme = "bearer",
         BearerFormat = "JWT"
     });
+
     options.AddSecurityRequirement(new OpenApiSecurityRequirement
     {
         {
             new OpenApiSecurityScheme
             {
-                Reference = new OpenApiReference { Type = ReferenceType.SecurityScheme, Id = "Bearer" }
+                Reference = new OpenApiReference
+                {
+                    Type = ReferenceType.SecurityScheme,
+                    Id = "Bearer"
+                }
             },
             Array.Empty<string>()
         }
@@ -80,6 +88,7 @@ builder.Services.AddHealthChecks();
 builder.Services.AddScoped<IItineraryRepository, EfItineraryRepository>();
 builder.Services.AddScoped<ITravelPreferenceReader, EfTravelPreferenceReader>();
 builder.Services.AddScoped<IItineraryPlanningService, ItineraryPlanningService>();
+builder.Services.AddScoped<IItinerarySearchService, ItinerarySearchService>();
 
 var app = builder.Build();
 

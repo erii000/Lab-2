@@ -1,7 +1,9 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
+using TravelAssistant.Services.UserService.Contracts.Users;
 using TravelAssistant.Services.UserService.Repositories.Interfaces;
+using TravelAssistant.Services.UserService.Services.Interfaces;
 
 namespace TravelAssistant.Services.UserService.Controllers;
 
@@ -10,10 +12,12 @@ namespace TravelAssistant.Services.UserService.Controllers;
 public class UserController : ControllerBase
 {
     private readonly IUserRepository _userRepository;
+    private readonly IUserSearchService _userSearchService;
 
-    public UserController(IUserRepository userRepository)
+    public UserController(IUserRepository userRepository, IUserSearchService userSearchService)
     {
         _userRepository = userRepository;
+        _userSearchService = userSearchService;
     }
 
     [Authorize] 
@@ -45,5 +49,13 @@ public class UserController : ControllerBase
             user.Email,
             user.CreatedAt
         });
+    }
+
+    [Authorize(Roles = "Admin")]
+    [HttpGet("search")]
+    public async Task<IActionResult> Search([FromQuery] UserSearchRequest request, CancellationToken ct)
+    {
+        var data = await _userSearchService.SearchAsync(request, ct);
+        return Ok(data);
     }
 }
