@@ -50,10 +50,11 @@ export default function AdminLayout() {
                 sx={{
                     width: { md: `calc(100% - ${drawerWidth}px)` },
                     ml: { md: `${drawerWidth}px` },
-                    bgcolor: "#ffffff",
-                    color: "#0f172a",
-                    borderBottom: "1px solid #e2e8f0",
+                    bgcolor: "#0f172a",
+                    color: "#ffffff",
+                    borderBottom: "1px solid rgba(255,255,255,0.08)",
                 }}
+
             >
                 <Toolbar sx={{ display: "flex", justifyContent: "space-between" }}>
                     <Box>
@@ -154,10 +155,24 @@ export default function AdminLayout() {
                 sx={{
                     flexGrow: 1,
                     width: { md: `calc(100% - ${drawerWidth}px)` },
-                    p: 3,
+                    minHeight: "100vh",
+                    bgcolor: "#f8fafc",
+                    overflowY: "auto",
+                    px: 3,
+                    pb: 4,
+                    pt: 12,
+
+                    "& h1, & h2, & h3, & h4, & h5, & h6": {
+                        color: "#b9923f",
+                    },
+                    "& .MuiTypography-h1, & .MuiTypography-h2, & .MuiTypography-h3, & .MuiTypography-h4, & .MuiTypography-h5, & .MuiTypography-h6": {
+                        color: "#b9923f",
+                    },
+                    "& .MuiTypography-body1, & .MuiTypography-body2": {
+                        color: "#64748b",
+                    },
                 }}
             >
-                <Toolbar />
                 <Outlet />
             </Box>
         </Box>
