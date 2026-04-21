@@ -1,8 +1,17 @@
+using DotNetEnv;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
 using TravelAssistant.Services.SupportService.Data;
 using TravelAssistant.Services.SupportService.Interfaces;
 using TravelAssistant.Services.SupportService.Services;
+
+var rootEnvPath = Path.GetFullPath(Path.Combine(Directory.GetCurrentDirectory(), "..", "..", "global-settings.env"));
+var envPath = Path.Combine(Directory.GetCurrentDirectory(), ".env");
+var envFiles = new[] { rootEnvPath, envPath }.Where(File.Exists).ToArray();
+if (envFiles.Length > 0)
+{
+    Env.LoadMulti(envFiles);
+}
 
 var builder = WebApplication.CreateBuilder(args);
 

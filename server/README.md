@@ -58,3 +58,50 @@
 3. Review generated files in `server/Services/PaymentService/Migrations`.
 4. Apply migration: `dotnet tool run dotnet-ef database update --project server/Services/PaymentService/PaymentService.csproj --startup-project server/Services/PaymentService/PaymentService.csproj --context ApplicationDbContext`
 5. Commit model + context + migration files together.
+
+## Dockerized Local Stack
+
+The repository now includes a full Docker Compose setup for runnable services:
+
+- `ApiGateway`
+- `UserService`
+- `ItineraryService`
+- `BookingService`
+- `PaymentService`
+- `NotificationService`
+- `AuditService`
+- `RealTimeCommunicationService`
+- `SupportService`
+- `WeatherExternalDataService`
+- `client` (Vite build served by nginx)
+- SQL Server (`mcr.microsoft.com/mssql/server:2022-latest`)
+
+> `RolePermissionService` and `TravelPreferencesService` are currently scaffolds (no `Program.cs`), so they are not included in Compose runtime yet.
+
+### Run
+
+From `server/`:
+
+1. `copy .env.docker.example .env` (Windows) or `cp .env.docker.example .env` (macOS/Linux)
+2. Update `.env` secrets (`MSSQL_SA_PASSWORD`, `JWT__SECRETKEY`, and optional provider keys).
+3. `docker compose build`
+4. `docker compose up -d`
+5. `docker compose ps`
+
+### Stop
+
+- `docker compose down`
+- `docker compose down -v` (also remove DB volume)
+
+### Common Endpoints
+
+- Frontend: `http://localhost:5173`
+- API Gateway: `http://localhost:5161/swagger`
+- UserService: `http://localhost:62381/swagger`
+- BookingService: `http://localhost:63191/swagger`
+- PaymentService: `http://localhost:63187/swagger`
+
+### Notes
+
+- Compose reads runtime secrets/config from `server/.env` (via variable substitution in `docker-compose.yml`).
+- Keep `server/.env` local-only; use `.env.docker.example` as the sharable template.

@@ -1,4 +1,5 @@
 using System.Text;
+using DotNetEnv;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -6,6 +7,14 @@ using Microsoft.OpenApi.Models;
 using TravelAssistant.Services.AuditService.Data;
 using TravelAssistant.Services.AuditService.Interfaces;
 using TravelAssistant.Services.AuditService.Services;
+
+var rootEnvPath = Path.GetFullPath(Path.Combine(Directory.GetCurrentDirectory(), "..", "..", "global-settings.env"));
+var envPath = Path.Combine(Directory.GetCurrentDirectory(), ".env");
+var envFiles = new[] { rootEnvPath, envPath }.Where(File.Exists).ToArray();
+if (envFiles.Length > 0)
+{
+    Env.LoadMulti(envFiles);
+}
 
 var builder = WebApplication.CreateBuilder(args);
 

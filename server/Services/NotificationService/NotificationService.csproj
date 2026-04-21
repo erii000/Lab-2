@@ -5,6 +5,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
   <ItemGroup>
+    <PackageReference Include="DotNetEnv" Version="3.1.1" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="9.0.3" />
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.3" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="9.0.3" />
@@ -15,6 +16,14 @@
     <PackageReference Include="Swashbuckle.AspNetCore" Version="7.2.0" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\RealTimeCommunicationService\RealTimeCommunicationService.csproj" />
+    <ProjectReference Include="..\RealTimeCommunicationService\RealTimeCommunicationService.csproj">
+      <ExcludeAssets>contentFiles</ExcludeAssets>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <Content Remove="..\RealTimeCommunicationService\appsettings.json" />
+    <Content Remove="..\RealTimeCommunicationService\appsettings.Development.json" />
+    <None Remove="..\RealTimeCommunicationService\appsettings.json" />
+    <None Remove="..\RealTimeCommunicationService\appsettings.Development.json" />
   </ItemGroup>
 </Project>

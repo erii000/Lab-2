@@ -3,8 +3,11 @@
   "profiles": {
     "BookingService": {
       "commandName": "Project",
+      "launchBrowser": true,
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
+      },
+      "applicationUrl": "https://localhost:63190;http://localhost:63191"
     }
   }
 }
