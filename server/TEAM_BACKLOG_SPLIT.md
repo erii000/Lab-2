@@ -225,6 +225,7 @@ Required fields per card:
 25. Setup SignalR notification hub
 
 - Owner: C
+
 - Priority: High
 - Acceptance:
   - Hub endpoint exposed at `/hubs/notifications`
