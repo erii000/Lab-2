@@ -1,4 +1,11 @@
-import { CssBaseline, ThemeProvider } from "@mui/material";
+import UsersManagementPage from "./pages/UsersManagementPage.jsx";
+import RolesManagementPage from "./pages/RolesManagementPage.jsx";
+import PermissionsManagementPage from "./pages/PermissionsManagementPage.jsx";
+import AuditLogsPage from "./pages/AuditLogsPage.jsx";
+import RecommendationsPage from "./pages/RecommendationsPage.jsx";
+import ImportResultsPage from "./pages/ImportResultsPage.jsx";
+import AdminLayout from "./layouts/AdminLayout.jsx";
+import AdminDashboardPage from "./pages/AdminDashboardPage.jsx"; import { CssBaseline, ThemeProvider } from "@mui/material";
 import { useEffect, useState } from "react";
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import MainLayout from "./layouts/MainLayout.jsx";
@@ -63,7 +70,16 @@ function AppRoutes() {
         <Route element={<AuthLayout />}>
           <Route path="login" element={<LoginPage />} />
           <Route path="register" element={<RegisterPage />} />
-        </Route>
+              </Route>
+              <Route element={<AdminLayout />}>
+                  <Route path="admin" element={<AdminDashboardPage />} />
+                  <Route path="admin/users" element={<UsersManagementPage />} />
+                  <Route path="admin/roles" element={<RolesManagementPage />} />
+                  <Route path="admin/permissions" element={<PermissionsManagementPage />} />
+                  <Route path="admin/audit-logs" element={<AuditLogsPage />} />
+                  <Route path="admin/recommendations" element={<RecommendationsPage />} />
+                  <Route path="admin/import-results" element={<ImportResultsPage />} />
+              </Route>
 
         <Route path="*" element={<Navigate to="/404" replace />} />
       </Routes>
