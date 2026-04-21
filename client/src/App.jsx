@@ -1,4 +1,5 @@
-import { CssBaseline, ThemeProvider } from "@mui/material";
+import AdminLayout from "./layouts/AdminLayout.jsx";
+import AdminDashboardPage from "./pages/AdminDashboardPage.jsx"; import { CssBaseline, ThemeProvider } from "@mui/material";
 import { useEffect, useState } from "react";
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import MainLayout from "./layouts/MainLayout.jsx";
@@ -63,7 +64,10 @@ function AppRoutes() {
         <Route element={<AuthLayout />}>
           <Route path="login" element={<LoginPage />} />
           <Route path="register" element={<RegisterPage />} />
-        </Route>
+              </Route>
+              <Route element={<AdminLayout />}>
+                  <Route path="admin" element={<AdminDashboardPage />} />
+              </Route>
 
         <Route path="*" element={<Navigate to="/404" replace />} />
       </Routes>
