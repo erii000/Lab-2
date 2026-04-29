@@ -1,4 +1,5 @@
 using Microsoft.OpenApi.Models;
+using TravelAssistant.Common.Middleware;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -27,7 +28,12 @@ builder.Services.AddCors(options =>
     });
 });
 
+builder.Services.AddReverseProxy()
+    .LoadFromConfig(builder.Configuration.GetSection("ReverseProxy"));
+
 var app = builder.Build();
+
+app.UseMiddleware<GlobalExceptionMiddleware>();
 
 if (app.Environment.IsDevelopment())
 {
@@ -37,8 +43,10 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 app.UseCors("FrontendPolicy");
+app.MapReverseProxy();
 app.MapControllers();
 
-app.MapGet("/api/ping", () => Results.Ok(new { status = "ok", service = "ApiGateway" }));
+app.MapGet("/api/gateway-test", () => Results.Ok(new { status = "ok" }));
+app.MapGet("/health", () => Results.Ok(new { status = "Healthy", gateway = "Active" }));
 
 app.Run();

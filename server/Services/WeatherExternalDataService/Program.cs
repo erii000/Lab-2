@@ -1,9 +1,9 @@
-using System.Text;
 using DotNetEnv;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
-using Microsoft.OpenApi.Models;
+using Microsoft.OpenApi;
+using System.Text;
 using TravelAssistant.Services.WeatherExternalDataService.Configuration;
 using TravelAssistant.Services.WeatherExternalDataService.Services.Flights;
 using TravelAssistant.Services.WeatherExternalDataService.Services.Transport;

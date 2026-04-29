@@ -20,6 +20,6 @@ namespace UserService.Models
         public User? User { get; set; }
 
         [ForeignKey(nameof(RoleId))]
-        public Roles? Roles { get; set; }
+        public Roles? Role { get; set; }
     }
 }

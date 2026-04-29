@@ -28,6 +28,8 @@ builder.Services.AddSwaggerGen(options =>
 {
     options.SwaggerDoc("v1", new OpenApiInfo { Title = "User Service API", Version = "v1" });
 
+    options.ResolveConflictingActions(apiDescriptions => apiDescriptions.First());
+
     options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
         Name = "Authorization",
@@ -37,6 +39,7 @@ builder.Services.AddSwaggerGen(options =>
         In = ParameterLocation.Header,
         Description = "Enter 'Bearer' [space] and then your valid token in the text input below.\r\n\r\nExample: \"Bearer eyJhbGci...\""
     });
+
 
     options.AddSecurityRequirement(new OpenApiSecurityRequirement
     {
@@ -52,6 +55,13 @@ builder.Services.AddSwaggerGen(options =>
             new string[] {}
         }
     });
+
+    //var xmlFile = $"{System.Reflection.Assembly.GetExecutingAssembly().GetName().Name}.xml";
+   // var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
+  //  if (File.Exists(xmlPath))
+   // {
+      //  options.IncludeXmlComments(xmlPath);
+    //}
 });
 
 
@@ -104,6 +114,6 @@ app.UseAuthorization();
 
 app.MapControllers();
 app.MapHealthChecks("/health");
-app.MapGet("/api/ping", () => Results.Ok(new { status = "ok", service = "UserService" }));
+app.MapGet("/api/user/ping", () => Results.Ok(new { status = "ok", service = "UserService" }));
 
 app.Run();

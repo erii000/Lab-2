@@ -1,3 +1,5 @@
+using UserService.Models;
+
 namespace TravelAssistant.Services.UserService.Models.Entities
 {
     public class User : BaseEntity
@@ -10,6 +12,8 @@ namespace TravelAssistant.Services.UserService.Models.Entities
         public bool IsActive { get; set; } = true;
         public DateTime CreatedAt { get; set; } = DateTime.Now;
         public DateTime? UpdatedAt { get; set; }
+
+        public ICollection<UserRoles> UserRoles { get; set; } = new List<UserRoles>();
 
         public ICollection<RefreshToken> RefreshTokens { get; set; } = new List<RefreshToken>();
     }

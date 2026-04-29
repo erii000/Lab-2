@@ -1,17 +1,23 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
-VisualStudioVersion = 17.14.36616.10 d17.14
+VisualStudioVersion = 17.14.36616.10
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Backend", "Backend", "{1AE8ACA6-933B-BF2A-3671-3E2EAC007D16}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "ApiGateway", "ApiGateway", "{7FACA80D-3737-9F55-745C-4E0664411CA4}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ApiGateway", "server\ApiGateway\ApiGateway.csproj", "{16C52528-042A-4C14-83B2-5354358D0BC4}"
+	ProjectSection(ProjectDependencies) = postProject
+		{21C5AF0D-2DBF-400A-956E-E92929F362B7} = {21C5AF0D-2DBF-400A-956E-E92929F362B7}
+	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Services", "Services", "{3C755975-A7BD-44BC-C8F9-5B13F14529BF}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UserService", "server\Services\UserService\UserService.csproj", "{84D846BE-2C94-4A38-889E-56BF64E99E01}"
+	ProjectSection(ProjectDependencies) = postProject
+		{21C5AF0D-2DBF-400A-956E-E92929F362B7} = {21C5AF0D-2DBF-400A-956E-E92929F362B7}
+	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NotificationService", "server\Services\NotificationService\NotificationService.csproj", "{39997A7F-C7A7-4F99-B316-9B54758AFA52}"
 EndProject
@@ -34,6 +40,8 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WeatherExternalDataService", "server\Services\WeatherExternalDataService\WeatherExternalDataService.csproj", "{1907D63A-6C81-40D6-9618-925688B0840F}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AuditService", "server\Services\AuditService\AuditService.csproj", "{7C3115F5-0100-A9C9-1A33-00255026ED93}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TravelAssistant.Common", "TravelAssistant.Common\TravelAssistant.Common.csproj", "{21C5AF0D-2DBF-400A-956E-E92929F362B7}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -165,6 +173,18 @@ Global
 		{7C3115F5-0100-A9C9-1A33-00255026ED93}.Release|x64.Build.0 = Release|Any CPU
 		{7C3115F5-0100-A9C9-1A33-00255026ED93}.Release|x86.ActiveCfg = Release|Any CPU
 		{7C3115F5-0100-A9C9-1A33-00255026ED93}.Release|x86.Build.0 = Release|Any CPU
+		{21C5AF0D-2DBF-400A-956E-E92929F362B7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{21C5AF0D-2DBF-400A-956E-E92929F362B7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{21C5AF0D-2DBF-400A-956E-E92929F362B7}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{21C5AF0D-2DBF-400A-956E-E92929F362B7}.Debug|x64.Build.0 = Debug|Any CPU
+		{21C5AF0D-2DBF-400A-956E-E92929F362B7}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{21C5AF0D-2DBF-400A-956E-E92929F362B7}.Debug|x86.Build.0 = Debug|Any CPU
+		{21C5AF0D-2DBF-400A-956E-E92929F362B7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{21C5AF0D-2DBF-400A-956E-E92929F362B7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{21C5AF0D-2DBF-400A-956E-E92929F362B7}.Release|x64.ActiveCfg = Release|Any CPU
+		{21C5AF0D-2DBF-400A-956E-E92929F362B7}.Release|x64.Build.0 = Release|Any CPU
+		{21C5AF0D-2DBF-400A-956E-E92929F362B7}.Release|x86.ActiveCfg = Release|Any CPU
+		{21C5AF0D-2DBF-400A-956E-E92929F362B7}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

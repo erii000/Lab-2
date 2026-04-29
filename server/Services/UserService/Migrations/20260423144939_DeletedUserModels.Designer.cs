@@ -9,11 +9,11 @@ using TravelAssistant.Services.UserService.Data;
 
 #nullable disable
 
-namespace TravelAssistant.Services.UserService.Migrations
+namespace UserService.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20260414213147_AddRemainingModules")]
-    partial class AddRemainingModules
+    [Migration("20260423144939_DeletedUserModels")]
+    partial class DeletedUserModels
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -38,9 +38,6 @@ namespace TravelAssistant.Services.UserService.Migrations
 
                     b.Property<DateTime>("ExpiresAt")
                         .HasColumnType("datetime");
-
-                    b.Property<int>("RefreshTokenId")
-                        .HasColumnType("int");
 
                     b.Property<DateTime?>("RevokedAt")
                         .HasColumnType("datetime");
@@ -108,6 +105,58 @@ namespace TravelAssistant.Services.UserService.Migrations
                     b.ToTable("Users", (string)null);
                 });
 
+            modelBuilder.Entity("UserService.Models.Roles", b =>
+                {
+                    b.Property<int>("RolesId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("RolesId"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.HasKey("RolesId");
+
+                    b.ToTable("Roles");
+                });
+
+            modelBuilder.Entity("UserService.Models.UserRoles", b =>
+                {
+                    b.Property<int>("UserRoleId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("UserRoleId"));
+
+                    b.Property<DateTime>("AssignedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("RoleId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
+
+                    b.HasKey("UserRoleId");
+
+                    b.HasIndex("RoleId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("UserRoles");
+                });
+
             modelBuilder.Entity("TravelAssistant.Services.UserService.Models.Entities.RefreshToken", b =>
                 {
                     b.HasOne("TravelAssistant.Services.UserService.Models.Entities.User", "User")
@@ -119,9 +168,30 @@ namespace TravelAssistant.Services.UserService.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("UserService.Models.UserRoles", b =>
+                {
+                    b.HasOne("UserService.Models.Roles", "Role")
+                        .WithMany()
+                        .HasForeignKey("RoleId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("TravelAssistant.Services.UserService.Models.Entities.User", "User")
+                        .WithMany("UserRoles")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Role");
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("TravelAssistant.Services.UserService.Models.Entities.User", b =>
                 {
                     b.Navigation("RefreshTokens");
+
+                    b.Navigation("UserRoles");
                 });
 #pragma warning restore 612, 618
         }
