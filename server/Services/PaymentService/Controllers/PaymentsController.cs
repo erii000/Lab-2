@@ -69,6 +69,18 @@ public sealed class PaymentsController : ControllerBase
         return ok ? Ok() : BadRequest(new { error = "Invalid Stripe signature or webhook configuration." });
     }
 
+    [HttpPost("webhook/paypal")]
+    [AllowAnonymous]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> PayPalWebhook(CancellationToken cancellationToken)
+    {
+        using var reader = new StreamReader(Request.Body);
+        var json = await reader.ReadToEndAsync(cancellationToken);
+        var ok = await _paymentWebhookService.ProcessPayPalEventAsync(json, Request.Headers, cancellationToken);
+        return ok ? Ok() : BadRequest(new { error = "Invalid PayPal signature or webhook configuration." });
+    }
+
     [HttpGet("{paymentId:int}")]
     [Authorize]
     [ProducesResponseType(typeof(PaymentDetailResponse), StatusCodes.Status200OK)]

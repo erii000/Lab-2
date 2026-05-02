@@ -16,11 +16,28 @@ public sealed class TransportController : ControllerBase
         _transportOptionsClient = transportOptionsClient;
 
     [HttpGet("options")]
-    public Task<IReadOnlyList<TransportOptionDto>> Options(
+    [ProducesResponseType(typeof(IReadOnlyList<TransportOptionDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status502BadGateway)]
+    public async Task<ActionResult<IReadOnlyList<TransportOptionDto>>> Options(
         [FromQuery] double fromLatitude,
         [FromQuery] double fromLongitude,
         [FromQuery] double toLatitude,
         [FromQuery] double toLongitude,
-        CancellationToken cancellationToken) =>
-        _transportOptionsClient.GetOptionsAsync(fromLatitude, fromLongitude, toLatitude, toLongitude, cancellationToken);
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            var options = await _transportOptionsClient.GetOptionsAsync(fromLatitude, fromLongitude, toLatitude, toLongitude, cancellationToken);
+            return Ok(options);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return NotFound(new { error = ex.Message });
+        }
+        catch (HttpRequestException ex)
+        {
+            return StatusCode(StatusCodes.Status502BadGateway, new { error = ex.Message });
+        }
+    }
 }

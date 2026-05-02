@@ -91,6 +91,15 @@ builder.Services.AddHttpClient<PayPalCheckoutService>((sp, client) =>
     client.BaseAddress = new Uri(baseUrl);
     client.Timeout = TimeSpan.FromSeconds(30);
 }).AddStandardResilienceHandler();
+builder.Services.AddHttpClient<PayPalPaymentWebhookService>((sp, client) =>
+{
+    var options = sp.GetRequiredService<Microsoft.Extensions.Options.IOptions<PayPalOptions>>().Value;
+    var baseUrl = string.IsNullOrWhiteSpace(options.BaseUrl)
+        ? "https://api-m.sandbox.paypal.com/"
+        : options.BaseUrl.TrimEnd('/') + "/";
+    client.BaseAddress = new Uri(baseUrl);
+    client.Timeout = TimeSpan.FromSeconds(30);
+}).AddStandardResilienceHandler();
 builder.Services.AddScoped<IPaymentCheckoutService, PaymentCheckoutOrchestrator>();
 builder.Services.AddScoped<IPaymentWebhookService, StripePaymentWebhookService>();
 

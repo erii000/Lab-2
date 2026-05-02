@@ -2,6 +2,7 @@ import {
   AutoAwesomeRounded,
   ChevronLeftRounded,
   ChevronRightRounded,
+  DashboardRounded,
   ExploreRounded,
   SavingsRounded,
   TimelineRounded,
@@ -126,6 +127,29 @@ export default function HomePage() {
             <Typography variant="h6" sx={{ color: alpha("#fff", 0.92), fontWeight: 400, lineHeight: 1.5, maxWidth: 680, mx: "auto" }}>
               Create personalized itineraries, discover top places, and plan faster with one intelligent assistant.
             </Typography>
+            <Stack
+              direction="row"
+              justifyContent={{ xs: "flex-start", md: "center" }}
+              sx={{ mt: 2 }}
+            >
+              <Button
+                component={RouterLink}
+                to="/admin"
+                variant="outlined"
+                size="medium"
+                startIcon={<DashboardRounded />}
+                sx={{
+                  color: "common.white",
+                  borderColor: alpha("#fff", 0.5),
+                  "&:hover": {
+                    borderColor: "common.white",
+                    bgcolor: alpha("#fff", 0.08),
+                  },
+                }}
+              >
+                Dashboard
+              </Button>
+            </Stack>
           </Stack>
           <Box sx={{ position: "relative", zIndex: 2 }}>
             <HeroSearchBar ctaLabel="Start Planning" showGuests={false} />

@@ -73,6 +73,11 @@ export const ViewListRounded = mk(
   "M3 14h4v-4H3zm0 5h4v-4H3zM3 9h4V5H3zm5 15h14v-4H8zm0-5h14v-4H8zm0-10v4h14V5z",
 );
 
+/** Dashboard grid — admin / overview */
+export const DashboardRounded = mk(
+  "M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z",
+);
+
 export const StarRounded = mk(
   "M12 17.27 18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z",
 );

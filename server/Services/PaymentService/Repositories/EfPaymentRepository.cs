@@ -16,6 +16,9 @@ public sealed class EfPaymentRepository : IPaymentRepository
     public Task<Payment?> GetTrackedByIdAsync(int id, CancellationToken cancellationToken = default) =>
         _dbContext.Payments.FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
 
+    public Task<Payment?> GetTrackedByExternalReferenceAsync(string externalReference, CancellationToken cancellationToken = default) =>
+        _dbContext.Payments.FirstOrDefaultAsync(x => x.ExternalReference == externalReference, cancellationToken);
+
     public async Task<IReadOnlyList<Payment>> ListByUserAsync(int userId, CancellationToken cancellationToken = default)
     {
         return await _dbContext.Payments

@@ -86,6 +86,7 @@ services:
       PayPal__BaseUrl: "${PAYPAL__BASEURL:-https://api-m.sandbox.paypal.com/}"
       PayPal__ClientId: "${PAYPAL__CLIENTID:-}"
       PayPal__ClientSecret: "${PAYPAL__CLIENTSECRET:-}"
+      PayPal__WebhookId: "${PAYPAL__WEBHOOKID:-}"
 
   notificationservice:
     build:
@@ -143,6 +144,8 @@ services:
     environment:
       <<: *service_env
       ExternalApis__AviationStack__AccessKey: "${EXTERNALAPIS__AVIATIONSTACK__ACCESSKEY:-}"
+      ExternalApis__Transport__BaseUrl: "${EXTERNALAPIS__TRANSPORT__BASEURL:-}"
+      ExternalApis__Transport__ApiKey: "${EXTERNALAPIS__TRANSPORT__APIKEY:-}"
 
   client:
     build:

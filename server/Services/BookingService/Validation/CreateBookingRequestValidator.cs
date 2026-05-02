@@ -7,6 +7,10 @@ public sealed class CreateBookingRequestValidator : AbstractValidator<CreateBook
 {
     public CreateBookingRequestValidator()
     {
+        RuleFor(x => x.ItineraryId)
+            .NotNull()
+            .GreaterThan(0)
+            .WithMessage("ItineraryId is required and must be greater than zero.");
         RuleFor(x => x.Provider).NotEmpty().MaximumLength(100);
         RuleFor(x => x.BookingType).NotEmpty().MaximumLength(50);
         RuleFor(x => x.ReferenceCode).NotEmpty().MaximumLength(100);

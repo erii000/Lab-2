@@ -12,9 +12,6 @@ public static class BookingStatusTransitions
 
     public static bool IsAllowed(string currentStatus, string nextStatus)
     {
-        if (string.Equals(currentStatus, nextStatus, StringComparison.OrdinalIgnoreCase))
-            return true;
-
         if (!Allowed.TryGetValue(currentStatus, out var targets))
             return false;
 

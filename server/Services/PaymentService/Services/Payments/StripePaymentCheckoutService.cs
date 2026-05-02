@@ -26,74 +26,94 @@ public sealed class StripePaymentCheckoutService
         CreateCheckoutSessionRequest request,
         CancellationToken cancellationToken = default)
     {
-        if (string.IsNullOrWhiteSpace(_stripeOptions.SecretKey))
-            throw new InvalidOperationException("Stripe SecretKey is not configured.");
-
-        StripeConfiguration.ApiKey = _stripeOptions.SecretKey;
-
-        var amount = request.Amount!.Value;
-        var currency = request.Currency!.Trim().ToLowerInvariant();
-
-        var payment = new Payment
+        Payment? payment = null;
+        try
         {
-            UserId = userId,
-            BookingId = request.BookingId,
-            Amount = amount,
-            Currency = currency.ToUpperInvariant(),
-            PaymentMethod = "stripe",
-            PaymentStatus = "PendingCheckout",
-            CreatedAt = DateTime.UtcNow
-        };
+            if (string.IsNullOrWhiteSpace(_stripeOptions.SecretKey))
+                throw new InvalidOperationException("Stripe SecretKey is not configured.");
 
-        await _paymentRepository.AddAsync(payment, cancellationToken);
-        await _paymentRepository.SaveChangesAsync(cancellationToken);
+            StripeConfiguration.ApiKey = _stripeOptions.SecretKey;
 
-        var unitAmount = (long)Math.Round(amount * 100m, MidpointRounding.AwayFromZero);
-        if (unitAmount <= 0)
-            throw new InvalidOperationException("Checkout amount rounds to zero cents.");
+            var amount = request.Amount!.Value;
+            var currency = request.Currency!.Trim().ToLowerInvariant();
 
-        var options = new SessionCreateOptions
-        {
-            Mode = "payment",
-            SuccessUrl = request.SuccessUrl,
-            CancelUrl = request.CancelUrl,
-            ClientReferenceId = payment.Id.ToString(),
-            Metadata = new Dictionary<string, string>
+            payment = new Payment
             {
-                ["paymentId"] = payment.Id.ToString(),
-                ["userId"] = userId.ToString(),
-                ["bookingId"] = request.BookingId.ToString()
-            },
-            LineItems = new List<SessionLineItemOptions>
+                UserId = userId,
+                BookingId = request.BookingId,
+                Amount = amount,
+                Currency = currency.ToUpperInvariant(),
+                PaymentMethod = "stripe",
+                PaymentStatus = "PendingCheckout",
+                CreatedAt = DateTime.UtcNow
+            };
+
+            await _paymentRepository.AddAsync(payment, cancellationToken);
+            await _paymentRepository.SaveChangesAsync(cancellationToken);
+
+            var unitAmount = (long)Math.Round(amount * 100m, MidpointRounding.AwayFromZero);
+            if (unitAmount <= 0)
+                throw new InvalidOperationException("Checkout amount rounds to zero cents.");
+
+            var options = new SessionCreateOptions
             {
-                new SessionLineItemOptions
+                Mode = "payment",
+                SuccessUrl = request.SuccessUrl,
+                CancelUrl = request.CancelUrl,
+                ClientReferenceId = payment.Id.ToString(),
+                Metadata = new Dictionary<string, string>
                 {
-                    Quantity = 1,
-                    PriceData = new SessionLineItemPriceDataOptions
+                    ["paymentId"] = payment.Id.ToString(),
+                    ["userId"] = userId.ToString(),
+                    ["bookingId"] = request.BookingId.ToString()
+                },
+                LineItems = new List<SessionLineItemOptions>
+                {
+                    new SessionLineItemOptions
                     {
-                        Currency = currency,
-                        UnitAmount = unitAmount,
-                        ProductData = new SessionLineItemPriceDataProductDataOptions
+                        Quantity = 1,
+                        PriceData = new SessionLineItemPriceDataOptions
                         {
-                            Name = $"Travel booking #{request.BookingId}"
+                            Currency = currency,
+                            UnitAmount = unitAmount,
+                            ProductData = new SessionLineItemPriceDataProductDataOptions
+                            {
+                                Name = $"Travel booking #{request.BookingId}"
+                            }
                         }
                     }
                 }
-            }
-        };
+            };
 
-        var service = new SessionService();
-        var session = await service.CreateAsync(options, cancellationToken: cancellationToken);
+            var service = new SessionService();
+            var session = await service.CreateAsync(options, cancellationToken: cancellationToken);
 
-        payment = (await _paymentRepository.GetTrackedByIdAsync(payment.Id, cancellationToken))!;
-        payment.ExternalReference = session.Id;
-        payment.PaymentStatus = "AwaitingPayment";
-        await _paymentRepository.SaveChangesAsync(cancellationToken);
+            payment = (await _paymentRepository.GetTrackedByIdAsync(payment.Id, cancellationToken))!;
+            payment.ExternalReference = session.Id;
+            payment.PaymentStatus = "AwaitingPayment";
+            await _paymentRepository.SaveChangesAsync(cancellationToken);
 
-        return new CreateCheckoutSessionResponse
+            return new CreateCheckoutSessionResponse
+            {
+                PaymentId = payment.Id.ToString(),
+                CheckoutUrl = session.Url
+            };
+        }
+        catch (Exception ex)
         {
-            PaymentId = payment.Id.ToString(),
-            CheckoutUrl = session.Url
-        };
+            var log = new PaymentTransactionLog
+            {
+                PaymentId = payment?.Id,
+                Provider = "stripe",
+                ExternalEventId = $"stripe-checkout-{Guid.NewGuid():N}",
+                EventType = "checkout.create",
+                ProcessedOk = false,
+                ErrorMessage = ex.Message,
+                CreatedAt = DateTime.UtcNow
+            };
+            await _paymentRepository.AddLogAsync(log, cancellationToken);
+            await _paymentRepository.SaveChangesAsync(cancellationToken);
+            throw;
+        }
     }
 }

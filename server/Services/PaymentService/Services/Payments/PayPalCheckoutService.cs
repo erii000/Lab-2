@@ -31,71 +31,91 @@ public sealed class PayPalCheckoutService
         CreateCheckoutSessionRequest request,
         CancellationToken cancellationToken = default)
     {
-        if (string.IsNullOrWhiteSpace(_payPalOptions.ClientId) || string.IsNullOrWhiteSpace(_payPalOptions.ClientSecret))
-            throw new InvalidOperationException("PayPal ClientId/ClientSecret is not configured.");
-
-        var accessToken = await GetAccessTokenAsync(cancellationToken);
-        var amount = request.Amount!.Value;
-        var currency = request.Currency!.Trim().ToUpperInvariant();
-
-        var payment = new Payment
+        Payment? payment = null;
+        try
         {
-            UserId = userId,
-            BookingId = request.BookingId,
-            Amount = amount,
-            Currency = currency,
-            PaymentMethod = "paypal",
-            PaymentStatus = "PendingCheckout",
-            CreatedAt = DateTime.UtcNow
-        };
-        await _paymentRepository.AddAsync(payment, cancellationToken);
-        await _paymentRepository.SaveChangesAsync(cancellationToken);
+            if (string.IsNullOrWhiteSpace(_payPalOptions.ClientId) || string.IsNullOrWhiteSpace(_payPalOptions.ClientSecret))
+                throw new InvalidOperationException("PayPal ClientId/ClientSecret is not configured.");
 
-        var orderRequest = new PayPalCreateOrderRequest
-        {
-            Intent = "CAPTURE",
-            PurchaseUnits =
-            [
-                new PayPalPurchaseUnit
-                {
-                    ReferenceId = payment.Id.ToString(),
-                    Amount = new PayPalMoney
-                    {
-                        CurrencyCode = currency,
-                        Value = amount.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture)
-                    }
-                }
-            ],
-            ApplicationContext = new PayPalApplicationContext
+            var accessToken = await GetAccessTokenAsync(cancellationToken);
+            var amount = request.Amount!.Value;
+            var currency = request.Currency!.Trim().ToUpperInvariant();
+
+            payment = new Payment
             {
-                ReturnUrl = request.SuccessUrl,
-                CancelUrl = request.CancelUrl
-            }
-        };
+                UserId = userId,
+                BookingId = request.BookingId,
+                Amount = amount,
+                Currency = currency,
+                PaymentMethod = "paypal",
+                PaymentStatus = "PendingCheckout",
+                CreatedAt = DateTime.UtcNow
+            };
+            await _paymentRepository.AddAsync(payment, cancellationToken);
+            await _paymentRepository.SaveChangesAsync(cancellationToken);
 
-        using var orderHttpRequest = new HttpRequestMessage(HttpMethod.Post, "v2/checkout/orders");
-        orderHttpRequest.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
-        orderHttpRequest.Content = JsonContent.Create(orderRequest);
+            var orderRequest = new PayPalCreateOrderRequest
+            {
+                Intent = "CAPTURE",
+                PurchaseUnits =
+                [
+                    new PayPalPurchaseUnit
+                    {
+                        ReferenceId = payment.Id.ToString(),
+                        Amount = new PayPalMoney
+                        {
+                            CurrencyCode = currency,
+                            Value = amount.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture)
+                        }
+                    }
+                ],
+                ApplicationContext = new PayPalApplicationContext
+                {
+                    ReturnUrl = request.SuccessUrl,
+                    CancelUrl = request.CancelUrl
+                }
+            };
 
-        using var orderResponse = await _httpClient.SendAsync(orderHttpRequest, cancellationToken);
-        var payload = await orderResponse.Content.ReadFromJsonAsync<PayPalCreateOrderResponse>(cancellationToken: cancellationToken);
-        if (!orderResponse.IsSuccessStatusCode || payload is null || string.IsNullOrWhiteSpace(payload.Id))
-            throw new InvalidOperationException("PayPal order creation failed.");
+            using var orderHttpRequest = new HttpRequestMessage(HttpMethod.Post, "v2/checkout/orders");
+            orderHttpRequest.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+            orderHttpRequest.Content = JsonContent.Create(orderRequest);
 
-        var approveUrl = payload.Links?.FirstOrDefault(x => string.Equals(x.Rel, "approve", StringComparison.OrdinalIgnoreCase))?.Href;
-        if (string.IsNullOrWhiteSpace(approveUrl))
-            throw new InvalidOperationException("PayPal did not return an approval URL.");
+            using var orderResponse = await _httpClient.SendAsync(orderHttpRequest, cancellationToken);
+            var payload = await orderResponse.Content.ReadFromJsonAsync<PayPalCreateOrderResponse>(cancellationToken: cancellationToken);
+            if (!orderResponse.IsSuccessStatusCode || payload is null || string.IsNullOrWhiteSpace(payload.Id))
+                throw new InvalidOperationException("PayPal order creation failed.");
 
-        payment = (await _paymentRepository.GetTrackedByIdAsync(payment.Id, cancellationToken))!;
-        payment.ExternalReference = payload.Id;
-        payment.PaymentStatus = "AwaitingPayment";
-        await _paymentRepository.SaveChangesAsync(cancellationToken);
+            var approveUrl = payload.Links?.FirstOrDefault(x => string.Equals(x.Rel, "approve", StringComparison.OrdinalIgnoreCase))?.Href;
+            if (string.IsNullOrWhiteSpace(approveUrl))
+                throw new InvalidOperationException("PayPal did not return an approval URL.");
 
-        return new CreateCheckoutSessionResponse
+            payment = (await _paymentRepository.GetTrackedByIdAsync(payment.Id, cancellationToken))!;
+            payment.ExternalReference = payload.Id;
+            payment.PaymentStatus = "AwaitingPayment";
+            await _paymentRepository.SaveChangesAsync(cancellationToken);
+
+            return new CreateCheckoutSessionResponse
+            {
+                PaymentId = payment.Id.ToString(),
+                CheckoutUrl = approveUrl
+            };
+        }
+        catch (Exception ex)
         {
-            PaymentId = payment.Id.ToString(),
-            CheckoutUrl = approveUrl
-        };
+            var log = new PaymentTransactionLog
+            {
+                PaymentId = payment?.Id,
+                Provider = "paypal",
+                ExternalEventId = $"paypal-checkout-{Guid.NewGuid():N}",
+                EventType = "checkout.create",
+                ProcessedOk = false,
+                ErrorMessage = ex.Message,
+                CreatedAt = DateTime.UtcNow
+            };
+            await _paymentRepository.AddLogAsync(log, cancellationToken);
+            await _paymentRepository.SaveChangesAsync(cancellationToken);
+            throw;
+        }
     }
 
     private async Task<string> GetAccessTokenAsync(CancellationToken cancellationToken)

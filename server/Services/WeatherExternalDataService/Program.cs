@@ -61,6 +61,8 @@ builder.Services.Configure<JwtOptions>(
 
 builder.Services.Configure<AviationStackOptions>(
     builder.Configuration.GetSection(AviationStackOptions.SectionName));
+builder.Services.Configure<TransportApiOptions>(
+    builder.Configuration.GetSection(TransportApiOptions.SectionName));
 
 var jwtOptions = builder.Configuration
     .GetSection(JwtOptions.SectionName)
@@ -119,9 +121,17 @@ builder.Services
         client.Timeout = TimeSpan.FromSeconds(25);
     })
     .AddStandardResilienceHandler();
+builder.Services
+    .AddHttpClient<ITransportOptionsClient, HybridTransportOptionsClient>((sp, client) =>
+    {
+        var options = sp.GetRequiredService<Microsoft.Extensions.Options.IOptions<TransportApiOptions>>().Value;
+        if (!string.IsNullOrWhiteSpace(options.BaseUrl))
+            client.BaseAddress = new Uri(options.BaseUrl.TrimEnd('/') + "/");
+        client.Timeout = TimeSpan.FromSeconds(20);
+    })
+    .AddStandardResilienceHandler();
 
 builder.Services.AddScoped<IWeatherClient, OpenMeteoWeatherClient>();
-builder.Services.AddScoped<ITransportOptionsClient, HeuristicTransportOptionsClient>();
 
 builder.Services.AddHealthChecks();
 

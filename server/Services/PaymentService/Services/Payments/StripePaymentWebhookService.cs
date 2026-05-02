@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Options;
 using Stripe;
 using Stripe.Checkout;
@@ -12,13 +13,16 @@ public sealed class StripePaymentWebhookService : IPaymentWebhookService
 {
     private readonly IPaymentRepository _paymentRepository;
     private readonly StripeOptions _stripeOptions;
+    private readonly PayPalPaymentWebhookService _payPalPaymentWebhookService;
 
     public StripePaymentWebhookService(
         IPaymentRepository paymentRepository,
-        IOptions<StripeOptions> stripeOptions)
+        IOptions<StripeOptions> stripeOptions,
+        PayPalPaymentWebhookService payPalPaymentWebhookService)
     {
         _paymentRepository = paymentRepository;
         _stripeOptions = stripeOptions.Value;
+        _payPalPaymentWebhookService = payPalPaymentWebhookService;
     }
 
     public async Task<bool> ProcessStripeEventAsync(string json, string signatureHeader, CancellationToken cancellationToken = default)
@@ -98,6 +102,9 @@ public sealed class StripePaymentWebhookService : IPaymentWebhookService
 
         return true;
     }
+
+    public Task<bool> ProcessPayPalEventAsync(string json, IHeaderDictionary headers, CancellationToken cancellationToken = default) =>
+        _payPalPaymentWebhookService.ProcessAsync(json, headers, cancellationToken);
 
     private async Task HandleCheckoutSessionCompletedAsync(Session session, CancellationToken cancellationToken)
     {
