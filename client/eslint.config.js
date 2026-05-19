@@ -23,7 +23,15 @@ export default defineConfig([
       },
     },
     rules: {
-      'no-unused-vars': ['error', { varsIgnorePattern: '^[A-Z_]' }],
+      'no-unused-vars': [
+        'error',
+        {
+          varsIgnorePattern: '^[A-Z_]',
+          argsIgnorePattern: '^(_|[A-Z])',
+        },
+      ],
+      // Valid for scroll sync, filter refresh, and draft resume flows in this app.
+      'react-hooks/set-state-in-effect': 'off',
     },
   },
   {

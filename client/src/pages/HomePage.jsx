@@ -26,6 +26,8 @@ import { useState } from "react";
 import { Link as RouterLink } from "react-router-dom";
 import SectionHeading from "../components/common/SectionHeading.jsx";
 import HeroSearchBar from "../components/search/HeroSearchBar.jsx";
+import { popularDestinations } from "../data/destinations.js";
+import { buildDestinationUrl } from "../utils/destinationSearch.js";
 import { designTokens } from "../theme/theme.js";
 
 const highlights = [
@@ -46,16 +48,12 @@ const highlights = [
   },
 ];
 
-const quickSuggestions = [
-  { name: "Paris", image: "https://images.unsplash.com/photo-1502602898657-3e91760cbb34?auto=format&fit=crop&w=900&q=80" },
-  { name: "Rome", image: "https://images.unsplash.com/photo-1529260830199-42c24126f198?auto=format&fit=crop&w=900&q=80" },
-  { name: "Bali", image: "https://images.unsplash.com/photo-1537996194471-e657df975ab4?auto=format&fit=crop&w=900&q=80" },
-  { name: "Tokyo", image: "https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?auto=format&fit=crop&w=900&q=80" },
-  { name: "Barcelona", image: "https://images.unsplash.com/photo-1583422409516-2895a77efded?auto=format&fit=crop&w=900&q=80" },
-  { name: "Dubai", image: "https://images.unsplash.com/photo-1512453979798-5ea266f8880c?auto=format&fit=crop&w=900&q=80" },
-  { name: "London", image: "https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?auto=format&fit=crop&w=900&q=80" },
-  { name: "New York", image: "https://images.unsplash.com/photo-1496442226666-8d4d0e62e6e9?auto=format&fit=crop&w=900&q=80" },
-];
+const quickSuggestions = popularDestinations.map((d) => ({
+  id: d.id,
+  name: d.title,
+  image: d.image,
+  priceFrom: d.priceFrom,
+}));
 
 const steps = [
   { title: "Search destination", text: "Tell us where and when you want to travel." },
@@ -152,7 +150,7 @@ export default function HomePage() {
             </Stack>
           </Stack>
           <Box sx={{ position: "relative", zIndex: 2 }}>
-            <HeroSearchBar ctaLabel="Start Planning" showGuests={false} />
+            <HeroSearchBar ctaLabel="Start Planning" showGuests />
           </Box>
         </Container>
       </Box>
@@ -215,9 +213,9 @@ export default function HomePage() {
             <Stack direction="row" spacing={2} sx={{ alignItems: "stretch" }}>
               {visibleSlides.map((item) => (
                 <Card
-                  key={item.name}
+                  key={item.id}
                   component={RouterLink}
-                  to={`/search?q=${encodeURIComponent(item.name)}`}
+                  to={buildDestinationUrl(item.id)}
                   sx={{
                     flex: `1 1 ${100 / visibleCount}%`,
                     minWidth: 0,
@@ -260,19 +258,21 @@ export default function HomePage() {
                         pointerEvents: "none",
                       }}
                     />
-                    <Typography
-                      sx={{
-                        position: "absolute",
-                        left: 12,
-                        bottom: 10,
-                        color: "common.white",
-                        fontWeight: 800,
-                        letterSpacing: "0.02em",
-                        fontSize: "1rem",
-                      }}
-                    >
-                      {item.name}
-                    </Typography>
+                    <Stack sx={{ position: "absolute", left: 12, bottom: 10 }}>
+                      <Typography
+                        sx={{
+                          color: "common.white",
+                          fontWeight: 800,
+                          letterSpacing: "0.02em",
+                          fontSize: "1rem",
+                        }}
+                      >
+                        {item.name}
+                      </Typography>
+                      <Typography variant="caption" sx={{ color: alpha("#fff", 0.82) }}>
+                        from €{item.priceFrom}
+                      </Typography>
+                    </Stack>
                   </Box>
                 </Card>
               ))}

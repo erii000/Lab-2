@@ -23,14 +23,14 @@ import { alpha, useTheme } from "@mui/material/styles";
 import { useMemo, useState } from "react";
 import { Link as RouterLink, useLocation, useNavigate } from "react-router-dom";
 import { useNotifications } from "../../context/NotificationsContext.jsx";
+import { useBookingStore } from "../../store/bookingStore.js";
 
 const navLinks = [
   { label: "Home", to: "/", description: "Landing & quick search" },
   { label: "Explore", to: "/search", description: "Destinations & filters" },
   { label: "Assistant", to: "/assistant", description: "AI trip planning" },
-  { label: "Itinerary", to: "/itinerary", description: "Day-by-day planner" },
-  { label: "Booking", to: "/booking", description: "Flights, stays, activities" },
-  { label: "About", to: "/about", description: "Help & FAQ" },
+  { label: "Bookings", to: "/bookings", description: "Travel dashboard", badge: "bookings" },
+  { label: "Contact", to: "/contact", description: "Support & inquiries" },
 ];
 
 export default function Navbar() {
@@ -41,6 +41,7 @@ export default function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [notificationAnchorEl, setNotificationAnchorEl] = useState(null);
   const { notifications, unreadCount, markAsRead } = useNotifications();
+  const draftCount = useBookingStore((s) => s.getDraftCount());
   const notificationsOpen = Boolean(notificationAnchorEl);
   const previewNotifications = useMemo(
     () => notifications.slice(0, 6),
@@ -155,25 +156,36 @@ export default function Navbar() {
             {isMdUp ? (
               <Stack direction="row" spacing={0.75} sx={{ flex: 1, justifyContent: "center" }}>
                 {navLinks.map((item) => {
-                  const active = location.pathname === item.to;
+                  const active =
+                    item.to === "/bookings"
+                      ? location.pathname.startsWith("/bookings")
+                      : location.pathname === item.to;
+                  const showDraftBadge = item.badge === "bookings" && draftCount > 0;
                   return (
-                    <Button
+                    <Badge
                       key={item.to}
-                      component={RouterLink}
-                      to={item.to}
-                      color="inherit"
-                      sx={{
-                        px: 1.5,
-                        py: 0.8,
-                        borderRadius: 2,
-                        color: active ? "primary.main" : alpha("#fff", 0.85),
-                        bgcolor: active ? alpha(theme.palette.primary.main, 0.13) : "transparent",
-                        border: `1px solid ${active ? alpha(theme.palette.primary.main, 0.45) : "transparent"}`,
-                        "&:hover": { bgcolor: alpha(theme.palette.primary.main, 0.16) },
-                      }}
+                      badgeContent={showDraftBadge ? draftCount : 0}
+                      color="secondary"
+                      invisible={!showDraftBadge}
+                      sx={{ "& .MuiBadge-badge": { fontWeight: 700, fontSize: "0.65rem" } }}
                     >
-                      {item.label}
-                    </Button>
+                      <Button
+                        component={RouterLink}
+                        to={item.to}
+                        color="inherit"
+                        sx={{
+                          px: 1.5,
+                          py: 0.8,
+                          borderRadius: 2,
+                          color: active ? "primary.main" : alpha("#fff", 0.85),
+                          bgcolor: active ? alpha(theme.palette.primary.main, 0.13) : "transparent",
+                          border: `1px solid ${active ? alpha(theme.palette.primary.main, 0.45) : "transparent"}`,
+                          "&:hover": { bgcolor: alpha(theme.palette.primary.main, 0.16) },
+                        }}
+                      >
+                        {item.label}
+                      </Button>
+                    </Badge>
                   );
                 })}
               </Stack>

@@ -6,6 +6,8 @@ export const designTokens = {
     obsidian: "#0b0d12",
     charcoal: "#121826",
     graphite: "#1b2435",
+    navy: "#2f69b0",
+    navyDark: "#1e4d82",
     gold: "#d4af6a",
     champagne: "#f4e7c8",
     ivory: "#f9f6ef",
@@ -75,6 +77,14 @@ export const appTheme = createTheme({
     },
     MuiPaper: {
       defaultProps: { elevation: 0 },
+    },
+    MuiInputLabel: {
+      defaultProps: { disableAnimation: true },
+    },
+    MuiTextField: {
+      defaultProps: {
+        InputLabelProps: { shrink: true },
+      },
     },
   },
 });

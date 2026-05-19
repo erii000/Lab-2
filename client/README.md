@@ -1,16 +1,48 @@
-# React + Vite
+# Smart Travel Assistant — Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+React + Vite app for destination discovery, trip configuration, and bookings.
 
-Currently, two official plugins are available:
+## Requirements
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- **Node.js 20+** (LTS recommended)
+- **npm 10+**
 
-## React Compiler
+## Setup (for teammates)
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+```bash
+cd client
+npm ci
+```
 
-## Expanding the ESLint configuration
+Use `npm ci` (not `npm install`) so everyone gets the exact dependency versions from `package-lock.json`.
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+## Verify before you push
+
+```bash
+npm run lint
+npm run build
+```
+
+Both commands must exit with code **0**. GitHub Actions runs the same checks on pull requests.
+
+## Development
+
+```bash
+npm run dev
+```
+
+Open the URL shown in the terminal (usually `http://localhost:5173`).
+
+## Scripts
+
+| Command        | Description              |
+| -------------- | ------------------------ |
+| `npm run dev`  | Local dev server + HMR   |
+| `npm run build`| Production build to `dist/` |
+| `npm run lint` | ESLint across `src/`     |
+| `npm run preview` | Preview production build |
+
+## Notes
+
+- Bookings and drafts are stored in the browser (`localStorage` key `sta-bookings-v1`).
+- The backend in `../server` is optional for this UI shell; no API is required to run the client.

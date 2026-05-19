@@ -1,6 +1,5 @@
 import { SearchRounded } from "../../ui/icons.jsx";
 import {
-  Box,
   Button,
   Grid,
   InputAdornment,
@@ -10,7 +9,15 @@ import {
   Typography,
 } from "@mui/material";
 import { alpha } from "@mui/material/styles";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import {
+  buildDestinationUrl,
+  defaultTripDates,
+  resolveDestinationId,
+  todayISO,
+  tripParamsToSearchParams,
+} from "../../utils/destinationSearch.js";
 
 const fieldSx = {
   "& .MuiOutlinedInput-root": {
@@ -33,25 +40,44 @@ export default function HeroSearchBar({
   ctaLabel = "Search destinations",
 }) {
   const navigate = useNavigate();
+  const defaults = defaultTripDates();
+  const minDate = todayISO();
+
+  const [queryInput, setQueryInput] = useState(defaultQuery);
+  const [start, setStart] = useState(defaults.start);
+  const [end, setEnd] = useState(defaults.end);
+  const [guests, setGuests] = useState(2);
+  const [budget, setBudget] = useState("");
 
   function handleSubmit(e) {
     e.preventDefault();
-    const form = e.target;
-    const q = form.query.value?.trim() ?? "";
+
+    const query = queryInput.trim();
+    const resolvedId = resolveDestinationId(query);
+    const tripParams = tripParamsToSearchParams({
+      start,
+      end,
+      guests,
+      budget: budget || undefined,
+    });
+
     if (onSearch) {
-      onSearch({ query: q });
+      onSearch({
+        query,
+        destinationId: resolvedId,
+        ...tripParams,
+      });
       return;
     }
+
+    if (resolvedId) {
+      navigate(buildDestinationUrl(resolvedId, tripParams));
+      return;
+    }
+
     const params = new URLSearchParams();
-    if (q) params.set("q", q);
-    const start = form.start?.value;
-    const end = form.end?.value;
-    const guests = form.guests?.value;
-    const budget = form.budget?.value;
-    if (start) params.set("start", start);
-    if (end) params.set("end", end);
-    if (guests) params.set("guests", guests);
-    if (budget) params.set("budget", budget);
+    if (query) params.set("q", query);
+    Object.entries(tripParams).forEach(([k, v]) => params.set(k, v));
     navigate(`/search?${params.toString()}`);
   }
 
@@ -69,19 +95,16 @@ export default function HeroSearchBar({
         backdropFilter: "blur(10px)",
       }}
     >
-      {!compact ? (
-        <Typography variant="subtitle2" sx={{ color: alpha("#e6f1ff", 0.92) }} gutterBottom>
-          Where do you want to go?
-        </Typography>
-      ) : null}
-
       <Grid container spacing={2} alignItems="stretch">
         <Grid size={{ xs: 12, md: showOptionalFields ? 5 : 12 }}>
           <TextField
             name="query"
+            label="Where do you want to go?"
             fullWidth
-            placeholder="City, region, or landmark"
-            defaultValue={defaultQuery}
+            required
+            value={queryInput}
+            onChange={(e) => setQueryInput(e.target.value)}
+            InputLabelProps={{ shrink: true }}
             sx={fieldSx}
             slotProps={{
               input: {
@@ -97,26 +120,58 @@ export default function HeroSearchBar({
         {showOptionalFields ? (
           <>
             <Grid size={{ xs: 6, md: 2 }}>
-              <TextField name="start" type="date" label="Start" fullWidth InputLabelProps={{ shrink: true }} sx={fieldSx} />
+              <TextField
+                type="date"
+                label="Check-in"
+                fullWidth
+                InputLabelProps={{ shrink: true }}
+                value={start}
+                inputProps={{ min: minDate }}
+                onChange={(e) => {
+                  const v = e.target.value;
+                  setStart(v);
+                  if (end && v > end) setEnd(v);
+                }}
+                sx={fieldSx}
+              />
             </Grid>
             <Grid size={{ xs: 6, md: 2 }}>
-              <TextField name="end" type="date" label="End" fullWidth InputLabelProps={{ shrink: true }} sx={fieldSx} />
+              <TextField
+                type="date"
+                label="Check-out"
+                fullWidth
+                InputLabelProps={{ shrink: true }}
+                value={end}
+                inputProps={{ min: start || minDate }}
+                onChange={(e) => setEnd(e.target.value)}
+                sx={fieldSx}
+              />
             </Grid>
             {showGuests ? (
               <Grid size={{ xs: 6, md: 1.5 }}>
                 <TextField
-                  name="guests"
                   type="number"
-                  label="People"
+                  label="Travelers"
                   fullWidth
-                  inputProps={{ min: 1 }}
-                  defaultValue={2}
+                  InputLabelProps={{ shrink: true }}
+                  value={guests}
+                  inputProps={{ min: 1, max: 12 }}
+                  onChange={(e) => setGuests(Number(e.target.value) || 1)}
                   sx={fieldSx}
                 />
               </Grid>
             ) : null}
             <Grid size={{ xs: 6, md: 1.5 }}>
-              <TextField name="budget" type="number" label="Budget €" fullWidth inputProps={{ min: 0 }} placeholder="Optional" sx={fieldSx} />
+              <TextField
+                type="number"
+                label="Budget €"
+                fullWidth
+                InputLabelProps={{ shrink: true }}
+                value={budget}
+                inputProps={{ min: 0, step: 100 }}
+                onChange={(e) => setBudget(e.target.value)}
+                sx={fieldSx}
+              />
             </Grid>
           </>
         ) : null}
@@ -143,7 +198,7 @@ export default function HeroSearchBar({
 
       {!compact ? (
         <Typography variant="caption" sx={{ mt: 1.5, display: "block", color: alpha("#cde0ff", 0.75) }}>
-          Tip: budgets are optional — we&apos;ll optimize suggestions around your comfort range.
+          Enter a city name, then choose your dates and budget.
         </Typography>
       ) : null}
     </Paper>
