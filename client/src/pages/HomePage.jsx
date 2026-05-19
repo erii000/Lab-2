@@ -2,16 +2,15 @@ import {
   AutoAwesomeRounded,
   ChevronLeftRounded,
   ChevronRightRounded,
-  DashboardRounded,
   ExploreRounded,
   SavingsRounded,
+  StarRounded,
   TimelineRounded,
 } from "../ui/icons.jsx";
 import {
   Box,
   Button,
   Card,
-  CardContent,
   Chip,
   Container,
   Grid,
@@ -25,8 +24,12 @@ import { alpha, useTheme } from "@mui/material/styles";
 import { useState } from "react";
 import { Link as RouterLink } from "react-router-dom";
 import SectionHeading from "../components/common/SectionHeading.jsx";
+import HomeFeaturedDestinations from "../components/home/HomeFeaturedDestinations.jsx";
+import HomeHowItWorks from "../components/home/HomeHowItWorks.jsx";
+import HomeTestimonials from "../components/home/HomeTestimonials.jsx";
+import HomeTrustStats from "../components/home/HomeTrustStats.jsx";
+import { quickSuggestions } from "../components/home/homeData.js";
 import HeroSearchBar from "../components/search/HeroSearchBar.jsx";
-import { popularDestinations } from "../data/destinations.js";
 import { buildDestinationUrl } from "../utils/destinationSearch.js";
 import { designTokens } from "../theme/theme.js";
 
@@ -43,22 +46,9 @@ const highlights = [
   },
   {
     title: "Personalized Recommendations",
-    body: "Get destinations and activities tailored to your profile and travel style.",
+    body: "Get destinations and activities tailored to your travel style.",
     icon: <AutoAwesomeRounded fontSize="large" color="secondary" />,
   },
-];
-
-const quickSuggestions = popularDestinations.map((d) => ({
-  id: d.id,
-  name: d.title,
-  image: d.image,
-  priceFrom: d.priceFrom,
-}));
-
-const steps = [
-  { title: "Search destination", text: "Tell us where and when you want to travel." },
-  { title: "Get AI itinerary", text: "Receive a smart day-by-day plan instantly." },
-  { title: "Book & enjoy", text: "Save your trip and continue to booking." },
 ];
 
 export default function HomePage() {
@@ -74,12 +64,13 @@ export default function HomePage() {
 
   return (
     <Box>
+      {/* Hero */}
       <Box
         sx={{
           position: "relative",
           color: "common.white",
           pt: { xs: 6, md: 10 },
-          pb: { xs: 8, md: 12 },
+          pb: { xs: 6, md: 8 },
           overflow: "hidden",
         }}
       >
@@ -94,101 +85,77 @@ export default function HomePage() {
             filter: "saturate(1.08)",
           }}
         />
+        <Box sx={{ position: "absolute", inset: 0, background: designTokens.gradients.hero }} />
         <Box
           sx={{
             position: "absolute",
             inset: 0,
-            background: designTokens.gradients.hero,
+            background: `radial-gradient(ellipse 70% 50% at 50% 0%, ${alpha(designTokens.brand.navy, 0.35)} 0%, transparent 70%)`,
+            pointerEvents: "none",
           }}
         />
-        <Container maxWidth="lg">
-          <Stack
-            spacing={1}
-            sx={{
-              mb: 3,
-              textAlign: { xs: "left", md: "center" },
-              maxWidth: 780,
-              mx: "auto",
-              position: "relative",
-              zIndex: 2,
-            }}
-          >
-            <Typography
-              variant="overline"
-              sx={{ letterSpacing: "0.2em", color: alpha("#fff", 0.85), fontWeight: 700 }}
-            >
+        <Container maxWidth="lg" sx={{ position: "relative", zIndex: 2 }}>
+          <Stack spacing={1} sx={{ mb: 2.5, textAlign: { xs: "left", md: "center" }, maxWidth: 780, mx: "auto" }}>
+            <Typography variant="overline" sx={{ letterSpacing: "0.2em", color: alpha("#fff", 0.85), fontWeight: 700 }}>
               Smart Travel Assistant
             </Typography>
             <Typography variant="h3" component="h1" sx={{ fontWeight: 800, letterSpacing: "-0.03em" }}>
               Plan your perfect trip with AI
             </Typography>
-            <Typography variant="h6" sx={{ color: alpha("#fff", 0.92), fontWeight: 400, lineHeight: 1.5, maxWidth: 680, mx: "auto" }}>
+            <Typography
+              variant="h6"
+              sx={{ color: alpha("#fff", 0.92), fontWeight: 400, lineHeight: 1.5, maxWidth: 680, mx: "auto" }}
+            >
               Create personalized itineraries, discover top places, and plan faster with one intelligent assistant.
             </Typography>
             <Stack
-              direction="row"
+              direction={{ xs: "column", sm: "row" }}
+              spacing={1.5}
               justifyContent={{ xs: "flex-start", md: "center" }}
-              sx={{ mt: 2 }}
+              sx={{ mt: 2.5 }}
             >
               <Button
                 component={RouterLink}
-                to="/admin"
-                variant="outlined"
-                size="medium"
-                startIcon={<DashboardRounded />}
+                to="/search"
+                variant="contained"
+                size="large"
                 sx={{
-                  color: "common.white",
-                  borderColor: alpha("#fff", 0.5),
-                  "&:hover": {
-                    borderColor: "common.white",
-                    bgcolor: alpha("#fff", 0.08),
-                  },
+                  fontWeight: 800,
+                  px: 3,
+                  background: `linear-gradient(135deg, ${designTokens.brand.gold}, ${alpha(designTokens.brand.gold, 0.88)})`,
+                  color: designTokens.brand.obsidian,
                 }}
               >
-                Dashboard
+                Start Your Journey
+              </Button>
+              <Button
+                component={RouterLink}
+                to="/search"
+                variant="outlined"
+                size="large"
+                sx={{
+                  fontWeight: 700,
+                  color: "common.white",
+                  borderColor: alpha("#fff", 0.5),
+                  "&:hover": { borderColor: "common.white", bgcolor: alpha("#fff", 0.08) },
+                }}
+              >
+                Explore Destinations
               </Button>
             </Stack>
           </Stack>
-          <Box sx={{ position: "relative", zIndex: 2 }}>
-            <HeroSearchBar ctaLabel="Start Planning" showGuests />
-          </Box>
-        </Container>
-      </Box>
 
-      <Box
-        sx={{
-          position: "relative",
-          minHeight: { xs: 220, md: 280 },
-          backgroundImage:
-            'url("https://images.unsplash.com/photo-1469474968028-56623f02e42e?auto=format&fit=crop&w=2200&q=80")',
-          backgroundSize: "cover",
-          backgroundPosition: "center",
-          borderTop: (theme) => `1px solid ${alpha(theme.palette.primary.main, 0.25)}`,
-          borderBottom: (theme) => `1px solid ${alpha(theme.palette.primary.main, 0.2)}`,
-        }}
-      >
-        <Box
-          sx={{
-            position: "absolute",
-            inset: 0,
-            background: "linear-gradient(180deg, rgba(7,11,20,0.25) 0%, rgba(7,11,20,0.82) 100%)",
-          }}
-        />
-        <Container maxWidth="lg" sx={{ position: "relative", py: { xs: 5, md: 8 } }}>
-          <Typography variant="h5" sx={{ color: "common.white", fontWeight: 800, maxWidth: 560 }}>
-            Discover extraordinary destinations with an interface designed for modern travelers.
-          </Typography>
-          <Typography sx={{ color: alpha("#fff", 0.86), mt: 1.2, maxWidth: 520 }}>
-            Real destinations, smart planning, and professional-grade travel tools in one seamless experience.
-          </Typography>
+          <HeroSearchBar ctaLabel="Start Planning" showGuests />
+          <HomeTrustStats />
         </Container>
       </Box>
 
       <Container maxWidth="lg" sx={{ py: { xs: 6, md: 10 } }}>
+        {/* Quick suggestions */}
         <SectionHeading
           eyebrow="Ideas"
           title="Quick suggestions"
-          subtitle="Pick a destination and start planning immediately."
+          subtitle="Curated escapes with ratings, duration, and live pricing."
         />
         <Stack direction="row" spacing={{ xs: 0.8, sm: 1.5 }} alignItems="center" sx={{ pb: 0.5 }}>
           <IconButton
@@ -229,12 +196,10 @@ export default function HomePage() {
                       transform: "translateY(-4px)",
                       boxShadow: "0 22px 50px rgba(0,0,0,0.38)",
                     },
-                    "&:hover .quick-sugg-media": {
-                      transform: "scale(1.1)",
-                    },
+                    "&:hover .quick-sugg-media": { transform: "scale(1.08)" },
                   }}
                 >
-                  <Box sx={{ position: "relative", height: 132, overflow: "hidden" }}>
+                  <Box sx={{ position: "relative", height: 148, overflow: "hidden" }}>
                     <Box
                       className="quick-sugg-media"
                       component="img"
@@ -244,34 +209,42 @@ export default function HomePage() {
                         width: "100%",
                         height: "100%",
                         objectFit: "cover",
-                        display: "block",
-                        transformOrigin: "center center",
                         transition: "transform 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94)",
-                        transform: "scale(1)",
                       }}
                     />
                     <Box
                       sx={{
                         position: "absolute",
                         inset: 0,
-                        background: "linear-gradient(180deg, rgba(0,0,0,0.06), rgba(0,0,0,0.76))",
-                        pointerEvents: "none",
+                        background: "linear-gradient(180deg, rgba(0,0,0,0.1), rgba(0,0,0,0.82))",
                       }}
                     />
-                    <Stack sx={{ position: "absolute", left: 12, bottom: 10 }}>
-                      <Typography
-                        sx={{
-                          color: "common.white",
-                          fontWeight: 800,
-                          letterSpacing: "0.02em",
-                          fontSize: "1rem",
-                        }}
-                      >
-                        {item.name}
-                      </Typography>
-                      <Typography variant="caption" sx={{ color: alpha("#fff", 0.82) }}>
-                        from €{item.priceFrom}
-                      </Typography>
+                    <Stack direction="row" spacing={0.75} sx={{ position: "absolute", top: 10, left: 10, right: 10 }}>
+                      <Chip
+                        label={item.country}
+                        size="small"
+                        sx={{ height: 24, fontSize: "0.7rem", fontWeight: 700, bgcolor: alpha("#000", 0.5) }}
+                      />
+                      {item.trending ? (
+                        <Chip label="Trending" size="small" color="primary" sx={{ height: 24, fontSize: "0.7rem", fontWeight: 700 }} />
+                      ) : null}
+                      {item.popular && !item.trending ? (
+                        <Chip label="Popular" size="small" sx={{ height: 24, fontSize: "0.7rem", fontWeight: 700, bgcolor: alpha("#000", 0.5) }} />
+                      ) : null}
+                    </Stack>
+                    <Stack sx={{ position: "absolute", left: 12, right: 12, bottom: 10 }} spacing={0.35}>
+                      <Typography sx={{ color: "common.white", fontWeight: 800, fontSize: "1.05rem" }}>{item.name}</Typography>
+                      <Stack direction="row" alignItems="center" justifyContent="space-between">
+                        <Typography variant="caption" sx={{ color: alpha("#fff", 0.85), fontWeight: 600 }}>
+                          {item.duration} · from €{item.priceFrom}
+                        </Typography>
+                        <Stack direction="row" alignItems="center" spacing={0.35}>
+                          <StarRounded sx={{ fontSize: 14, color: designTokens.brand.gold }} />
+                          <Typography variant="caption" sx={{ color: designTokens.brand.champagne, fontWeight: 700 }}>
+                            {item.rating.toFixed(1)}
+                          </Typography>
+                        </Stack>
+                      </Stack>
                     </Stack>
                   </Box>
                 </Card>
@@ -298,19 +271,51 @@ export default function HomePage() {
           </IconButton>
         </Stack>
 
-        <Box sx={{ mt: 8 }}>
+        {/* Featured */}
+        <Box sx={{ mt: { xs: 8, md: 10 } }}>
+          <SectionHeading
+            eyebrow="Trending"
+            title="Featured destinations"
+            subtitle="Hand-picked cities with premium stays and AI-built itineraries."
+          />
+          <HomeFeaturedDestinations />
+        </Box>
+
+        {/* Features */}
+        <Box sx={{ mt: { xs: 8, md: 10 } }}>
           <SectionHeading
             eyebrow="Features"
             title="Why Smart Travel Assistant"
-            subtitle="Three core features that make planning fast and personalized."
+            subtitle="Three core capabilities that make planning fast and personalized."
           />
           <Grid container spacing={3}>
             {highlights.map((h) => (
               <Grid key={h.title} size={{ xs: 12, md: 4 }}>
-                <Paper sx={{ p: 3, height: "100%", border: (theme) => `1px solid ${theme.palette.divider}` }}>
+                <Paper
+                  sx={{
+                    p: 3,
+                    height: "100%",
+                    borderRadius: 3,
+                    border: `1px solid ${alpha(designTokens.brand.gold, 0.12)}`,
+                    background: `linear-gradient(160deg, ${alpha("#fff", 0.03)} 0%, ${alpha(designTokens.brand.charcoal, 0.9)} 100%)`,
+                  }}
+                >
                   <Stack spacing={2}>
-                    {h.icon}
-                    <Typography variant="h6">{h.title}</Typography>
+                    <Box
+                      sx={{
+                        width: 48,
+                        height: 48,
+                        borderRadius: 2,
+                        display: "grid",
+                        placeItems: "center",
+                        bgcolor: alpha(designTokens.brand.navy, 0.35),
+                      }}
+                    >
+                      {h.icon}
+                    </Box>
+                    <Typography variant="h6" fontWeight={800}>
+                      {h.title}
+                    </Typography>
                     <Typography color="text.secondary">{h.body}</Typography>
                   </Stack>
                 </Paper>
@@ -319,64 +324,61 @@ export default function HomePage() {
           </Grid>
         </Box>
 
-        <Box sx={{ mt: 8 }}>
-          <SectionHeading eyebrow="How it works" title="Plan in 3 simple steps" subtitle="Visual and simple flow." />
-          <Grid container spacing={2.5}>
-            {steps.map((step, index) => (
-              <Grid key={step.title} size={{ xs: 12, md: 4 }}>
-                <Paper sx={{ p: 3, height: "100%", border: (theme) => `1px solid ${theme.palette.divider}` }}>
-                  <Chip label={`Step ${index + 1}`} color="secondary" size="small" sx={{ mb: 1.4 }} />
-                  <Typography variant="h6" sx={{ mb: 0.8 }}>
-                    {step.title}
-                  </Typography>
-                  <Typography color="text.secondary">{step.text}</Typography>
-                </Paper>
-              </Grid>
-            ))}
-          </Grid>
+        {/* How it works */}
+        <Box sx={{ mt: { xs: 8, md: 10 } }}>
+          <SectionHeading eyebrow="How it works" title="Plan in 3 simple steps" subtitle="Search, plan with AI, then book — all in one flow." />
+          <HomeHowItWorks />
         </Box>
 
-        <Box sx={{ mt: 8 }}>
-          <SectionHeading eyebrow="Preview" title="Sample itinerary" subtitle="See the value before you commit." />
-          <Card sx={{ borderRadius: 2, border: (theme) => `1px solid ${theme.palette.divider}` }}>
-            <CardContent sx={{ p: { xs: 2, md: 3 } }}>
-              <Stack spacing={1.5}>
-                <Typography variant="h6">3 days in Paris</Typography>
-                <Typography color="text.secondary">Day 1: Eiffel Tower + Seine walk</Typography>
-                <Typography color="text.secondary">Day 2: Louvre + Montmartre</Typography>
-                <Typography color="text.secondary">Day 3: Versailles + local food tour</Typography>
-                <Button component={RouterLink} to="/destination/paris" variant="outlined" endIcon={<ExploreRounded />} sx={{ alignSelf: "flex-start", mt: 1 }}>
-                  View details
-                </Button>
-              </Stack>
-            </CardContent>
-          </Card>
+        {/* Testimonials */}
+        <Box sx={{ mt: { xs: 8, md: 10 } }}>
+          <SectionHeading eyebrow="Social proof" title="What travelers say" subtitle="Real feedback from guests who planned with us." />
+          <HomeTestimonials />
         </Box>
 
+        {/* Final CTA */}
         <Box
           sx={{
-            mt: 8,
-            p: { xs: 3, md: 5 },
-            borderRadius: 3,
-            background: (theme) =>
-              `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.08)} 0%, ${alpha(theme.palette.secondary.main, 0.12)} 100%)`,
-            border: (theme) => `1px solid ${theme.palette.divider}`,
+            mt: { xs: 8, md: 10 },
+            pt: { xs: 5, md: 6 },
+            textAlign: "center",
+            borderTop: (theme) => `1px solid ${theme.palette.divider}`,
           }}
         >
-          <Stack spacing={2} alignItems={{ xs: "stretch", sm: "center" }} direction={{ xs: "column", sm: "row" }}>
-            <Box sx={{ flex: 1 }}>
-              <Typography variant="h5" fontWeight={800} gutterBottom>
-                Start planning your next trip today
-              </Typography>
-              <Typography color="text.secondary">
-                Your assistant is ready with destination ideas, AI itineraries, and booking-ready planning.
-              </Typography>
-            </Box>
-            <Stack direction={{ xs: "column", sm: "row" }} spacing={2} sx={{ width: { xs: "100%", sm: "auto" }, minWidth: { sm: 360 } }}>
-              <Button component={RouterLink} to="/itinerary" variant="contained" color="secondary" size="large" fullWidth>
-                Create my trip
-              </Button>
-            </Stack>
+          <Typography variant="h5" fontWeight={700} sx={{ mb: 1 }}>
+            Start planning your next trip today
+          </Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 3, maxWidth: 440, mx: "auto" }}>
+            Destination ideas, AI itineraries, and booking in one place.
+          </Typography>
+          <Stack
+            direction={{ xs: "column", sm: "row" }}
+            spacing={1.5}
+            justifyContent="center"
+            alignItems="center"
+          >
+            <Button
+              component={RouterLink}
+              to="/assistant"
+              variant="contained"
+              color="primary"
+              sx={{ fontWeight: 700, px: 3, whiteSpace: "nowrap" }}
+            >
+              Ask AI Assistant
+            </Button>
+            <Button
+              component={RouterLink}
+              to="/bookings"
+              variant="outlined"
+              sx={{
+                fontWeight: 600,
+                px: 3,
+                borderColor: alpha(designTokens.brand.gold, 0.4),
+                color: "text.primary",
+              }}
+            >
+              My bookings
+            </Button>
           </Stack>
         </Box>
       </Container>
