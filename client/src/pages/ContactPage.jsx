@@ -1,157 +1,113 @@
-import { EmailOutlined, MapRounded, SendRounded } from "../ui/icons.jsx";
-import {
-  Box,
-  Button,
-  Container,
-  Grid,
-  Paper,
-  Stack,
-  TextField,
-  Typography,
-} from "@mui/material";
+import DarkModeRoundedIcon from "@mui/icons-material/DarkModeRounded";
+import LightModeRoundedIcon from "@mui/icons-material/LightModeRounded";
+import { Box, Container, Fab, Tooltip, Typography } from "@mui/material";
 import { alpha } from "@mui/material/styles";
-import { useState } from "react";
-import SectionHeading from "../components/common/SectionHeading.jsx";
-import { useToast } from "../context/ToastContext.jsx";
+import { useRef, useState } from "react";
+import ContactEmergency from "../components/contact/ContactEmergency.jsx";
+import ContactFaqPreview from "../components/contact/ContactFaqPreview.jsx";
+import ContactForm from "../components/contact/ContactForm.jsx";
+import ContactHero from "../components/contact/ContactHero.jsx";
+import ContactSupportChannels from "../components/contact/ContactSupportChannels.jsx";
 import { designTokens } from "../theme/theme.js";
 
-const contactChannels = [
-  {
-    icon: EmailOutlined,
-    title: "Email",
-    detail: "hello@smarttravel.app",
-    note: "We reply within one business day.",
-  },
-  {
-    icon: MapRounded,
-    title: "Office",
-    detail: "Rue de la Loi 16, Brussels",
-    note: "Visits by appointment only.",
-  },
-];
+function SectionTitle({ overline, title, subtitle, align = "left" }) {
+  const centered = align === "center";
+  return (
+    <Box sx={{ mb: 2.5, textAlign: align }}>
+      {overline ? (
+        <Typography variant="overline" color="primary" fontWeight={800} letterSpacing="0.14em">
+          {overline}
+        </Typography>
+      ) : null}
+      <Typography variant="h5" fontWeight={800} sx={{ mt: overline ? 0.5 : 0 }}>
+        {title}
+      </Typography>
+      {subtitle ? (
+        <Typography
+          variant="body2"
+          color="text.secondary"
+          sx={{ mt: 0.75, maxWidth: 560, mx: centered ? "auto" : undefined }}
+        >
+          {subtitle}
+        </Typography>
+      ) : null}
+    </Box>
+  );
+}
 
 export default function ContactPage() {
-  const { showToast } = useToast();
-  const [form, setForm] = useState({ name: "", email: "", message: "" });
+  const formRef = useRef(null);
+  const [lightSurface, setLightSurface] = useState(false);
 
-  function handleSubmit(event) {
-    event.preventDefault();
-    if (!form.name.trim() || !form.email.trim() || !form.message.trim()) {
-      showToast({ message: "Please fill in all fields.", severity: "warning" });
-      return;
-    }
-    showToast({
-      message: "Thanks — your message was sent. Our team will get back to you soon.",
-      severity: "success",
-    });
-    setForm({ name: "", email: "", message: "" });
+  function scrollToForm() {
+    formRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
   }
 
   return (
-    <Container maxWidth="md" sx={{ py: { xs: 3, md: 6 } }}>
-      <SectionHeading
-        eyebrow="Support"
-        title="Contact us"
-        subtitle="Questions about a trip, booking, or the platform? Reach out and we will help."
-      />
+    <Box
+      sx={{
+        bgcolor: lightSurface ? alpha(designTokens.brand.ivory, 0.04) : "background.default",
+        color: lightSurface ? designTokens.brand.ivory : "text.primary",
+        transition: "background-color 0.35s ease",
+        pb: 8,
+      }}
+    >
+      <ContactHero onEmailClick={scrollToForm} lightSurface={lightSurface} />
 
-      <Grid container spacing={2} sx={{ mb: 3 }}>
-        {contactChannels.map((channel) => (
-          <Grid key={channel.title} size={{ xs: 12, sm: 6 }}>
-            <Paper
-              sx={{
-                p: 2.5,
-                height: "100%",
-                border: `1px solid ${alpha(designTokens.brand.gold, 0.15)}`,
-                bgcolor: alpha(designTokens.brand.graphite, 0.35),
-              }}
-            >
-              <Stack direction="row" spacing={1.5} alignItems="flex-start">
-                <Box
-                  sx={{
-                    width: 40,
-                    height: 40,
-                    borderRadius: 2,
-                    display: "grid",
-                    placeItems: "center",
-                    bgcolor: alpha(designTokens.brand.gold, 0.12),
-                    color: "primary.main",
-                  }}
-                >
-                  <channel.icon />
-                </Box>
-                <Box>
-                  <Typography variant="subtitle2" color="text.secondary">
-                    {channel.title}
-                  </Typography>
-                  <Typography fontWeight={700}>{channel.detail}</Typography>
-                  <Typography variant="caption" color="text.secondary">
-                    {channel.note}
-                  </Typography>
-                </Box>
-              </Stack>
-            </Paper>
-          </Grid>
-        ))}
-      </Grid>
-
-      <Paper
-        component="form"
-        onSubmit={handleSubmit}
+      <Container
+        maxWidth="md"
         sx={{
-          p: { xs: 2, md: 3 },
-          border: `1px solid ${alpha(designTokens.brand.gold, 0.18)}`,
+          mt: { xs: -2, md: -4 },
+          position: "relative",
+          zIndex: 2,
+          px: { xs: 2, sm: 3 },
         }}
       >
-        <Typography variant="h6" fontWeight={800} gutterBottom>
-          Send a message
-        </Typography>
-        <Grid container spacing={2}>
-          <Grid size={{ xs: 12, sm: 6 }}>
-            <TextField
-              label="Your name"
-              fullWidth
-              size="small"
-              value={form.name}
-              onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
-              InputLabelProps={{ shrink: true }}
-            />
-          </Grid>
-          <Grid size={{ xs: 12, sm: 6 }}>
-            <TextField
-              label="Email"
-              type="email"
-              fullWidth
-              size="small"
-              value={form.email}
-              onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
-              InputLabelProps={{ shrink: true }}
-            />
-          </Grid>
-          <Grid size={{ xs: 12 }}>
-            <TextField
-              label="Message"
-              fullWidth
-              multiline
-              minRows={4}
-              value={form.message}
-              onChange={(e) => setForm((f) => ({ ...f, message: e.target.value }))}
-              InputLabelProps={{ shrink: true }}
-            />
-          </Grid>
-          <Grid size={{ xs: 12 }}>
-            <Button
-              type="submit"
-              variant="contained"
-              color="secondary"
-              startIcon={<SendRounded />}
-              sx={{ fontWeight: 700, borderRadius: 2 }}
-            >
-              Send message
-            </Button>
-          </Grid>
-        </Grid>
-      </Paper>
-    </Container>
+        <SectionTitle
+          align="center"
+          overline="Get in touch"
+          title="Send us a message"
+          subtitle="Secure form · Encrypted in transit · Our team typically replies within one business day."
+        />
+        <ContactForm formRef={formRef} lightSurface={lightSurface} />
+      </Container>
+
+      <Container maxWidth="lg" sx={{ mt: { xs: 4, md: 5 } }}>
+        <SectionTitle
+          overline="Channels"
+          title="Support channels"
+          subtitle="Choose how you want to reach us — every request is routed to the right specialist."
+        />
+        <ContactSupportChannels lightSurface={lightSurface} />
+      </Container>
+
+      <Container maxWidth="lg" sx={{ mt: { xs: 5, md: 7 } }}>
+        <SectionTitle overline="FAQ" title="Common questions" subtitle="Quick answers — full documentation in the Help Center." />
+        <ContactFaqPreview />
+      </Container>
+
+      <Container maxWidth="lg" sx={{ mt: { xs: 4, md: 6 } }}>
+        <ContactEmergency />
+      </Container>
+
+      <Tooltip title={lightSurface ? "Dark glass mode" : "Light glass mode"}>
+        <Fab
+          size="small"
+          onClick={() => setLightSurface((v) => !v)}
+          sx={{
+            position: "fixed",
+            left: { xs: 16, md: 24 },
+            bottom: { xs: 16, md: 28 },
+            zIndex: 1200,
+            bgcolor: alpha(designTokens.brand.graphite, 0.9),
+            color: "primary.main",
+            border: `1px solid ${alpha(designTokens.brand.gold, 0.35)}`,
+            "&:hover": { bgcolor: alpha(designTokens.brand.navy, 0.5) },
+          }}
+        >
+          {lightSurface ? <DarkModeRoundedIcon /> : <LightModeRoundedIcon />}
+        </Fab>
+      </Tooltip>
+    </Box>
   );
 }

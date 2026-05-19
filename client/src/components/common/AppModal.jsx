@@ -1,5 +1,6 @@
 import { CloseRounded } from "../../ui/icons.jsx";
 import {
+  Box,
   Dialog,
   DialogActions,
   DialogContent,
@@ -15,9 +16,13 @@ export default function AppModal({ open, onClose, title, subtitle, children, act
       <DialogTitle>
         <Stack direction="row" alignItems="flex-start" justifyContent="space-between" spacing={2}>
           <Stack spacing={0.5}>
-            <Typography variant="h6" component="span">
-              {title}
-            </Typography>
+            {typeof title === "string" ? (
+              <Typography variant="h6" component="span">
+                {title}
+              </Typography>
+            ) : (
+              <Box sx={{ flex: 1, minWidth: 0 }}>{title}</Box>
+            )}
             {subtitle ? (
               <Typography variant="body2" color="text.secondary">
                 {subtitle}
