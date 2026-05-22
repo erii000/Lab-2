@@ -291,7 +291,7 @@ export default function DestinationDetailPage() {
     return (
       <Container sx={{ py: 8 }}>
         <Typography variant="h5">Destination not found</Typography>
-        <Button component={RouterLink} to="/search" sx={{ mt: 2 }}>
+        <Button component={RouterLink} to="/explore" sx={{ mt: 2 }}>
           Explore destinations
         </Button>
       </Container>
@@ -335,7 +335,7 @@ export default function DestinationDetailPage() {
             resultsKey={filterSig}
           />
 
-          <Button component={RouterLink} to="/search" variant="text" startIcon={<ExploreRounded />}>
+          <Button component={RouterLink} to="/explore" variant="text" startIcon={<ExploreRounded />}>
             Back to explore
           </Button>
         </Stack>

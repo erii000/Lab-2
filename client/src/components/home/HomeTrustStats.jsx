@@ -16,11 +16,6 @@ const iconMap = {
   support: AccessTimeRoundedIcon,
 };
 
-const shimmer = keyframes`
-  0%, 100% { opacity: 1; transform: scale(1); }
-  50% { opacity: 0.85; transform: scale(1.05); }
-`;
-
 function AnimatedStatValue({ stat, active }) {
   const animated = useCountUp(stat.animate?.end ?? 0, {
     duration: 1800,
@@ -33,7 +28,7 @@ function AnimatedStatValue({ stat, active }) {
         variant="h5"
         fontWeight={800}
         sx={{
-          color: stat.highlight ? designTokens.brand.champagne : "common.white",
+          color: "common.white",
           letterSpacing: "-0.02em",
           fontVariantNumeric: "tabular-nums",
         }}
@@ -50,7 +45,7 @@ function AnimatedStatValue({ stat, active }) {
       variant="h5"
       fontWeight={800}
       sx={{
-        color: stat.highlight ? designTokens.brand.champagne : "common.white",
+        color: "common.white",
         letterSpacing: "-0.02em",
         fontVariantNumeric: "tabular-nums",
         minWidth: "3.5ch",
@@ -76,7 +71,7 @@ function TrustStatCard({ stat, active, delay = 0 }) {
         py: 2.25,
         px: 1.5,
         borderRadius: 2.5,
-        border: `1px solid ${alpha(designTokens.brand.gold, stat.highlight ? 0.38 : 0.22)}`,
+          border: `1px solid ${alpha(designTokens.brand.gold, 0.22)}`,
         bgcolor: alpha("#0b0d12", 0.55),
         backdropFilter: "blur(12px)",
         opacity: active ? 1 : 0.4,
@@ -92,10 +87,9 @@ function TrustStatCard({ stat, active, delay = 0 }) {
           mb: 1.25,
           display: "grid",
           placeItems: "center",
-          bgcolor: alpha(stat.highlight ? designTokens.brand.gold : designTokens.brand.navy, 0.22),
-          color: stat.highlight ? designTokens.brand.gold : designTokens.brand.champagne,
+          bgcolor: alpha(designTokens.brand.navy, 0.22),
+          color: designTokens.brand.champagne,
           border: `1px solid ${alpha(designTokens.brand.gold, 0.25)}`,
-          animation: stat.id === "ai" && active ? `${shimmer} 2.5s ease-in-out infinite` : "none",
         }}
       >
         <Icon sx={{ fontSize: 22 }} />

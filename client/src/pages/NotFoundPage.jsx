@@ -36,7 +36,7 @@ export default function NotFoundPage() {
             <AppButton component={RouterLink} to="/" tone="primary">
               Back to Home
             </AppButton>
-            <AppButton component={RouterLink} to="/search" tone="secondary">
+            <AppButton component={RouterLink} to="/explore" tone="secondary">
               Explore Destinations
             </AppButton>
             <Button component={RouterLink} to="/assistant" variant="text">

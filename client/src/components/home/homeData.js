@@ -17,7 +17,6 @@ export const trustStats = [
     id: "ai",
     label: "Powered Recommendations",
     icon: "ai",
-    highlight: true,
     staticValue: "AI",
   },
   {

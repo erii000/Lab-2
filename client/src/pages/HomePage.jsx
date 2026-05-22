@@ -116,7 +116,7 @@ export default function HomePage() {
             >
               <Button
                 component={RouterLink}
-                to="/search"
+                to="/explore"
                 variant="contained"
                 size="large"
                 sx={{
@@ -130,7 +130,7 @@ export default function HomePage() {
               </Button>
               <Button
                 component={RouterLink}
-                to="/search"
+                to="/explore"
                 variant="outlined"
                 size="large"
                 sx={{

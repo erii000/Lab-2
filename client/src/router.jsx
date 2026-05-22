@@ -18,11 +18,11 @@ import ImportResultsPage from "./pages/ImportResultsPage.jsx";
 import ItineraryPlannerPage from "./pages/ItineraryPlannerPage.jsx";
 import LoginPage from "./pages/LoginPage.jsx";
 import NotFoundPage from "./pages/NotFoundPage.jsx";
-import NotificationsPage from "./pages/NotificationsPage.jsx";
 import PermissionsManagementPage from "./pages/PermissionsManagementPage.jsx";
 import RecommendationsPage from "./pages/RecommendationsPage.jsx";
 import RegisterPage from "./pages/RegisterPage.jsx";
 import RolesManagementPage from "./pages/RolesManagementPage.jsx";
+import LegacySearchRedirect from "./components/routing/LegacySearchRedirect.jsx";
 import SearchPage from "./pages/SearchPage.jsx";
 import UsersManagementPage from "./pages/UsersManagementPage.jsx";
 
@@ -34,7 +34,8 @@ export const router = createBrowserRouter([
         element: <MainLayout />,
         children: [
           { index: true, element: <HomePage /> },
-          { path: "search", element: <SearchPage /> },
+          { path: "explore", element: <SearchPage /> },
+          { path: "search", element: <LegacySearchRedirect /> },
           { path: "destination/:id", element: <DestinationDetailPage /> },
           { path: "itinerary", element: <ItineraryPlannerPage /> },
           { path: "booking", element: <BookingPage /> },
@@ -45,7 +46,7 @@ export const router = createBrowserRouter([
           { path: "contact", element: <ContactPage /> },
           { path: "profile", element: <Navigate to="/contact" replace /> },
           { path: "assistant", element: <AiAssistantPage /> },
-          { path: "notifications", element: <NotificationsPage /> },
+          { path: "notifications", element: <Navigate to="/" replace /> },
           { path: "about", element: <AboutHelpPage /> },
           { path: "404", element: <NotFoundPage /> },
         ],

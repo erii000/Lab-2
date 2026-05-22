@@ -105,7 +105,7 @@ export default function BookingPage() {
             homepage
           </Button>{" "}
           or{" "}
-          <Button component={RouterLink} to="/search" size="small">
+          <Button component={RouterLink} to="/explore" size="small">
             explore
           </Button>{" "}
           page.

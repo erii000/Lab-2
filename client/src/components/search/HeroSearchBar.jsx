@@ -11,13 +11,8 @@ import {
 import { alpha } from "@mui/material/styles";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import {
-  buildDestinationUrl,
-  defaultTripDates,
-  resolveDestinationId,
-  todayISO,
-  tripParamsToSearchParams,
-} from "../../utils/destinationSearch.js";
+import { defaultTripDates, todayISO } from "../../utils/destinationSearch.js";
+import { buildExploreUrl } from "../../utils/exploreSearch.js";
 
 const fieldSx = {
   "& .MuiOutlinedInput-root": {
@@ -53,32 +48,20 @@ export default function HeroSearchBar({
     e.preventDefault();
 
     const query = queryInput.trim();
-    const resolvedId = resolveDestinationId(query);
-    const tripParams = tripParamsToSearchParams({
+    const criteria = {
+      destination: query,
       start,
       end,
-      guests,
-      budget: budget || undefined,
-    });
+      travelers: guests,
+      budget: budget ? Number(budget) : null,
+    };
 
     if (onSearch) {
-      onSearch({
-        query,
-        destinationId: resolvedId,
-        ...tripParams,
-      });
+      onSearch(criteria);
       return;
     }
 
-    if (resolvedId) {
-      navigate(buildDestinationUrl(resolvedId, tripParams));
-      return;
-    }
-
-    const params = new URLSearchParams();
-    if (query) params.set("q", query);
-    Object.entries(tripParams).forEach(([k, v]) => params.set(k, v));
-    navigate(`/search?${params.toString()}`);
+    navigate(buildExploreUrl(criteria));
   }
 
   return (

@@ -41,12 +41,6 @@ export default defineConfig([
     },
   },
   {
-    files: ['src/context/NotificationsContext.jsx'],
-    rules: {
-      'react-refresh/only-export-components': 'off',
-    },
-  },
-  {
     files: ['src/context/ToastContext.jsx'],
     rules: {
       'react-refresh/only-export-components': 'off',

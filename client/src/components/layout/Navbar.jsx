@@ -1,10 +1,9 @@
-import { BrandMonogramLogo, MenuIcon, NotificationsOutlined } from "../../ui/icons.jsx";
+import { BrandMonogramLogo, MenuIcon } from "../../ui/icons.jsx";
 import {
   AppBar,
   Badge,
   Box,
   Button,
-  Chip,
   Container,
   Divider,
   Drawer,
@@ -12,8 +11,6 @@ import {
   List,
   ListItemButton,
   ListItemText,
-  Menu,
-  MenuItem,
   Stack,
   Toolbar,
   Typography,
@@ -21,13 +18,12 @@ import {
 } from "@mui/material";
 import { alpha, useTheme } from "@mui/material/styles";
 import { useMemo, useState } from "react";
-import { Link as RouterLink, useLocation, useNavigate } from "react-router-dom";
-import { useNotifications } from "../../context/NotificationsContext.jsx";
+import { Link as RouterLink, useLocation } from "react-router-dom";
 import { useBookingStore } from "../../store/bookingStore.js";
 
 const navLinks = [
   { label: "Home", to: "/", description: "Landing & quick search" },
-  { label: "Explore", to: "/search", description: "Destinations & filters" },
+  { label: "Explore", to: "/explore", description: "Destinations & filters" },
   { label: "Assistant", to: "/assistant", description: "AI trip planning" },
   { label: "Bookings", to: "/bookings", description: "Travel dashboard", badge: "bookings" },
   { label: "Contact", to: "/contact", description: "Support & inquiries" },
@@ -37,16 +33,8 @@ export default function Navbar() {
   const theme = useTheme();
   const isMdUp = useMediaQuery(theme.breakpoints.up("md"));
   const location = useLocation();
-  const navigate = useNavigate();
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [notificationAnchorEl, setNotificationAnchorEl] = useState(null);
-  const { notifications, unreadCount, markAsRead } = useNotifications();
   const draftCount = useBookingStore((s) => s.getDraftCount());
-  const notificationsOpen = Boolean(notificationAnchorEl);
-  const previewNotifications = useMemo(
-    () => notifications.slice(0, 6),
-    [notifications],
-  );
 
   const drawer = useMemo(
     () => (
@@ -159,7 +147,9 @@ export default function Navbar() {
                   const active =
                     item.to === "/bookings"
                       ? location.pathname.startsWith("/bookings")
-                      : location.pathname === item.to;
+                      : item.to === "/explore"
+                        ? location.pathname.startsWith("/explore")
+                        : location.pathname === item.to;
                   const showDraftBadge = item.badge === "bookings" && draftCount > 0;
                   return (
                     <Badge
@@ -194,133 +184,6 @@ export default function Navbar() {
             )}
 
             <Stack direction="row" spacing={0.6} alignItems="center" sx={{ flexShrink: 0 }}>
-              <IconButton
-                color="inherit"
-                aria-label="Notifications"
-                onClick={(event) => setNotificationAnchorEl(event.currentTarget)}
-                sx={{
-                  border: `1px solid ${alpha(theme.palette.primary.main, 0.34)}`,
-                  color: location.pathname === "/notifications" ? "primary.main" : alpha("#fff", 0.9),
-                  bgcolor: location.pathname === "/notifications" ? alpha(theme.palette.primary.main, 0.12) : "transparent",
-                  "&:hover": { bgcolor: alpha(theme.palette.primary.main, 0.16) },
-                }}
-              >
-                <Badge
-                  badgeContent={unreadCount}
-                  color="primary"
-                  max={99}
-                  overlap="circular"
-                  sx={{
-                    "& .MuiBadge-badge": {
-                      fontWeight: 700,
-                      border: `1px solid ${alpha(theme.palette.primary.main, 0.75)}`,
-                      boxShadow: "0 0 0 2px rgba(9, 12, 18, 0.9)",
-                    },
-                  }}
-                >
-                  <NotificationsOutlined />
-                </Badge>
-              </IconButton>
-              <Menu
-                anchorEl={notificationAnchorEl}
-                open={notificationsOpen}
-                onClose={() => setNotificationAnchorEl(null)}
-                transformOrigin={{ horizontal: "right", vertical: "top" }}
-                anchorOrigin={{ horizontal: "right", vertical: "bottom" }}
-                slotProps={{
-                  paper: {
-                    sx: {
-                      mt: 1.2,
-                      width: 380,
-                      maxWidth: "calc(100vw - 24px)",
-                      borderRadius: 2.2,
-                      border: `1px solid ${alpha(theme.palette.primary.main, 0.3)}`,
-                      backgroundColor: alpha("#111827", 0.95),
-                      backgroundImage:
-                        "linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01))",
-                      backdropFilter: "blur(12px)",
-                    },
-                  },
-                }}
-              >
-                <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ px: 1.8, py: 1.3 }}>
-                  <Typography variant="subtitle1" sx={{ fontWeight: 800 }}>
-                    Notifications
-                  </Typography>
-                  <Chip size="small" label={`${unreadCount} unread`} color="primary" />
-                </Stack>
-                <Divider sx={{ borderColor: alpha(theme.palette.primary.main, 0.22) }} />
-                {previewNotifications.length ? (
-                  previewNotifications.map((item) => (
-                    <MenuItem
-                      key={item.id}
-                      onClick={() => {
-                        if (item.unread) {
-                          markAsRead(item.id);
-                        }
-                        setNotificationAnchorEl(null);
-                        navigate("/notifications");
-                      }}
-                      sx={{
-                        alignItems: "flex-start",
-                        gap: 1,
-                        py: 1.1,
-                        borderBottom: `1px solid ${alpha(theme.palette.primary.main, 0.08)}`,
-                        whiteSpace: "normal",
-                      }}
-                    >
-                      <Box sx={{ pt: 0.6 }}>
-                        <Box
-                          sx={{
-                            width: 8,
-                            height: 8,
-                            borderRadius: "50%",
-                            bgcolor: item.unread ? "primary.main" : alpha(theme.palette.text.secondary, 0.45),
-                            boxShadow: item.unread ? `0 0 0 4px ${alpha(theme.palette.primary.main, 0.18)}` : "none",
-                          }}
-                        />
-                      </Box>
-                      <Stack spacing={0.45} sx={{ minWidth: 0 }}>
-                        <Stack direction="row" spacing={1} alignItems="center" sx={{ minWidth: 0 }}>
-                          <Typography variant="body2" sx={{ fontWeight: 700 }}>
-                            {item.title}
-                          </Typography>
-                          {item.unread && <Chip label="New" size="small" color="primary" sx={{ height: 20 }} />}
-                        </Stack>
-                        <Typography variant="caption" sx={{ color: "text.secondary", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
-                          {item.body}
-                        </Typography>
-                        <Typography variant="caption" sx={{ color: alpha(theme.palette.text.secondary, 0.82) }}>
-                          {item.timestamp}
-                        </Typography>
-                      </Stack>
-                    </MenuItem>
-                  ))
-                ) : (
-                  <Box sx={{ px: 2, py: 2.5 }}>
-                    <Typography variant="body2" sx={{ color: "text.secondary" }}>
-                      No notifications yet.
-                    </Typography>
-                  </Box>
-                )}
-                <Divider sx={{ borderColor: alpha(theme.palette.primary.main, 0.2) }} />
-                <Box sx={{ p: 1 }}>
-                  <Button
-                    fullWidth
-                    variant="text"
-                    onClick={() => {
-                      setNotificationAnchorEl(null);
-                      navigate("/notifications");
-                    }}
-                    sx={{
-                      color: "primary.main",
-                      "&:hover": { bgcolor: alpha(theme.palette.primary.main, 0.12) },
-                    }}
-                  >
-                    View all notifications
-                  </Button>
-                </Box>
-              </Menu>
               {isMdUp && (
                 <>
                   <Button
