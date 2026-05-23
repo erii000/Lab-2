@@ -12,6 +12,7 @@ import DashboardAnalyticsSection from "../../components/admin/dashboard/Dashboar
 import DashboardRecentBookings from "../../components/admin/dashboard/DashboardRecentBookings.jsx";
 import ExecutiveMetricCard from "../../components/admin/dashboard/ExecutiveMetricCard.jsx";
 import RevenueBookingsChart from "../../components/admin/dashboard/RevenueBookingsChart.jsx";
+import MlPredictiveInsights from "../../components/admin/MlPredictiveInsights.jsx";
 import SmartInsightsPanel from "../../components/admin/dashboard/SmartInsightsPanel.jsx";
 import {
   buildChartSeries,
@@ -128,9 +129,11 @@ export default function AdminDashboardPage() {
   return (
     <Box sx={{ pb: 4 }}>
       <AdminTopBar title="Dashboard" actions={headerActions} />
-      <Typography variant="body2" sx={{ color: adminColors.textMuted, mb: 3, mt: -2 }}>
+      <Typography variant="body2" sx={{ color: adminColors.textMuted, mb: 2, mt: -2 }}>
         Live operations — metrics sync with Trips, Bookings, and Users.
       </Typography>
+
+      <MlPredictiveInsights bookings={bookings} trips={trips} users={users} />
 
       <Grid container spacing={2.5} sx={{ mb: 2.5 }}>
         <Grid size={{ xs: 12, sm: 6, lg: 3 }}>

@@ -9,23 +9,29 @@ import {
   Typography,
 } from "@mui/material";
 import { alpha } from "@mui/material/styles";
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { Link as RouterLink } from "react-router-dom";
 import AssistantBudgetSummary from "../components/assistant/AssistantBudgetSummary.jsx";
 import AssistantItineraryAccordion from "../components/assistant/AssistantItineraryAccordion.jsx";
 import AssistantResultCard from "../components/assistant/AssistantResultCard.jsx";
 import { buildTripPlan, suggestionChips } from "../components/assistant/assistantData.js";
+import { useLoading } from "../context/LoadingContext.jsx";
+import { useToast } from "../context/ToastContext.jsx";
+import { useAssistantStore } from "../store/assistantStore.js";
 import { designTokens } from "../theme/theme.js";
 
 const CONTENT_MAX = 680;
 
 export default function AiAssistantPage() {
   const inputRef = useRef(null);
-  const [query, setQuery] = useState("");
-  const [plan, setPlan] = useState(null);
+  const query = useAssistantStore((s) => s.query);
+  const setQuery = useAssistantStore((s) => s.setQuery);
+  const plan = useAssistantStore((s) => s.plan);
+  const setPlan = useAssistantStore((s) => s.setPlan);
+  const { runWithLoader } = useLoading();
+  const { showToast } = useToast();
   const [sending, setSending] = useState(false);
   const [expandedDay, setExpandedDay] = useState(false);
-  const [toast, setToast] = useState("");
 
   async function generateTrip(text) {
     const q = (text ?? query).trim();
@@ -34,9 +40,14 @@ export default function AiAssistantPage() {
     setSending(true);
     setPlan(null);
     setExpandedDay(false);
-    await new Promise((r) => setTimeout(r, 800));
-    setPlan(buildTripPlan(q));
-    setSending(false);
+    try {
+      await runWithLoader(async () => {
+        await new Promise((r) => setTimeout(r, 800));
+        setPlan(buildTripPlan(q));
+      });
+    } finally {
+      setSending(false);
+    }
   }
 
   function handleSubmit(e) {
@@ -59,23 +70,25 @@ export default function AiAssistantPage() {
   }
 
   function handleSave() {
-    setToast("Trip saved to your itinerary.");
+    showToast({ message: "Trip saved to your itinerary.", severity: "success" });
   }
 
-  function handleShare() {
+  async function handleShare() {
     if (navigator.share) {
-      navigator.share({ title: plan?.title, text: plan?.summary }).catch(() => {});
-    } else {
-      setToast("Link copied to clipboard.");
-      navigator.clipboard?.writeText(window.location.href);
+      try {
+        await navigator.share({ title: plan?.title, text: plan?.summary });
+      } catch {
+        /* user cancelled */
+      }
+      return;
+    }
+    try {
+      await navigator.clipboard?.writeText(window.location.href);
+      showToast({ message: "Link copied to clipboard.", severity: "info" });
+    } catch {
+      showToast({ message: "Could not copy link.", severity: "warning" });
     }
   }
-
-  useEffect(() => {
-    if (!toast) return undefined;
-    const t = setTimeout(() => setToast(""), 2800);
-    return () => clearTimeout(t);
-  }, [toast]);
 
   return (
     <Box
@@ -86,7 +99,6 @@ export default function AiAssistantPage() {
       }}
     >
       <Container maxWidth={false} disableGutters sx={{ maxWidth: CONTENT_MAX, mx: "auto" }}>
-        {/* Top — title, input, chips only */}
         <Stack spacing={1} sx={{ mb: 5 }}>
           <Typography variant="h4" component="h1" fontWeight={800} sx={{ letterSpacing: "-0.02em" }}>
             Your AI Travel Assistant
@@ -155,7 +167,6 @@ export default function AiAssistantPage() {
           </Stack>
         </Box>
 
-        {/* Middle — result, itinerary, budget */}
         {sending && !plan ? (
           <Stack alignItems="center" sx={{ mt: 8, py: 6 }}>
             <CircularProgress size={28} />
@@ -200,12 +211,6 @@ export default function AiAssistantPage() {
               Book trip
             </Button>
           </Box>
-        ) : null}
-
-        {toast ? (
-          <Typography variant="caption" color="text.secondary" sx={{ display: "block", textAlign: "center", mt: 2 }}>
-            {toast}
-          </Typography>
         ) : null}
       </Container>
     </Box>

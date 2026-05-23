@@ -2,6 +2,8 @@ import { AutoAwesomeRounded } from "../ui/icons.jsx";
 import { Box, Container, Grid, Paper, Stack, Tab, Tabs, Typography } from "@mui/material";
 import { alpha } from "@mui/material/styles";
 import { useMemo, useState } from "react";
+import AdvancedListToolbar from "../components/search/AdvancedListToolbar.jsx";
+import { BOOKING_SORT_OPTIONS, applyAdvancedListQuery, fullTextMatch } from "../utils/advancedSearch.js";
 import { Link as RouterLink } from "react-router-dom";
 import BookingCard from "../components/bookings/BookingCard.jsx";
 import { useToast } from "../context/ToastContext.jsx";
@@ -17,6 +19,8 @@ import { designTokens } from "../theme/theme.js";
 
 export default function BookingsDashboardPage() {
   const [tab, setTab] = useState(0);
+  const [listQuery, setListQuery] = useState("");
+  const [listSort, setListSort] = useState("date-desc");
   const { showToast } = useToast();
   const bookingDrafts = useBookingStore((s) => s.bookingDrafts);
   const savedDestinations = useBookingStore((s) => s.savedDestinations);
@@ -40,7 +44,30 @@ export default function BookingsDashboardPage() {
   );
 
   const lists = [drafts, upcoming, completed, savedPlaces];
-  const activeList = lists[tab];
+  const rawList = lists[tab];
+
+  const activeList = useMemo(() => {
+    if (tab === 3) {
+      if (!listQuery.trim()) return rawList;
+      return rawList.filter((d) =>
+        fullTextMatch(d, listQuery, (item) => `${item.title} ${item.country} ${item.description ?? ""}`),
+      );
+    }
+    return applyAdvancedListQuery({
+      items: rawList,
+      query: listQuery,
+      getSearchableText: (b) =>
+        `${b.id} ${b.destinationTitle} ${b.packageTitle} ${b.status} ${b.bookingReference ?? ""}`,
+      sortKey: listSort,
+      sortDir: listSort.includes("desc") ? "desc" : "asc",
+      getSortValue: (b, key) => {
+        if (key === "amount-desc") return b.total ?? 0;
+        if (key === "title-asc") return b.destinationTitle;
+        return b.updatedAt ?? b.createdAt;
+      },
+    });
+  }, [rawList, tab, listQuery, listSort]);
+
   const tabLabels = ["Drafts", "Upcoming", "Completed", "Saved"];
 
   return (
@@ -69,6 +96,16 @@ export default function BookingsDashboardPage() {
           </Typography>
         </Stack>
       </Paper>
+
+      <AdvancedListToolbar
+        query={listQuery}
+        onQueryChange={setListQuery}
+        sort={listSort}
+        onSortChange={setListSort}
+        sortOptions={BOOKING_SORT_OPTIONS}
+        resultCount={activeList.length}
+        placeholder={tab === 3 ? "Search saved destinations…" : "Full-text search your bookings…"}
+      />
 
       <Tabs
         value={tab}

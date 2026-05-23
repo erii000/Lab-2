@@ -1,15 +1,13 @@
 import { VerifiedRounded } from "../ui/icons.jsx";
 import {
+  Alert,
   Box,
   Button,
+  CircularProgress,
   Container,
   Divider,
-  FormControl,
   Grid,
-  InputLabel,
-  MenuItem,
   Paper,
-  Select,
   Stack,
   TextField,
   Typography,
@@ -19,44 +17,57 @@ import { useEffect, useMemo, useState } from "react";
 import { Link as RouterLink, useNavigate, useParams } from "react-router-dom";
 import BookingProgressBar from "../components/bookings/BookingProgressBar.jsx";
 import SectionHeading from "../components/common/SectionHeading.jsx";
+import SecureCheckoutForm from "../components/payment/SecureCheckoutForm.jsx";
+import { useLoading } from "../context/LoadingContext.jsx";
 import { useToast } from "../context/ToastContext.jsx";
 import { useBookingStore } from "../store/bookingStore.js";
+import { usePaymentLogStore } from "../store/paymentLogStore.js";
 import { formatBookingDates } from "../utils/bookingFactory.js";
 import { buildItineraryPlannerUrl } from "../utils/itineraryPlanner.js";
+import { getCheckoutCardPayload, maskCardNumber, processPayment } from "../utils/paymentGateway.js";
 import { designTokens } from "../theme/theme.js";
 
 export default function BookingTravelerPage() {
   const { bookingId } = useParams();
   const navigate = useNavigate();
   const { showToast } = useToast();
+  const { runWithLoader } = useLoading();
 
   const getBookingById = useBookingStore((s) => s.getBookingById);
   const updateTraveler = useBookingStore((s) => s.updateTraveler);
   const setPendingPayment = useBookingStore((s) => s.setPendingPayment);
   const confirmPayment = useBookingStore((s) => s.confirmPayment);
   const setCurrentBooking = useBookingStore((s) => s.setCurrentBooking);
+  const logTransaction = usePaymentLogStore((s) => s.logTransaction);
 
   const booking = getBookingById(bookingId);
   const [traveler, setTraveler] = useState(booking?.traveler ?? {});
+  const [paymentMethod, setPaymentMethod] = useState(booking?.paymentMethod ?? "card");
+  const [cardPayload, setCardPayload] = useState(null);
+  const [paying, setPaying] = useState(false);
+  const [payError, setPayError] = useState("");
 
   useEffect(() => {
     if (booking?.traveler) setTraveler(booking.traveler);
     if (booking?.id) setCurrentBooking(booking.id);
   }, [booking?.id, booking?.traveler, setCurrentBooking]);
 
-  const [paymentMethod, setPaymentMethod] = useState(booking?.paymentMethod ?? "card");
-
   const isValid = useMemo(() => {
     const t = traveler;
-    return Boolean(
+    const travelerOk = Boolean(
       t.fullName?.trim() &&
         t.passport?.trim() &&
         t.nationality?.trim() &&
         t.email?.trim() &&
-        t.phone?.trim() &&
-        paymentMethod,
+        t.phone?.trim(),
     );
-  }, [traveler, paymentMethod]);
+    if (!travelerOk) return false;
+    if (paymentMethod === "card") {
+      const { valid } = getCheckoutCardPayload(cardPayload ?? {}, paymentMethod);
+      return valid;
+    }
+    return true;
+  }, [traveler, paymentMethod, cardPayload]);
 
   if (!booking) {
     return (
@@ -71,17 +82,87 @@ export default function BookingTravelerPage() {
     );
   }
 
-  function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault();
+    setPayError("");
+
     if (!isValid) {
-      showToast({ message: "Please complete all required fields.", severity: "warning" });
+      showToast({ message: "Please complete traveler and payment details.", severity: "warning" });
       return;
     }
+
+    if (paymentMethod === "card") {
+      const { valid } = getCheckoutCardPayload(cardPayload ?? {}, paymentMethod);
+      if (!valid) {
+        showToast({ message: "Fix payment field errors before continuing.", severity: "warning" });
+        return;
+      }
+    }
+
+    setPaying(true);
     updateTraveler(booking.id, { ...traveler, paymentMethod });
     setPendingPayment(booking.id);
-    const ref = confirmPayment(booking.id);
-    showToast({ message: "Payment successful. Confirmation sent to your email.", severity: "success" });
-    navigate(`/bookings/${booking.id}/success`, { state: { reference: ref } });
+
+    logTransaction({
+      status: "pending",
+      bookingId: booking.id,
+      amount: booking.total,
+      currency: "EUR",
+      method: paymentMethod,
+      travelerEmail: traveler.email,
+    });
+
+    try {
+      const result = await runWithLoader(() =>
+        processPayment({
+          method: paymentMethod,
+          amount: booking.total,
+          currency: "EUR",
+          cardNumber: cardPayload?.cardNumber,
+          bookingId: booking.id,
+        }),
+      );
+
+      if (!result.ok) {
+        setPayError(result.message);
+        logTransaction({
+          status: "failed",
+          bookingId: booking.id,
+          amount: booking.total,
+          code: result.code,
+          message: result.message,
+          method: paymentMethod,
+        });
+        showToast({ message: result.message, severity: "error" });
+        return;
+      }
+
+      const cardDisplay =
+        paymentMethod === "card"
+          ? `${result.cardBrand ?? "Card"} ${maskCardNumber(cardPayload?.cardNumber ?? "")}`
+          : "PayPal";
+
+      logTransaction({
+        status: "succeeded",
+        bookingId: booking.id,
+        amount: booking.total,
+        transactionId: result.transactionId,
+        provider: result.provider,
+        method: paymentMethod,
+        cardDisplay,
+      });
+
+      const ref = confirmPayment(booking.id, {
+        paymentMethod,
+        paymentCardDisplay: cardDisplay,
+        transactionId: result.transactionId,
+      });
+
+      showToast({ message: "Payment successful. Confirmation sent to your email.", severity: "success" });
+      navigate(`/bookings/${booking.id}/success`, { state: { reference: ref } });
+    } finally {
+      setPaying(false);
+    }
   }
 
   const hotelLabel = booking.hotel?.name ?? booking.hotel?.label ?? "Hotel included";
@@ -95,18 +176,16 @@ export default function BookingTravelerPage() {
         size="small"
         sx={{ mb: 2 }}
       >
-        ← Back to trip review
+        ← Back to trip
       </Button>
 
       <SectionHeading
-        eyebrow="Step 2 of 3"
-        title="Traveler details"
-        subtitle={`Required for ${booking.destinationTitle} · ${formatBookingDates(booking)}`}
+        eyebrow="Checkout"
+        title="Traveler & payment"
+        subtitle={`Secure payment for ${booking.destinationTitle ?? "your trip"}`}
       />
 
-      <Box sx={{ mb: 3 }}>
-        <BookingProgressBar value={55} />
-      </Box>
+      <BookingProgressBar status={booking.status} sx={{ mb: 3 }} />
 
       <Grid container spacing={3}>
         <Grid size={{ xs: 12, md: 7 }}>
@@ -119,16 +198,12 @@ export default function BookingTravelerPage() {
               border: `1px solid ${alpha(designTokens.brand.gold, 0.15)}`,
             }}
           >
-            <Typography variant="h6" fontWeight={800} gutterBottom>
-              Personal information
+            <Typography variant="subtitle1" fontWeight={800} gutterBottom>
+              Traveler details
             </Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ mb: 2.5 }}>
-              Enter details exactly as they appear on your passport. All fields are required.
-            </Typography>
-
             <Stack spacing={2}>
               <TextField
-                label="Full name (as on passport)"
+                label="Full name"
                 fullWidth
                 required
                 value={traveler.fullName ?? ""}
@@ -168,21 +243,22 @@ export default function BookingTravelerPage() {
                 onChange={(e) => setTraveler((t) => ({ ...t, phone: e.target.value }))}
                 InputLabelProps={{ shrink: true }}
               />
-              <FormControl fullWidth required>
-                <InputLabel shrink>Payment method</InputLabel>
-                <Select
-                  label="Payment method"
-                  value={paymentMethod}
-                  onChange={(e) => setPaymentMethod(e.target.value)}
-                  displayEmpty
-                  notched
-                >
-                  <MenuItem value="card">Credit or debit card</MenuItem>
-                  <MenuItem value="paypal">PayPal</MenuItem>
-                  <MenuItem value="apple">Apple Pay</MenuItem>
-                </Select>
-              </FormControl>
             </Stack>
+
+            <Divider sx={{ my: 3 }} />
+
+            <SecureCheckoutForm
+              amount={booking.total}
+              method={paymentMethod}
+              onMethodChange={setPaymentMethod}
+              onCardChange={setCardPayload}
+            />
+
+            {payError ? (
+              <Alert severity="error" sx={{ mt: 2, borderRadius: 2 }}>
+                {payError}
+              </Alert>
+            ) : null}
 
             <Button
               type="submit"
@@ -190,11 +266,11 @@ export default function BookingTravelerPage() {
               color="secondary"
               size="large"
               fullWidth
-              disabled={!isValid}
-              startIcon={<VerifiedRounded />}
+              disabled={!isValid || paying}
+              startIcon={paying ? <CircularProgress size={20} color="inherit" /> : <VerifiedRounded />}
               sx={{ mt: 3, py: 1.35, fontWeight: 800 }}
             >
-              Pay €{booking.total?.toLocaleString()}
+              {paying ? "Processing payment…" : `Pay €${booking.total?.toLocaleString()}`}
             </Button>
           </Paper>
         </Grid>
@@ -217,7 +293,7 @@ export default function BookingTravelerPage() {
               {booking.packageTitle}
             </Typography>
             <Typography variant="caption" color="text.secondary" display="block" sx={{ mb: 2 }}>
-              {flightLabel} · {hotelLabel} · {booking.experiences?.length ?? 0} activities
+              {formatBookingDates(booking.start, booking.end)} · {flightLabel} · {hotelLabel}
             </Typography>
             <Divider sx={{ my: 1.5 }} />
             {(booking.lineItems ?? []).map((line) => (

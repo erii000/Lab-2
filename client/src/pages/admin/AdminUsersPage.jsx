@@ -1,11 +1,10 @@
-import { AddRounded, MoreVertRounded, SearchRounded } from "../../ui/icons.jsx";
+import { AddRounded, MoreVertRounded } from "../../ui/icons.jsx";
 import {
   Box,
   Button,
   Checkbox,
   Chip,
   IconButton,
-  InputAdornment,
   Menu,
   MenuItem,
   Paper,
@@ -15,12 +14,12 @@ import {
   TableCell,
   TableHead,
   TableRow,
-  TextField,
   Typography,
 } from "@mui/material";
 import { alpha } from "@mui/material/styles";
 import { useEffect, useMemo, useState } from "react";
 import { useLocation } from "react-router-dom";
+import AdvancedListToolbar from "../../components/search/AdvancedListToolbar.jsx";
 import AdminNotificationsMenu from "../../components/admin/AdminNotificationsMenu.jsx";
 import ConfirmUserActionModal from "../../components/admin/users/ConfirmUserActionModal.jsx";
 import InviteUserModal from "../../components/admin/users/InviteUserModal.jsx";
@@ -40,6 +39,7 @@ import {
   getTravelerStatusMeta,
   USER_FILTER_CHIPS,
 } from "../../utils/adminUsers.js";
+import { ADMIN_USER_SORT_OPTIONS, applyAdvancedListQuery } from "../../utils/advancedSearch.js";
 
 export default function AdminUsersPage() {
   const location = useLocation();
@@ -57,6 +57,7 @@ export default function AdminUsersPage() {
 
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [sortKey, setSortKey] = useState("spent-desc");
   const [selectedId, setSelectedId] = useState(null);
   const [checked, setChecked] = useState(new Set());
   const [hoveredId, setHoveredId] = useState(null);
@@ -69,10 +70,23 @@ export default function AdminUsersPage() {
     if (location.state?.openInvite) setInviteOpen(true);
   }, [location.state]);
 
-  const filtered = useMemo(
-    () => filterUsers(users, { query, statusFilter }),
-    [users, query, statusFilter],
-  );
+  const filtered = useMemo(() => {
+    const base = filterUsers(users, { query: "", statusFilter });
+    return applyAdvancedListQuery({
+      items: base,
+      query,
+      getSearchableText: (u) =>
+        `${u.name} ${u.email} ${u.favoriteDestination ?? ""} ${(u.preferences ?? []).join(" ")} ${u.travelerStatus} ${u.accountStatus}`,
+      sortKey,
+      sortDir: sortKey.includes("desc") ? "desc" : "asc",
+      getSortValue: (u, key) => {
+        if (key === "spent-desc") return u.totalSpent ?? 0;
+        if (key === "trips-desc") return u.trips ?? 0;
+        if (key === "name-asc") return u.name;
+        return u.lastActive ?? "";
+      },
+    });
+  }, [users, query, statusFilter, sortKey]);
 
   const selectedUser = useMemo(
     () => users.find((u) => u.id === selectedId) ?? null,
@@ -127,28 +141,15 @@ export default function AdminUsersPage() {
         </Stack>
       </Stack>
 
-      <TextField
-        placeholder="Search travelers, destinations, preferences…"
-        size="small"
-        fullWidth
-        value={query}
-        onChange={(e) => setQuery(e.target.value)}
-        sx={{
-          mb: 2,
-          maxWidth: 480,
-          "& .MuiOutlinedInput-root": {
-            bgcolor: alpha("#fff", 0.04),
-            borderRadius: 2.5,
-            "& fieldset": { borderColor: adminColors.border },
-          },
-        }}
-        InputProps={{
-          startAdornment: (
-            <InputAdornment position="start">
-              <SearchRounded sx={{ color: adminColors.textMuted, fontSize: 20 }} />
-            </InputAdornment>
-          ),
-        }}
+      <AdvancedListToolbar
+        accent="admin"
+        query={query}
+        onQueryChange={setQuery}
+        sort={sortKey}
+        onSortChange={setSortKey}
+        sortOptions={ADMIN_USER_SORT_OPTIONS}
+        resultCount={filtered.length}
+        placeholder="Full-text search travelers…"
       />
 
       <Stack direction="row" spacing={0.75} sx={{ mb: 2.5 }}>

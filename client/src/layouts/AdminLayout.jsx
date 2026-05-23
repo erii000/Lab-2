@@ -2,6 +2,7 @@ import {
   DashboardRounded,
   ExploreRounded,
   MenuIcon,
+  SmartTravelLogo,
   ViewListRounded,
 } from "../ui/icons.jsx";
 import {
@@ -13,10 +14,12 @@ import {
   ListItemButton,
   ListItemIcon,
   ListItemText,
+  Stack,
   Toolbar,
   Typography,
 } from "@mui/material";
 import { alpha } from "@mui/material/styles";
+import AssessmentRoundedIcon from "@mui/icons-material/AssessmentRounded";
 import PeopleOutlineRoundedIcon from "@mui/icons-material/PeopleOutlineRounded";
 import SettingsOutlinedIcon from "@mui/icons-material/SettingsOutlined";
 import { Navigate, Outlet, useLocation, useNavigate } from "react-router-dom";
@@ -33,6 +36,7 @@ const menuItems = [
   { label: "Trips", icon: ExploreRounded, path: "/admin/trips" },
   { label: "Bookings", icon: ViewListRounded, path: "/admin/bookings" },
   { label: "Users", icon: PeopleOutlineRoundedIcon, path: "/admin/users" },
+  { label: "Reports", icon: AssessmentRoundedIcon, path: "/admin/reports" },
   { label: "Settings", icon: SettingsOutlinedIcon, path: "/admin/settings" },
 ];
 
@@ -94,20 +98,23 @@ export default function AdminLayout() {
   const sidebar = (
     <Box sx={{ height: "100%", display: "flex", flexDirection: "column" }}>
       <Box sx={{ px: 2.5, py: 2.5 }}>
-        <Typography
+        <Stack
           component={RouterLink}
           to="/"
-          variant="subtitle1"
-          fontWeight={800}
+          direction="row"
+          spacing={1.25}
+          alignItems="center"
           sx={{
-            color: "#fff",
             textDecoration: "none",
-            letterSpacing: "-0.02em",
-            "&:hover": { color: adminColors.gold },
+            color: "#fff",
+            "&:hover .MuiTypography-root": { color: adminColors.gold },
           }}
         >
-          Smart Travel
-        </Typography>
+          <SmartTravelLogo sx={{ fontSize: 28 }} />
+          <Typography variant="subtitle1" fontWeight={800} sx={{ letterSpacing: "-0.02em" }}>
+            Smart Travel
+          </Typography>
+        </Stack>
       </Box>
       <NavList onNavigate={() => setMobileOpen(false)} />
     </Box>

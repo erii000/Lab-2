@@ -1,37 +1,16 @@
-const STORAGE_KEY = "sta-contact-form-draft-v1";
+import { defaultContactDraft, useContactDraftStore } from "../store/contactDraftStore.js";
 
-const defaultDraft = {
-  fullName: "",
-  email: "",
-  subject: "",
-  bookingId: "",
-  message: "",
-  tripType: "leisure",
-  priority: "standard",
-};
-
+/** @deprecated Prefer useContactDraftStore — kept for backward compatibility */
 export function loadContactDraft() {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return { ...defaultDraft };
-    return { ...defaultDraft, ...JSON.parse(raw) };
-  } catch {
-    return { ...defaultDraft };
-  }
+  return { ...defaultContactDraft, ...useContactDraftStore.getState().draft };
 }
 
+/** @deprecated Prefer useContactDraftStore */
 export function saveContactDraft(draft) {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(draft));
-  } catch {
-    /* quota or private mode */
-  }
+  useContactDraftStore.getState().setDraft(draft);
 }
 
+/** @deprecated Prefer useContactDraftStore */
 export function clearContactDraft() {
-  try {
-    localStorage.removeItem(STORAGE_KEY);
-  } catch {
-    /* ignore */
-  }
+  useContactDraftStore.getState().resetDraft();
 }

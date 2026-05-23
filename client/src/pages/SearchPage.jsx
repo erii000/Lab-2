@@ -17,12 +17,15 @@ import {
 import { alpha } from "@mui/material/styles";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link as RouterLink, useNavigate, useSearchParams } from "react-router-dom";
+import AdvancedListToolbar from "../components/search/AdvancedListToolbar.jsx";
+import VisionUploadAnalyzer from "../components/search/VisionUploadAnalyzer.jsx";
 import ExploreAiBlock from "../components/explore/ExploreAiBlock.jsx";
 import ExploreDestinationCard from "../components/explore/ExploreDestinationCard.jsx";
 import ExploreFiltersSidebar from "../components/explore/ExploreFiltersSidebar.jsx";
 import ExploreSearchSummary from "../components/explore/ExploreSearchSummary.jsx";
 import ExploreTrending from "../components/explore/ExploreTrending.jsx";
 import { useBookingStore } from "../store/bookingStore.js";
+import { useExploreStore } from "../store/exploreStore.js";
 import { buildDestinationUrl } from "../utils/destinationSearch.js";
 import { buildItineraryPlannerUrl } from "../utils/itineraryPlanner.js";
 import {
@@ -30,13 +33,13 @@ import {
   buildExploreUrl,
   getDiscoveryGroups,
   getTrendingDestinations,
-  loadRecentSearches,
   mapDestinationToCard,
   parseExploreParams,
   pushRecentSearch,
   runExploreSearch,
   sortExploreResults,
 } from "../utils/exploreSearch.js";
+import { fullTextMatch } from "../utils/advancedSearch.js";
 import { designTokens } from "../theme/theme.js";
 
 export default function SearchPage() {
@@ -52,6 +55,7 @@ export default function SearchPage() {
   const [view, setView] = useState("list");
   const [mobileFilters, setMobileFilters] = useState(false);
   const [filtersOpen, setFiltersOpen] = useState(true);
+  const [ftQuery, setFtQuery] = useState("");
 
   useEffect(() => {
     const parsed = parseExploreParams(searchParams);
@@ -65,6 +69,13 @@ export default function SearchPage() {
     [searchResult.results, sort],
   );
 
+  const displayResults = useMemo(() => {
+    if (!ftQuery.trim()) return sortedResults;
+    return sortedResults.filter((d) =>
+      fullTextMatch(d, ftQuery, (item) => `${item.title} ${item.country} ${item.badge ?? ""}`),
+    );
+  }, [sortedResults, ftQuery]);
+
   const tripParams = useMemo(
     () => ({
       start: filters.start,
@@ -77,7 +88,7 @@ export default function SearchPage() {
 
   const discoveryGroups = useMemo(() => getDiscoveryGroups(filters.destination), [filters.destination]);
   const trending = useMemo(() => getTrendingDestinations(), []);
-  const [recentSearches, setRecentSearches] = useState(() => loadRecentSearches());
+  const recentSearches = useExploreStore((s) => s.recentSearches);
 
   const applyCriteria = useCallback(
     (next, { syncUrl = true } = {}) => {
@@ -88,7 +99,6 @@ export default function SearchPage() {
         setSearchParams(params, { replace: true });
       }
       pushRecentSearch(merged);
-      setRecentSearches(loadRecentSearches());
     },
     [filters, sort, setSearchParams],
   );
@@ -99,7 +109,7 @@ export default function SearchPage() {
 
   const countLabel =
     searchResult.mode === "exact"
-      ? `${sortedResults.length} trip${sortedResults.length !== 1 ? "s" : ""} found`
+      ? `${displayResults.length} trip${displayResults.length !== 1 ? "s" : ""} found`
       : "No exact matches found";
 
   return (
@@ -130,6 +140,21 @@ export default function SearchPage() {
           </Grid>
 
           <Grid size={{ xs: 12, md: filtersOpen ? 9 : 12 }}>
+            <VisionUploadAnalyzer />
+            <AdvancedListToolbar
+              query={ftQuery}
+              onQueryChange={setFtQuery}
+              sort={sort}
+              onSortChange={setSort}
+              sortOptions={[
+                { value: "recommended", label: "Recommended" },
+                { value: "price-low", label: "Price: low to high" },
+                { value: "price-high", label: "Price: high to low" },
+                { value: "rating", label: "Top rated" },
+              ]}
+              resultCount={displayResults.length}
+              placeholder="Full-text search destinations…"
+            />
             <Stack
               direction={{ xs: "column", sm: "row" }}
               justifyContent="space-between"
@@ -191,7 +216,7 @@ export default function SearchPage() {
 
             {view === "list" ? (
               <Grid container spacing={3}>
-                {sortedResults.map((dest) => (
+                {displayResults.map((dest) => (
                   <Grid key={dest.id} size={{ xs: 12, sm: 6, lg: 4 }}>
                     <ExploreDestinationCard
                       destination={dest}
@@ -230,7 +255,7 @@ export default function SearchPage() {
                 <MapRounded sx={{ fontSize: 40, color: "secondary.main", opacity: 0.8 }} />
                 <Typography fontWeight={700}>Map view</Typography>
                 <Typography variant="body2" color="text.secondary">
-                  {sortedResults.length} destinations on map
+                  {displayResults.length} destinations on map
                 </Typography>
               </Box>
             )}
@@ -254,14 +279,14 @@ export default function SearchPage() {
 
             <Button
               component={RouterLink}
-              to={buildItineraryPlannerUrl(sortedResults[0]?.id || "paris", {
+              to={buildItineraryPlannerUrl(displayResults[0]?.id || "paris", {
                 ...tripParams,
                 travelers: tripParams.guests,
               })}
               variant="contained"
               size="large"
               fullWidth
-              disabled={!sortedResults.length}
+              disabled={!displayResults.length}
               sx={{ mt: 6, py: 1.75, fontWeight: 800, borderRadius: 2.5, maxWidth: 400, mx: "auto", display: "block" }}
             >
               Build itinerary

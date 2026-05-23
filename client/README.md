@@ -46,3 +46,30 @@ Open the URL shown in the terminal (usually `http://localhost:5173`).
 
 - Bookings and drafts are stored in the browser (`localStorage` key `sta-bookings-v1`).
 - The backend in `../server` is optional for this UI shell; no API is required to run the client.
+
+## State management
+
+Global client state lives in `src/store/` (Zustand with `persist`):
+
+| Store | Responsibility |
+| ----- | ---------------- |
+| `authStore` | Session, login/logout (syncs traveler profile to bookings) |
+| `bookingStore` | Bookings, drafts, saved destinations |
+| `plannerStore` | Itinerary planner (syncs to booking drafts) |
+| `exploreStore` | Recent explore searches |
+| `contactDraftStore` | Contact form draft |
+| `assistantStore` | AI assistant query and last generated plan |
+| `admin*Store` | Admin bookings, trips, users, settings, notifications |
+
+Import hooks from `src/store/index.js` or individual store files. UI feedback uses `ToastContext`; async flows can use `useLoading()` / `runWithLoader` (top progress bar).
+
+## Bonus features (lab)
+
+| Feature | Where to try |
+| -------- | ------------- |
+| **ML recommendations** | Home — personalized destination scores |
+| **ML vision** | Explore — upload a travel photo |
+| **ML predictive analytics** | Admin → Dashboard |
+| **Advanced search** (5 lists) | Explore, Bookings dashboard, Admin Bookings / Users / Trips |
+| **Stripe / PayPal checkout** | Booking flow → Traveler & payment (demo card `4242…`, decline test `…0002`) |
+| **Dynamic reports** | Admin → Reports — CSV export & print/PDF |

@@ -30,6 +30,7 @@ import HomeTestimonials from "../components/home/HomeTestimonials.jsx";
 import HomeTrustStats from "../components/home/HomeTrustStats.jsx";
 import { quickSuggestions } from "../components/home/homeData.js";
 import HeroSearchBar from "../components/search/HeroSearchBar.jsx";
+import MlRecommendationsRail from "../components/search/MlRecommendationsRail.jsx";
 import { buildDestinationUrl } from "../utils/destinationSearch.js";
 import { designTokens } from "../theme/theme.js";
 
@@ -278,6 +279,7 @@ export default function HomePage() {
             title="Featured destinations"
             subtitle="Hand-picked cities with premium stays and AI-built itineraries."
           />
+          <MlRecommendationsRail />
           <HomeFeaturedDestinations />
         </Box>
 

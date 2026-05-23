@@ -3,12 +3,9 @@ import { persist } from "zustand/middleware";
 import { BOOKING_STATUS, calculateBookingProgress, isDraftStatus } from "../utils/bookingConstants.js";
 import { createBookingFromConfigurator } from "../utils/bookingFactory.js";
 import { createBookingFromPlanner } from "../utils/bookingFromPlanner.js";
+import { sessionToAuthUser } from "./sessionUser.js";
 
-const defaultUser = {
-  id: "user_demo",
-  name: "Travel Guest",
-  email: "guest@smarttravel.app",
-};
+const defaultUser = sessionToAuthUser(null);
 
 export const useBookingStore = create(
   persist(
@@ -18,6 +15,8 @@ export const useBookingStore = create(
       currentBookingId: null,
       bookingDrafts: [],
       savedDestinations: [],
+
+      setAuthFromSession: (session) => set({ authUser: sessionToAuthUser(session) }),
 
       setSelectedTrip: (trip) => set({ selectedTrip: trip }),
 
@@ -134,7 +133,7 @@ export const useBookingStore = create(
           ),
         })),
 
-      confirmPayment: (bookingId) => {
+      confirmPayment: (bookingId, paymentMeta = {}) => {
         const ref = `STA-${bookingId.slice(-6).toUpperCase()}`;
         set((state) => ({
           bookingDrafts: state.bookingDrafts.map((b) =>
@@ -144,6 +143,9 @@ export const useBookingStore = create(
                   status: BOOKING_STATUS.CONFIRMED,
                   bookingReference: ref,
                   progress: 100,
+                  paymentMethod: paymentMeta.paymentMethod ?? b.paymentMethod,
+                  paymentCardDisplay: paymentMeta.paymentCardDisplay ?? b.paymentCardDisplay,
+                  paymentTransactionId: paymentMeta.transactionId ?? b.paymentTransactionId,
                   updatedAt: new Date().toISOString(),
                 }
               : b,
@@ -171,6 +173,7 @@ export const useBookingStore = create(
     }),
     {
       name: "sta-bookings-v1",
+      version: 1,
       partialize: (state) => ({
         authUser: state.authUser,
         bookingDrafts: state.bookingDrafts,

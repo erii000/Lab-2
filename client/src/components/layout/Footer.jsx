@@ -121,7 +121,7 @@ function FooterBrand() {
       sx={{ textDecoration: "none", color: "inherit", alignItems: "flex-start" }}
     >
       <Stack direction="row" spacing={1.25} alignItems="center">
-        <BrandMonogramLogo sx={{ fontSize: 32, color: theme.palette.primary.main }} />
+        <BrandMonogramLogo sx={{ fontSize: 32 }} />
         <Typography variant="subtitle1" fontWeight={800} sx={{ color: theme.palette.text.primary, letterSpacing: "-0.02em" }}>
           SmartTravel
         </Typography>

@@ -63,7 +63,7 @@ export default function AuthLayout() {
               bgcolor: alpha("#000", 0.2),
             }}
           >
-            <BrandMonogramLogo sx={{ fontSize: 24, color: designTokens.brand.gold }} />
+            <BrandMonogramLogo sx={{ fontSize: 24 }} />
           </Box>
           <Typography variant="h6" fontWeight={800} sx={{ color: "#fff", letterSpacing: "-0.02em" }}>
             Smart Travel

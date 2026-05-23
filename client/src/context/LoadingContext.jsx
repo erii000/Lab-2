@@ -1,3 +1,4 @@
+import { LinearProgress } from "@mui/material";
 import { createContext, useCallback, useContext, useMemo, useState } from "react";
 
 const LoadingContext = createContext(null);
@@ -25,18 +26,37 @@ export function LoadingProvider({ children }) {
     [startLoading, stopLoading],
   );
 
+  const isLoading = activeRequests > 0;
+
   const value = useMemo(
     () => ({
       activeRequests,
-      isLoading: activeRequests > 0,
+      isLoading,
       startLoading,
       stopLoading,
       runWithLoader,
     }),
-    [activeRequests, runWithLoader, startLoading, stopLoading],
+    [activeRequests, isLoading, runWithLoader, startLoading, stopLoading],
   );
 
-  return <LoadingContext.Provider value={value}>{children}</LoadingContext.Provider>;
+  return (
+    <LoadingContext.Provider value={value}>
+      {isLoading ? (
+        <LinearProgress
+          color="primary"
+          sx={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            right: 0,
+            zIndex: (theme) => theme.zIndex.tooltip + 2,
+            height: 2,
+          }}
+        />
+      ) : null}
+      {children}
+    </LoadingContext.Provider>
+  );
 }
 
 export function useLoading() {

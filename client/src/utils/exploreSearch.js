@@ -244,29 +244,14 @@ export function getDiscoveryGroups(query) {
   ].filter((g) => !q || g.id !== "similar" || refDest);
 }
 
-const RECENT_KEY = "sta_recent_explore";
+import { getRecentSearches, useExploreStore } from "../store/exploreStore.js";
 
 export function pushRecentSearch(criteria) {
-  try {
-    const label = [criteria.destination, criteria.budget ? `€${criteria.budget}` : null]
-      .filter(Boolean)
-      .join(" · ");
-    if (!label) return;
-    const entry = { label, criteria, at: Date.now() };
-    const list = loadRecentSearches().filter((r) => r.label !== label);
-    localStorage.setItem(RECENT_KEY, JSON.stringify([entry, ...list].slice(0, 5)));
-  } catch {
-    /* ignore */
-  }
+  useExploreStore.getState().pushRecentSearch(criteria);
 }
 
 export function loadRecentSearches() {
-  try {
-    const raw = localStorage.getItem(RECENT_KEY);
-    return raw ? JSON.parse(raw) : [];
-  } catch {
-    return [];
-  }
+  return getRecentSearches();
 }
 
 export function mapDestinationToCard(dest) {

@@ -1,21 +1,14 @@
-import { SearchRounded } from "../../ui/icons.jsx";
 import {
   Box,
-  FormControl,
-  InputAdornment,
-  InputLabel,
-  MenuItem,
   Paper,
-  Select,
-  Stack,
   Table,
   TableBody,
   TableCell,
   TableHead,
   TableRow,
-  TextField,
 } from "@mui/material";
 import { useMemo, useState } from "react";
+import AdvancedListToolbar from "../../components/search/AdvancedListToolbar.jsx";
 import AdminTopBar from "../../components/admin/AdminTopBar.jsx";
 import BookingDetailDrawer from "../../components/admin/BookingDetailDrawer.jsx";
 import BookingStatusSelect from "../../components/admin/BookingStatusSelect.jsx";
@@ -29,6 +22,10 @@ import {
 } from "../../components/admin/adminStyles.js";
 import { normalizeStatusKey, useAdminBookingsStore } from "../../store/adminBookingsStore.js";
 import { useToast } from "../../context/ToastContext.jsx";
+import {
+  ADMIN_BOOKING_SORT_OPTIONS,
+  applyAdvancedListQuery,
+} from "../../utils/advancedSearch.js";
 
 export default function AdminBookingsPage() {
   const { showToast } = useToast();
@@ -40,6 +37,7 @@ export default function AdminBookingsPage() {
 
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [sortKey, setSortKey] = useState("id-desc");
   const [selectedId, setSelectedId] = useState(null);
   const [cancelTarget, setCancelTarget] = useState(null);
   const [refundTarget, setRefundTarget] = useState(null);
@@ -50,18 +48,25 @@ export default function AdminBookingsPage() {
   );
 
   const filtered = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    return bookings.filter((b) => {
+    const base = bookings.filter((b) => {
       const statusKey = normalizeStatusKey(b.status);
-      if (statusFilter !== "all" && statusKey !== statusFilter) return false;
-      if (!q) return true;
-      return (
-        b.id.toLowerCase().includes(q) ||
-        b.user.toLowerCase().includes(q) ||
-        b.destination.toLowerCase().includes(q)
-      );
+      return statusFilter === "all" || statusKey === statusFilter;
     });
-  }, [bookings, query, statusFilter]);
+    return applyAdvancedListQuery({
+      items: base,
+      query,
+      getSearchableText: (b) =>
+        `${b.id} ${b.user} ${b.email ?? ""} ${b.destination} ${b.travelDates} ${b.status} ${b.invoice ?? ""}`,
+      sortKey,
+      sortDir: sortKey.includes("desc") ? "desc" : "asc",
+      getSortValue: (b, key) => {
+        if (key === "amount-desc") return b.amount;
+        if (key === "user-asc") return b.user;
+        if (key === "destination-asc") return b.destination;
+        return b.id;
+      },
+    });
+  }, [bookings, query, statusFilter, sortKey]);
 
   function handleStatusChange(bookingId, statusKey) {
     if (statusKey === "cancelled" || statusKey === "refunded") {
@@ -108,33 +113,26 @@ export default function AdminBookingsPage() {
     <Box>
       <AdminTopBar title="Bookings" />
 
-      <Stack direction={{ xs: "column", sm: "row" }} spacing={2} sx={{ mb: 3 }}>
-        <TextField
-          placeholder="Search by ID, traveler, or destination…"
-          size="small"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          sx={{ flex: 1 }}
-          InputProps={{
-            startAdornment: (
-              <InputAdornment position="start">
-                <SearchRounded sx={{ color: adminColors.textMuted, fontSize: 20 }} />
-              </InputAdornment>
-            ),
-          }}
-        />
-        <FormControl size="small" sx={{ minWidth: 160 }}>
-          <InputLabel>Status</InputLabel>
-          <Select label="Status" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
-            <MenuItem value="all">All</MenuItem>
-            <MenuItem value="paid">Paid</MenuItem>
-            <MenuItem value="pending">Pending</MenuItem>
-            <MenuItem value="cancelled">Cancelled</MenuItem>
-            <MenuItem value="refunded">Refunded</MenuItem>
-            <MenuItem value="partially_refunded">Partially refunded</MenuItem>
-          </Select>
-        </FormControl>
-      </Stack>
+      <AdvancedListToolbar
+        accent="admin"
+        query={query}
+        onQueryChange={setQuery}
+        sort={sortKey}
+        onSortChange={setSortKey}
+        sortOptions={ADMIN_BOOKING_SORT_OPTIONS}
+        statusFilter={statusFilter}
+        onStatusFilterChange={setStatusFilter}
+        statusOptions={[
+          { value: "all", label: "All statuses" },
+          { value: "paid", label: "Paid" },
+          { value: "pending", label: "Pending" },
+          { value: "cancelled", label: "Cancelled" },
+          { value: "refunded", label: "Refunded" },
+          { value: "partially_refunded", label: "Partially refunded" },
+        ]}
+        resultCount={filtered.length}
+        placeholder="Full-text search bookings…"
+      />
 
       <Paper sx={{ ...adminPanelSx, overflow: "hidden" }}>
         <Table>

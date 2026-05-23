@@ -2,6 +2,7 @@
  * Inline SVG icons (no @mui/icons-material) — avoids peer/version conflicts on install.
  * Paths follow Material Design icon shapes where applicable.
  */
+import { useId } from "react";
 import SvgIcon from "@mui/material/SvgIcon";
 
 function mk(path, viewBox = "0 0 24 24") {
@@ -192,35 +193,67 @@ export function BrandAuroraLogo(props) {
   );
 }
 
-/** Clean premium monogram logo with flight arc */
-export function BrandMonogramLogo(props) {
+/**
+ * Smart Travel brand mark — obsidian tile, gold journey arc, destination pin, AI node.
+ * Readable from 20px (navbar) to 32px+ (footer).
+ */
+export function SmartTravelLogo(props) {
+  const uid = useId().replace(/:/g, "");
+  const gold = `stGold-${uid}`;
+  const glow = `stGlow-${uid}`;
+
   return (
-    <SvgIcon {...props} viewBox="0 0 24 24">
+    <SvgIcon {...props} viewBox="0 0 32 32">
       <defs>
-        <linearGradient id="brandMonogramGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor="#f6d58c" />
-          <stop offset="60%" stopColor="#d4af6a" />
-          <stop offset="100%" stopColor="#b58b47" />
+        <linearGradient id={gold} x1="5" y1="4" x2="27" y2="28" gradientUnits="userSpaceOnUse">
+          <stop offset="0%" stopColor="#F7E8C3" />
+          <stop offset="45%" stopColor="#D4AF6A" />
+          <stop offset="100%" stopColor="#9A7B42" />
         </linearGradient>
+        <radialGradient id={glow} cx="50%" cy="55%" r="50%">
+          <stop offset="0%" stopColor="#D4AF6A" stopOpacity="0.28" />
+          <stop offset="100%" stopColor="#D4AF6A" stopOpacity="0" />
+        </radialGradient>
       </defs>
-      <rect x="3" y="3" width="18" height="18" rx="5" fill="#111318" />
+      <rect x="1" y="1" width="30" height="30" rx="9" fill="#0B0D12" />
       <rect
-        x="3.7"
-        y="3.7"
-        width="16.6"
-        height="16.6"
-        rx="4.3"
+        x="1.75"
+        y="1.75"
+        width="28.5"
+        height="28.5"
+        rx="8.25"
         fill="none"
-        stroke="url(#brandMonogramGrad)"
-        strokeWidth="1.1"
+        stroke={`url(#${gold})`}
+        strokeWidth="0.9"
+        opacity="0.5"
       />
-      <circle cx="12" cy="12" r="4.6" fill="none" stroke="url(#brandMonogramGrad)" strokeWidth="1.15" />
-      <path d="M12 6.3l1.4 3-1.4.9-1.4-.9z" fill="url(#brandMonogramGrad)" />
-      <path d="M8 16.7c2.1.8 4.7.8 7 .1 1.3-.4 2.5-1 3.2-1.3" stroke="url(#brandMonogramGrad)" strokeWidth="1.25" fill="none" strokeLinecap="round" />
-      <path d="M18.4 15.2l2 .2-.8 1.3z" fill="#f6d58c" />
-      <circle cx="8" cy="16.7" r="0.7" fill="#f6d58c" />
+      <circle cx="16" cy="17" r="10" fill={`url(#${glow})`} />
+      <path
+        d="M7 22.25c2.8-7.5 7.2-11.25 16-9.5"
+        fill="none"
+        stroke={`url(#${gold})`}
+        strokeWidth="2"
+        strokeLinecap="round"
+      />
+      <circle cx="7" cy="22.25" r="1.35" fill={`url(#${gold})`} />
+      <path
+        d="M16 10.5c-2.05 0-3.75 1.55-3.75 3.45 0 2.6 3.75 6.1 3.75 6.1s3.75-3.5 3.75-6.1c0-1.9-1.7-3.45-3.75-3.45z"
+        fill={`url(#${gold})`}
+      />
+      <circle cx="16" cy="14" r="1.1" fill="#0B0D12" />
+      <circle cx="23.25" cy="10.75" r="1.7" fill="#F4E7C8" />
+      <path
+        d="M23.25 9.1l.35 1.15 1.15.35-1.15.35-.35 1.15-.35-1.15-1.15-.35 1.15-.35z"
+        fill="#0B0D12"
+        opacity="0.85"
+      />
     </SvgIcon>
   );
+}
+
+/** @deprecated Alias — use SmartTravelLogo */
+export function BrandMonogramLogo(props) {
+  return <SmartTravelLogo {...props} />;
 }
 
 export const ChevronLeftRounded = mk(

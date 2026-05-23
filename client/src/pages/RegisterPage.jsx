@@ -37,7 +37,7 @@ export default function RegisterPage() {
     setSubmitError(nextErrors);
     if (Object.keys(nextErrors).length) return;
 
-    const result = login(form.email, form.password);
+    const result = login(form.email, form.password, { name: form.fullName });
     if (result.ok) {
       showToast({ message: `Welcome, ${form.fullName.split(" ")[0]}.`, severity: "success" });
       navigate("/", { replace: true });

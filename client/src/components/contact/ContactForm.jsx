@@ -21,7 +21,8 @@ import {
 } from "@mui/material";
 import { alpha, keyframes } from "@mui/material/styles";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { clearContactDraft, loadContactDraft, saveContactDraft } from "../../utils/contactFormStorage.js";
+import { useLoading } from "../../context/LoadingContext.jsx";
+import { useContactDraftStore } from "../../store/contactDraftStore.js";
 import { designTokens } from "../../theme/theme.js";
 import { glassCard } from "./contactStyles.js";
 import { validateContactField, validateContactForm } from "./contactFormValidation.js";
@@ -50,24 +51,27 @@ const MAX_FILES = 3;
 const MAX_FILE_MB = 5;
 
 export default function ContactForm({ formRef, lightSurface }) {
-  const [form, setForm] = useState(loadContactDraft);
+  const form = useContactDraftStore((s) => s.draft);
+  const setDraft = useContactDraftStore((s) => s.setDraft);
+  const resetDraft = useContactDraftStore((s) => s.resetDraft);
+  const { runWithLoader } = useLoading();
   const [touched, setTouched] = useState({});
   const [errors, setErrors] = useState({});
   const [files, setFiles] = useState([]);
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
   const [draftSaved, setDraftSaved] = useState(false);
-  const saveTimer = useRef(null);
+  const draftChipTimer = useRef(null);
 
   const showError = (field) => Boolean(touched[field] && errors[field]);
 
-  const updateField = useCallback((field, value) => {
-    setForm((prev) => {
-      const next = { ...prev, [field]: value };
-      return next;
-    });
-    setTouched((t) => ({ ...t, [field]: true }));
-  }, []);
+  const updateField = useCallback(
+    (field, value) => {
+      setDraft((prev) => ({ ...prev, [field]: value }));
+      setTouched((t) => ({ ...t, [field]: true }));
+    },
+    [setDraft],
+  );
 
   useEffect(() => {
     const err = validateContactField;
@@ -80,19 +84,13 @@ export default function ContactForm({ formRef, lightSurface }) {
     });
   }, [form, touched]);
 
-  const draftChipTimer = useRef(null);
-
   useEffect(() => {
-    if (saveTimer.current) clearTimeout(saveTimer.current);
-    saveTimer.current = setTimeout(() => {
-      saveContactDraft(form);
+    const timer = setTimeout(() => {
       setDraftSaved(true);
       if (draftChipTimer.current) clearTimeout(draftChipTimer.current);
       draftChipTimer.current = setTimeout(() => setDraftSaved(false), 2000);
     }, 500);
-    return () => {
-      if (saveTimer.current) clearTimeout(saveTimer.current);
-    };
+    return () => clearTimeout(timer);
   }, [form]);
 
   function handleBlur(field) {
@@ -120,17 +118,19 @@ export default function ContactForm({ formRef, lightSurface }) {
     if (Object.keys(nextErrors).length) return;
 
     setSubmitting(true);
-    await new Promise((r) => setTimeout(r, 1400));
-    setSubmitting(false);
-    setSuccess(true);
-    clearContactDraft();
-    setTimeout(() => {
-      setSuccess(false);
-      setForm(loadContactDraft());
-      setTouched({});
-      setErrors({});
-      setFiles([]);
-    }, 2800);
+    try {
+      await runWithLoader(() => new Promise((r) => setTimeout(r, 1400)));
+      setSuccess(true);
+      resetDraft();
+      setTimeout(() => {
+        setSuccess(false);
+        setTouched({});
+        setErrors({});
+        setFiles([]);
+      }, 2800);
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   return (

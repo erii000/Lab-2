@@ -22,6 +22,7 @@ import AdminBookingsPage from "./pages/admin/AdminBookingsPage.jsx";
 import AdminDashboardPage from "./pages/admin/AdminDashboardPage.jsx";
 import AdminSettingsPage from "./pages/admin/AdminSettingsPage.jsx";
 import AdminTripsPage from "./pages/admin/AdminTripsPage.jsx";
+import AdminReportsPage from "./pages/admin/AdminReportsPage.jsx";
 import AdminUsersPage from "./pages/admin/AdminUsersPage.jsx";
 
 export const router = createBrowserRouter([
@@ -65,6 +66,7 @@ export const router = createBrowserRouter([
           { path: "admin/trips/:tripId", element: <Navigate to="/admin/trips" replace /> },
           { path: "admin/bookings", element: <AdminBookingsPage /> },
           { path: "admin/users", element: <AdminUsersPage /> },
+          { path: "admin/reports", element: <AdminReportsPage /> },
           { path: "admin/settings", element: <AdminSettingsPage /> },
           { path: "admin/roles", element: <Navigate to="/admin/settings" replace /> },
           { path: "admin/permissions", element: <Navigate to="/admin/settings" replace /> },

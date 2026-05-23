@@ -322,7 +322,7 @@ export const featuredContent = {
 export const settingsSections = {
   general: {
     appName: "Smart Travel Assistant",
-    logo: "/logo.svg",
+    logo: "/favicon.svg",
     tagline: "Luxury Planning Platform",
     primaryColor: "#d4af6a",
   },

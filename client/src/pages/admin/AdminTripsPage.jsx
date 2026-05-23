@@ -1,8 +1,9 @@
-import { AddRounded, SearchRounded } from "../../ui/icons.jsx";
-import { Box, Button, Chip, Grid, InputAdornment, Stack, TextField, Typography } from "@mui/material";
+import { AddRounded } from "../../ui/icons.jsx";
+import { Box, Button, Chip, Grid, Stack, Typography } from "@mui/material";
 import { alpha } from "@mui/material/styles";
 import { useEffect, useMemo, useState } from "react";
 import { useLocation } from "react-router-dom";
+import AdvancedListToolbar from "../../components/search/AdvancedListToolbar.jsx";
 import AdminNotificationsMenu from "../../components/admin/AdminNotificationsMenu.jsx";
 import ConfirmTripDeleteModal from "../../components/admin/trips/ConfirmTripDeleteModal.jsx";
 import CreateTripDrawer from "../../components/admin/trips/CreateTripDrawer.jsx";
@@ -13,6 +14,7 @@ import { adminColors } from "../../components/admin/adminStyles.js";
 import { useToast } from "../../context/ToastContext.jsx";
 import { useAdminTripsStore } from "../../store/adminTripsStore.js";
 import { filterTripsWorkspace, TRIP_FILTER_PILLS } from "../../utils/adminTrips.js";
+import { ADMIN_TRIP_SORT_OPTIONS, applyAdvancedListQuery } from "../../utils/advancedSearch.js";
 
 export default function AdminTripsPage() {
   const location = useLocation();
@@ -29,6 +31,7 @@ export default function AdminTripsPage() {
 
   const [query, setQuery] = useState("");
   const [pill, setPill] = useState("all");
+  const [sortKey, setSortKey] = useState("bookings-desc");
   const [selected, setSelected] = useState(new Set());
   const [hoveredId, setHoveredId] = useState(null);
   const [workspaceId, setWorkspaceId] = useState(null);
@@ -39,7 +42,23 @@ export default function AdminTripsPage() {
     if (location.state?.openCreate) setCreateOpen(true);
   }, [location.state]);
 
-  const filtered = useMemo(() => filterTripsWorkspace(trips, { query, pill }), [trips, query, pill]);
+  const filtered = useMemo(() => {
+    const base = filterTripsWorkspace(trips, { query: "", pill });
+    return applyAdvancedListQuery({
+      items: base,
+      query,
+      getSearchableText: (t) =>
+        `${t.title} ${t.country} ${t.destination} ${t.style} ${t.status} ${t.subtitle ?? ""}`,
+      sortKey,
+      sortDir: sortKey.includes("desc") ? "desc" : "asc",
+      getSortValue: (t, key) => {
+        if (key === "bookings-desc") return t.bookings ?? 0;
+        if (key === "price-asc") return t.priceFrom;
+        if (key === "title-asc") return t.title;
+        return t.status;
+      },
+    });
+  }, [trips, query, pill, sortKey]);
   const workspaceTrip = useMemo(
     () => trips.find((t) => t.id === workspaceId) ?? null,
     [trips, workspaceId],
@@ -95,30 +114,15 @@ export default function AdminTripsPage() {
         </Stack>
       </Stack>
 
-      <TextField
-        placeholder="Search destinations, travelers, styles…"
-        size="small"
-        fullWidth
-        value={query}
-        onChange={(e) => setQuery(e.target.value)}
-        sx={{
-          mb: 2,
-          maxWidth: 520,
-          "& .MuiOutlinedInput-root": {
-            bgcolor: alpha("#fff", 0.04),
-            borderRadius: 2.5,
-            "& fieldset": { borderColor: adminColors.border },
-            "&:hover fieldset": { borderColor: adminColors.borderHover },
-            "&.Mui-focused fieldset": { borderColor: adminColors.gold },
-          },
-        }}
-        InputProps={{
-          startAdornment: (
-            <InputAdornment position="start">
-              <SearchRounded sx={{ color: adminColors.textMuted, fontSize: 20 }} />
-            </InputAdornment>
-          ),
-        }}
+      <AdvancedListToolbar
+        accent="admin"
+        query={query}
+        onQueryChange={setQuery}
+        sort={sortKey}
+        onSortChange={setSortKey}
+        sortOptions={ADMIN_TRIP_SORT_OPTIONS}
+        resultCount={filtered.length}
+        placeholder="Full-text search trips…"
       />
 
       <Stack direction="row" spacing={0.75} sx={{ mb: 2.5 }}>
