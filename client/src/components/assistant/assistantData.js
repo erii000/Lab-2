@@ -1,9 +1,7 @@
-export const suggestionChips = [
-  { label: "Weekend in Paris", query: "Weekend in Paris for two" },
-  { label: "Budget summer trip", query: "Budget summer trip in Europe under €1000" },
-  { label: "Luxury vacation", query: "Luxury vacation in Italy" },
-  { label: "Solo travel", query: "Solo travel city break for 4 days" },
-];
+import { promptChips } from "./assistantTheme.js";
+
+/** @deprecated Use promptChips from assistantTheme.js */
+export const suggestionChips = promptChips.map(({ label, query }) => ({ label, query }));
 
 const defaultPlan = {
   title: "5-Day Italy Trip",

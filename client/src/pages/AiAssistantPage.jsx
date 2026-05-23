@@ -1,34 +1,27 @@
-import {
-  Box,
-  Button,
-  Chip,
-  CircularProgress,
-  Container,
-  Stack,
-  TextField,
-  Typography,
-} from "@mui/material";
+import { Box, Button, Container } from "@mui/material";
 import { alpha } from "@mui/material/styles";
 import { useRef, useState } from "react";
 import { Link as RouterLink } from "react-router-dom";
 import AssistantBudgetSummary from "../components/assistant/AssistantBudgetSummary.jsx";
+import AssistantHero from "../components/assistant/AssistantHero.jsx";
+import AssistantHowItWorks from "../components/assistant/AssistantHowItWorks.jsx";
 import AssistantItineraryAccordion from "../components/assistant/AssistantItineraryAccordion.jsx";
 import AssistantResultCard from "../components/assistant/AssistantResultCard.jsx";
-import { buildTripPlan, suggestionChips } from "../components/assistant/assistantData.js";
-import { useLoading } from "../context/LoadingContext.jsx";
+import { buildTripPlan } from "../components/assistant/assistantData.js";
+import { loadingSteps } from "../components/assistant/assistantTheme.js";
 import { useToast } from "../context/ToastContext.jsx";
 import { useAssistantStore } from "../store/assistantStore.js";
 import { designTokens } from "../theme/theme.js";
 
-const CONTENT_MAX = 680;
+const PLAN_DELAY_MS = loadingSteps.length * 700 + 400;
 
 export default function AiAssistantPage() {
   const inputRef = useRef(null);
+  const resultsRef = useRef(null);
   const query = useAssistantStore((s) => s.query);
   const setQuery = useAssistantStore((s) => s.setQuery);
   const plan = useAssistantStore((s) => s.plan);
   const setPlan = useAssistantStore((s) => s.setPlan);
-  const { runWithLoader } = useLoading();
   const { showToast } = useToast();
   const [sending, setSending] = useState(false);
   const [expandedDay, setExpandedDay] = useState(false);
@@ -41,9 +34,10 @@ export default function AiAssistantPage() {
     setPlan(null);
     setExpandedDay(false);
     try {
-      await runWithLoader(async () => {
-        await new Promise((r) => setTimeout(r, 800));
-        setPlan(buildTripPlan(q));
+      await new Promise((r) => setTimeout(r, PLAN_DELAY_MS));
+      setPlan(buildTripPlan(q));
+      requestAnimationFrame(() => {
+        resultsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
       });
     } finally {
       setSending(false);
@@ -90,94 +84,29 @@ export default function AiAssistantPage() {
     }
   }
 
+  const showLandingSections = !plan && !sending;
+
   return (
-    <Box
-      sx={{
-        minHeight: "calc(100vh - 72px)",
-        py: { xs: 5, md: 8 },
-        px: { xs: 2, sm: 3 },
-      }}
-    >
-      <Container maxWidth={false} disableGutters sx={{ maxWidth: CONTENT_MAX, mx: "auto" }}>
-        <Stack spacing={1} sx={{ mb: 5 }}>
-          <Typography variant="h4" component="h1" fontWeight={800} sx={{ letterSpacing: "-0.02em" }}>
-            Your AI Travel Assistant
-          </Typography>
-          <Typography color="text.secondary" sx={{ fontSize: "1.05rem" }}>
-            Plan smarter trips in seconds.
-          </Typography>
-        </Stack>
+    <Box>
+      <AssistantHero
+        query={query}
+        onQueryChange={setQuery}
+        onSubmit={handleSubmit}
+        onChipClick={handleChip}
+        sending={sending}
+        showLoader={sending && !plan}
+        inputRef={inputRef}
+      />
 
-        <Box component="form" onSubmit={handleSubmit}>
-          <TextField
-            inputRef={inputRef}
-            fullWidth
-            multiline
-            minRows={3}
-            maxRows={6}
-            placeholder="Describe your trip — where, when, budget, who's traveling…"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            disabled={sending}
-            sx={{
-              "& .MuiOutlinedInput-root": {
-                fontSize: "1.05rem",
-                py: 1.5,
-                borderRadius: 3,
-                bgcolor: alpha(designTokens.brand.charcoal, 0.6),
-                border: `1px solid ${alpha(designTokens.brand.gold, 0.12)}`,
-                "& fieldset": { border: "none" },
-                "&:hover": { bgcolor: alpha(designTokens.brand.charcoal, 0.75) },
-                "&.Mui-focused": {
-                  bgcolor: alpha(designTokens.brand.charcoal, 0.8),
-                  boxShadow: `0 0 0 1px ${alpha(designTokens.brand.gold, 0.35)}`,
-                },
-              },
-            }}
-          />
+      {showLandingSections ? (
+        <Container maxWidth="lg" sx={{ pb: { xs: 6, md: 8 } }}>
+          <AssistantHowItWorks />
+        </Container>
+      ) : null}
 
-          <Stack direction="row" flexWrap="wrap" gap={1} sx={{ mt: 3 }}>
-            {suggestionChips.map((chip) => (
-              <Chip
-                key={chip.label}
-                label={chip.label}
-                onClick={() => handleChip(chip)}
-                disabled={sending}
-                variant="outlined"
-                sx={{
-                  fontWeight: 600,
-                  borderColor: alpha(designTokens.brand.gold, 0.2),
-                  "&:hover": { bgcolor: alpha(designTokens.brand.gold, 0.08) },
-                }}
-              />
-            ))}
-          </Stack>
-
-          <Stack direction="row" alignItems="center" spacing={1.5} sx={{ mt: 4 }}>
-            <Button
-              type="submit"
-              variant="contained"
-              size="large"
-              disabled={sending || !query.trim()}
-              sx={{ fontWeight: 800, px: 4, py: 1.25, borderRadius: 2.5 }}
-            >
-              {sending ? "Generating…" : "Generate Trip"}
-            </Button>
-            {sending ? <CircularProgress size={22} color="secondary" /> : null}
-          </Stack>
-        </Box>
-
-        {sending && !plan ? (
-          <Stack alignItems="center" sx={{ mt: 8, py: 6 }}>
-            <CircularProgress size={28} />
-            <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>
-              Building your trip…
-            </Typography>
-          </Stack>
-        ) : null}
-
-        {plan ? (
-          <Box sx={{ pb: 10 }}>
+      {plan ? (
+        <Box ref={resultsRef} sx={{ pb: 8, scrollMarginTop: 96 }}>
+          <Container maxWidth="md">
             <AssistantResultCard
               plan={plan}
               onRegenerate={handleRegenerate}
@@ -205,14 +134,18 @@ export default function AiAssistantPage() {
                 py: 1.75,
                 fontWeight: 800,
                 borderRadius: 2.5,
-                maxWidth: CONTENT_MAX,
+                background: `linear-gradient(135deg, ${designTokens.brand.gold}, ${alpha(designTokens.brand.gold, 0.88)})`,
+                color: designTokens.brand.obsidian,
+                "&:hover": {
+                  background: `linear-gradient(135deg, ${designTokens.brand.champagne}, ${designTokens.brand.gold})`,
+                },
               }}
             >
               Book trip
             </Button>
-          </Box>
-        ) : null}
-      </Container>
+          </Container>
+        </Box>
+      ) : null}
     </Box>
   );
 }
