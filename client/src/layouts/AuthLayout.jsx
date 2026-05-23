@@ -1,108 +1,132 @@
-import { BrandMonogramLogo, VerifiedRounded } from "../ui/icons.jsx";
-import { Box, CardMedia, Chip, Container, Paper, Stack, Typography } from "@mui/material";
+import { BrandMonogramLogo } from "../ui/icons.jsx";
+import { Box, Paper, Stack, Typography } from "@mui/material";
 import { alpha } from "@mui/material/styles";
-import { Link as RouterLink, Outlet } from "react-router-dom";
+import { Link as RouterLink, Outlet, useLocation } from "react-router-dom";
+import AuthHeroPanel from "../components/auth/AuthHeroPanel.jsx";
+import { AUTH_FORM_MAX_WIDTH, AUTH_SHELL_MAX_WIDTH } from "../components/auth/authLayoutConstants.js";
+import AuthModeTabs from "../components/auth/AuthModeTabs.jsx";
+import { authCardSx } from "../components/auth/authStyles.js";
+import { AUTH_HERO_COPY, AUTH_IMAGES } from "../constants/authVisuals.js";
+import { designTokens } from "../theme/theme.js";
+
+const HEADLINES = {
+  login: {
+    title: "Welcome back",
+    subtitle: "Sign in to manage trips, bookings, and AI planning.",
+  },
+  register: {
+    title: "Create account",
+    subtitle: "Join Smart Travel and unlock your travel workspace.",
+  },
+};
 
 export default function AuthLayout() {
+  const { pathname } = useLocation();
+  const mode = pathname.includes("register") ? "register" : "login";
+  const headline = HEADLINES[mode];
+
   return (
     <Box
+      component="main"
       sx={{
         minHeight: "100vh",
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        px: 2,
-        py: 4,
-        background: "radial-gradient(circle at 20% 0%, #1c2233 0%, #0b0d12 52%, #080a0f 100%)",
+        py: { xs: 4, sm: 6 },
+        px: { xs: 2, sm: 3 },
+        bgcolor: designTokens.brand.obsidian,
+        background: `
+          radial-gradient(ellipse 70% 45% at 50% 0%, ${alpha(designTokens.brand.gold, 0.1)} 0%, transparent 55%),
+          ${designTokens.brand.obsidian}
+        `,
       }}
     >
-      <Container maxWidth="md">
-        <Stack spacing={3} alignItems="center">
-          <Stack
-            direction="row"
-            spacing={1.2}
-            alignItems="center"
-            component={RouterLink}
-            to="/"
-            sx={{ textDecoration: "none", color: "common.white" }}
-          >
-            <Box
-              sx={{
-                width: 42,
-                height: 42,
-                borderRadius: 2,
-                display: "grid",
-                placeItems: "center",
-                border: (theme) => `1px solid ${alpha(theme.palette.primary.main, 0.5)}`,
-                background: "rgba(10,12,18,0.75)",
-              }}
-            >
-              <BrandMonogramLogo sx={{ fontSize: 28 }} />
-            </Box>
-            <Box>
-              <Typography variant="h6" fontWeight={800} letterSpacing="-0.02em" lineHeight={1.05}>
-                Smart Travel Assistant
-              </Typography>
-              <Typography variant="caption" sx={{ color: alpha("#fff", 0.7), letterSpacing: "0.08em" }}>
-                SECURE CLIENT ACCESS
-              </Typography>
-            </Box>
-          </Stack>
-          <Paper
-            elevation={0}
+      <Box sx={{ width: "100%", maxWidth: AUTH_SHELL_MAX_WIDTH }}>
+        <Stack
+          component={RouterLink}
+          to="/"
+          direction="row"
+          spacing={1.25}
+          alignItems="center"
+          justifyContent="center"
+          sx={{ textDecoration: "none", color: "inherit", mb: 3 }}
+        >
+          <Box
             sx={{
-              width: "100%",
-              p: { xs: 2, sm: 3 },
-              borderRadius: 4,
-              border: (theme) => `1px solid ${alpha(theme.palette.primary.main, 0.28)}`,
-              boxShadow: "0 30px 70px rgba(0,0,0,0.45)",
-              background: "linear-gradient(180deg, rgba(18,24,38,0.96) 0%, rgba(15,20,33,0.96) 100%)",
+              width: 40,
+              height: 40,
+              borderRadius: 2,
+              display: "grid",
+              placeItems: "center",
+              border: `1px solid ${alpha(designTokens.brand.gold, 0.35)}`,
+              bgcolor: alpha("#000", 0.2),
             }}
           >
-            <Stack direction={{ xs: "column", md: "row" }} spacing={0}>
-              <Box
-                sx={{
-                  flex: { md: "0 0 46%" },
-                  minHeight: { xs: 150, md: 520 },
-                  position: "relative",
-                  borderRadius: 3,
-                  overflow: "hidden",
-                  display: { xs: "none", sm: "block" },
-                }}
-              >
-                <CardMedia
-                  component="img"
-                  image="https://images.unsplash.com/photo-1503220317375-aaad61436b1b?auto=format&fit=crop&w=1400&q=80"
-                  alt=""
-                  sx={{ height: "100%" }}
-                />
-                <Box sx={{ position: "absolute", inset: 0, background: "linear-gradient(180deg, rgba(8,11,18,0.12), rgba(8,11,18,0.82))" }} />
-                <Stack spacing={1.2} sx={{ position: "absolute", left: 16, right: 16, bottom: 16 }}>
-                  <Chip
-                    icon={<VerifiedRounded />}
-                    label="Protected authentication"
-                    size="small"
-                    sx={{ alignSelf: "flex-start", bgcolor: alpha("#111318", 0.74), color: "common.white" }}
-                  />
-                  <Typography variant="h6" sx={{ color: "common.white", fontWeight: 800 }}>
-                    Access your luxury travel workspace
-                  </Typography>
-                  <Typography variant="body2" sx={{ color: alpha("#fff", 0.86) }}>
-                    Continue planning premium journeys with secure account access and personalized AI context.
-                  </Typography>
-                </Stack>
-              </Box>
-
-              <Box sx={{ flex: 1, px: { xs: 0, md: 3 }, py: { xs: 0.5, md: 1 }, display: "flex", alignItems: "center" }}>
-                <Outlet />
-              </Box>
-            </Stack>
-          </Paper>
-          <Typography variant="caption" sx={{ color: alpha("#fff", 0.85) }}>
-            Enterprise-grade entry surface · OAuth and MFA ready
+            <BrandMonogramLogo sx={{ fontSize: 24, color: designTokens.brand.gold }} />
+          </Box>
+          <Typography variant="h6" fontWeight={800} sx={{ color: "#fff", letterSpacing: "-0.02em" }}>
+            Smart Travel
           </Typography>
         </Stack>
-      </Container>
+
+        <Paper elevation={0} sx={{ ...authCardSx, display: "flex", flexDirection: { xs: "column", md: "row" } }}>
+          <Box
+            sx={{
+              display: { xs: "block", md: "none" },
+              height: 180,
+              position: "relative",
+              overflow: "hidden",
+            }}
+          >
+            <Box
+              component="img"
+              src={AUTH_IMAGES[mode]}
+              alt=""
+              sx={{ width: "100%", height: "100%", objectFit: "cover" }}
+            />
+            <Box
+              sx={{
+                position: "absolute",
+                inset: 0,
+                background: `linear-gradient(0deg, ${designTokens.brand.charcoal} 0%, transparent 70%)`,
+              }}
+            />
+          </Box>
+
+          <AuthHeroPanel image={AUTH_IMAGES[mode]} copy={AUTH_HERO_COPY[mode]} />
+
+          <Box
+            sx={{
+              flex: 1,
+              minWidth: 0,
+              px: { xs: 3, sm: 4.5, md: 5 },
+              py: { xs: 4, sm: 4.5, md: 5 },
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            <Box sx={{ width: "100%", maxWidth: AUTH_FORM_MAX_WIDTH }}>
+              <AuthModeTabs />
+              <Typography variant="h5" fontWeight={800} sx={{ color: "#fff", letterSpacing: "-0.02em", mb: 0.75 }}>
+                {headline.title}
+              </Typography>
+              <Typography variant="body2" sx={{ color: alpha("#fff", 0.5), mb: 3.5, lineHeight: 1.55 }}>
+                {headline.subtitle}
+              </Typography>
+              <Outlet />
+            </Box>
+          </Box>
+        </Paper>
+
+        <Typography
+          variant="caption"
+          sx={{ display: "block", textAlign: "center", mt: 2.5, color: alpha("#fff", 0.35) }}
+        >
+          Secure · Encrypted sessions · Smart Travel Assistant
+        </Typography>
+      </Box>
     </Box>
   );
 }
