@@ -1,7 +1,8 @@
 import { Box, Grid, Typography } from "@mui/material";
 import { alpha } from "@mui/material/styles";
 import { Link as RouterLink } from "react-router-dom";
-import { buildDestinationUrl, tripParamsToSearchParams } from "../../utils/destinationSearch.js";
+import { buildDestinationUrl } from "../../utils/destinationSearch.js";
+import { buildItineraryPlannerUrl } from "../../utils/itineraryPlanner.js";
 import { mapDestinationToCard } from "../../utils/exploreSearch.js";
 import ExploreDestinationCard from "./ExploreDestinationCard.jsx";
 import { designTokens } from "../../theme/theme.js";
@@ -21,7 +22,13 @@ export default function ExploreTrending({ destinations, tripParams, savedIds, on
             <Grid key={dest.id} size={{ xs: 12, sm: 6, md: 4 }}>
               <ExploreDestinationCard
                 destination={card}
-                linkTo={buildDestinationUrl(dest.id, tripParamsToSearchParams(tripParams))}
+                itineraryTo={buildItineraryPlannerUrl(dest.id, { ...tripParams, travelers: tripParams.guests })}
+                tripTo={buildDestinationUrl(dest.id, {
+                  start: tripParams.start,
+                  end: tripParams.end,
+                  guests: tripParams.guests,
+                  budget: tripParams.budget,
+                })}
                 saved={savedIds.includes(dest.id)}
                 onToggleSave={onToggleSave}
               />

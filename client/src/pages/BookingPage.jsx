@@ -9,29 +9,22 @@ import {
   Chip,
   Container,
   Divider,
-  FormControl,
   Grid,
-  InputLabel,
-  MenuItem,
   Paper,
-  Select,
   Stack,
   Tab,
   Tabs,
   Typography,
 } from "@mui/material";
 import { alpha } from "@mui/material/styles";
-import { useMemo, useState } from "react";
-import { Link as RouterLink, useSearchParams } from "react-router-dom";
+import { useEffect, useMemo, useState } from "react";
+import { Link as RouterLink, useNavigate, useSearchParams } from "react-router-dom";
 import AppModal from "../components/common/AppModal.jsx";
 import SectionHeading from "../components/common/SectionHeading.jsx";
-import { useToast } from "../context/ToastContext.jsx";
-import {
-  buildDestinationUrl,
-  calculateTripQuote,
-  getDestinationDetail,
-  parseTripSearchParams,
-} from "../utils/destinationSearch.js";
+import { useBookingStore } from "../store/bookingStore.js";
+import { usePlannerStore } from "../store/plannerStore.js";
+import { getDestinationDetail } from "../utils/destinationSearch.js";
+import { buildItineraryPlannerUrl } from "../utils/itineraryPlanner.js";
 
 const tabItems = [
   { label: "Flights", icon: <FlightRounded fontSize="small" /> },
@@ -41,64 +34,112 @@ const tabItems = [
 
 export default function BookingPage() {
   const [params] = useSearchParams();
-  const { showToast } = useToast();
-  const destinationId = params.get("destination");
-  const dest = destinationId ? getDestinationDetail(destinationId) : null;
-  const trip = parseTripSearchParams(params);
-  const selectedActivityIds = trip.activities;
+  const navigate = useNavigate();
 
-  const quote = useMemo(
-    () =>
-      dest
-        ? calculateTripQuote(dest, {
-            start: trip.start,
-            end: trip.end,
-            guests: trip.guests,
-            budget: trip.budget,
-            hotelTierId: trip.hotel,
-            selectedActivityIds,
-          })
-        : null,
-    [dest, trip, selectedActivityIds],
+  const destinationId = params.get("destination");
+  const bookingIdParam = params.get("bookingId");
+  const dest = destinationId ? getDestinationDetail(destinationId) : null;
+
+  const plannerTrip = usePlannerStore((s) => s.trip);
+  const linkedBookingId = usePlannerStore((s) => s.linkedBookingId);
+
+  const getBookingById = useBookingStore((s) => s.getBookingById);
+  const currentBookingId = useBookingStore((s) => s.currentBookingId);
+  const continueBookingFromPlanner = useBookingStore((s) => s.continueBookingFromPlanner);
+  const setCurrentBooking = useBookingStore((s) => s.setCurrentBooking);
+
+  const bookingId = bookingIdParam || linkedBookingId || currentBookingId;
+  const [booking, setBooking] = useState(() =>
+    bookingId ? getBookingById(bookingId) : null,
   );
 
-  const [tab, setTab] = useState(0);
+  useEffect(() => {
+    if (!dest) return;
+
+    const existingId = bookingIdParam || linkedBookingId || currentBookingId;
+    const existing = existingId ? getBookingById(existingId) : null;
+
+    if (plannerTrip?.destination?.id === dest.id) {
+      const synced = continueBookingFromPlanner(plannerTrip, existing?.id);
+      setBooking(synced);
+      setCurrentBooking(synced.id);
+      return;
+    }
+
+    if (existing) {
+      setBooking(existing);
+      setCurrentBooking(existing.id);
+    }
+  }, [
+    dest,
+    plannerTrip,
+    bookingIdParam,
+    linkedBookingId,
+    currentBookingId,
+    getBookingById,
+    continueBookingFromPlanner,
+    setCurrentBooking,
+  ]);
+
+  const [tab, setTab] = useState(2);
   const [checkoutOpen, setCheckoutOpen] = useState(false);
   const [selectedFlight, setSelectedFlight] = useState(0);
   const [selectedHotel, setSelectedHotel] = useState(0);
 
   const flights = useMemo(() => {
-    if (!dest) return [];
-    return [0, 1, 2].map((i) => ({
+    if (!dest || !booking) return [];
+    if (booking.flight) {
+      return [
+        booking.flight,
+        {
+          id: "alt-flight",
+          title: `${dest.airportCode} · Alternative fare`,
+          meta: "Flexible ticket",
+          price: Math.round(booking.flight.priceTotal * 0.92),
+          priceTotal: Math.round(booking.flight.priceTotal * 0.92),
+        },
+      ];
+    }
+    return [0, 1].map((i) => ({
       id: `flight-${i}`,
-      title: `${dest.airportCode} · ${i === 0 ? "Direct" : i === 1 ? "1 stop" : "Premium"} round-trip`,
-      meta: i === 0 ? "Morning departure · 23kg checked bag" : "Flexible fare · lounge access",
+      title: `${dest.airportCode} · ${i === 0 ? "Direct" : "1 stop"} round-trip`,
+      meta: "Round-trip estimate",
       price: dest.flightEstimate + i * 65,
+      priceTotal: (dest.flightEstimate + i * 65) * (booking.guests ?? 2),
     }));
-  }, [dest]);
+  }, [dest, booking]);
 
-  const hotels = useMemo(() => dest?.hotelTiers ?? [], [dest]);
-  const activities = useMemo(
-    () => dest?.activities?.filter((a) => selectedActivityIds.includes(a.id)) ?? [],
-    [dest, selectedActivityIds],
-  );
+  const hotels = useMemo(() => {
+    if (!dest) return [];
+    if (booking?.hotel) {
+      return [
+        booking.hotel,
+        ...(dest.hotelTiers ?? []).map((tier) => ({
+          id: tier.id,
+          name: tier.label,
+          total: tier.nightly * (booking.lineItems?.find((l) => l.label.includes("night")) ? 3 : 3),
+          nightly: tier.nightly,
+        })),
+      ];
+    }
+    return dest.hotelTiers ?? [];
+  }, [dest, booking]);
 
-  const fees = quote ? quote.total - quote.subtotal : 0;
+  const activities = useMemo(() => booking?.experiences ?? [], [booking]);
 
-  function handlePayment() {
+  const lineItems = booking?.lineItems ?? [];
+  const total = booking?.total ?? 0;
+  function handleContinueToTraveler() {
+    if (!booking) return;
     setCheckoutOpen(false);
-    showToast({
-      message: dest
-        ? `Booking confirmed for ${dest.title}! Confirmation sent to your email.`
-        : "Payment successful — confirmation email sent.",
-      severity: "success",
-    });
+    setCurrentBooking(booking.id);
+    navigate(`/bookings/${booking.id}/traveler`);
   }
 
   if (!dest) {
     return (
       <Container maxWidth="lg" sx={{ py: { xs: 3, md: 5 } }}>
-        <SectionHeading title="Booking" subtitle="Select a destination from search or a city page to continue." />
+        <SectionHeading title="Booking" subtitle="Select a destination from explore or your itinerary to continue." />
         <Alert severity="info" sx={{ mt: 2 }}>
           No trip selected. Start from the{" "}
           <Button component={RouterLink} to="/" size="small">
@@ -114,18 +155,64 @@ export default function BookingPage() {
     );
   }
 
+  if (!booking) {
+    return (
+      <Container maxWidth="lg" sx={{ py: { xs: 3, md: 5 } }}>
+        <Alert severity="warning">
+          No booking draft found.{" "}
+          <Button
+            component={RouterLink}
+            to={buildItineraryPlannerUrl(dest.id)}
+            size="small"
+          >
+            Build your itinerary first
+          </Button>
+        </Alert>
+      </Container>
+    );
+  }
+
+  const fromPlanner = booking.source === "itinerary-planner";
+  const fromConfigurator = booking.source === "configurator";
+
   return (
     <Container maxWidth="lg" sx={{ py: { xs: 3, md: 5 } }}>
       <SectionHeading
         eyebrow="Checkout"
         title={`Book ${dest.title}`}
-        subtitle={`${trip.start} → ${trip.end} · ${trip.guests} traveler${trip.guests > 1 ? "s" : ""} · ${quote?.nights} nights`}
+        subtitle={`${booking.start} → ${booking.end} · ${booking.guests} traveler${booking.guests > 1 ? "s" : ""}`}
       />
+
+      {fromPlanner ? (
+        <Alert severity="success" sx={{ mb: 2 }}>
+          Priced from your itinerary — {activities.length} activit{activities.length === 1 ? "y" : "ies"} · total €
+          {total.toLocaleString()}.{" "}
+          <Button
+            component={RouterLink}
+            to={buildItineraryPlannerUrl(dest.id, {
+              start: booking.start,
+              end: booking.end,
+              travelers: booking.guests,
+            })}
+            size="small"
+          >
+            Edit itinerary
+          </Button>
+        </Alert>
+      ) : null}
+      {fromConfigurator ? (
+        <Alert severity="info" sx={{ mb: 2 }}>
+          Trip configured on {dest.title} — review selections below, then proceed to traveler details and payment.{" "}
+          <Button component={RouterLink} to={`/destination/${dest.id}`} size="small">
+            Edit trip package
+          </Button>
+        </Alert>
+      ) : null}
 
       <Grid container spacing={2} sx={{ mb: 3 }}>
         <Grid size={{ xs: 12, md: 7 }}>
           <Box sx={{ position: "relative", borderRadius: 2, overflow: "hidden" }}>
-            <CardMedia component="img" image={dest.image} height="200" alt={dest.title} />
+            <CardMedia component="img" image={dest.image} height="160" alt={dest.title} />
             <Box sx={{ position: "absolute", inset: 0, background: "linear-gradient(180deg, rgba(0,0,0,0.15), rgba(0,0,0,0.72))" }} />
             <Stack spacing={0.5} sx={{ position: "absolute", left: 14, bottom: 12 }}>
               <Stack direction="row" spacing={1} alignItems="center">
@@ -135,7 +222,7 @@ export default function BookingPage() {
                 </Typography>
               </Stack>
               <Typography variant="caption" sx={{ color: alpha("#fff", 0.88) }}>
-                {dest.airportCode} · {dest.hotelTiers?.find((h) => h.id === trip.hotel)?.label ?? "Hotel included"}
+                {booking.packageTitle}
               </Typography>
             </Stack>
           </Box>
@@ -148,23 +235,7 @@ export default function BookingPage() {
             <Stack spacing={1.1}>
               <Chip icon={<VerifiedRounded />} label="Free cancellation 24h" variant="outlined" />
               <Chip icon={<FlightRounded />} label="ATOL-style coverage" variant="outlined" />
-              <Chip icon={<LocalActivityRounded />} label="Verified local partners" variant="outlined" />
             </Stack>
-            <Button
-              component={RouterLink}
-              to={buildDestinationUrl(dest.id, {
-                start: trip.start,
-                end: trip.end,
-                guests: trip.guests,
-                budget: trip.budget,
-                hotel: trip.hotel,
-                activities: selectedActivityIds.join(","),
-              })}
-              size="small"
-              sx={{ mt: 2 }}
-            >
-              Edit trip on city page
-            </Button>
           </Paper>
         </Grid>
       </Grid>
@@ -183,24 +254,21 @@ export default function BookingPage() {
             {tab === 0 &&
               flights.map((item, i) => (
                 <Card
-                  key={item.id}
+                  key={item.id ?? i}
                   variant="outlined"
-                  sx={{
-                    borderColor: selectedFlight === i ? "primary.main" : "divider",
-                    cursor: "pointer",
-                  }}
+                  sx={{ borderColor: selectedFlight === i ? "primary.main" : "divider", cursor: "pointer" }}
                   onClick={() => setSelectedFlight(i)}
                 >
                   <CardContent>
-                    <Stack direction={{ xs: "column", sm: "row" }} spacing={2} justifyContent="space-between">
+                    <Stack direction="row" justifyContent="space-between" spacing={2}>
                       <Box>
-                        <Typography fontWeight={700}>{item.title}</Typography>
+                        <Typography fontWeight={700}>{item.title ?? item.airline}</Typography>
                         <Typography variant="body2" color="text.secondary">
-                          {item.meta} · ★ 4.{8 - i}
+                          {item.meta ?? item.baggage}
                         </Typography>
                       </Box>
                       <Typography variant="h6" fontWeight={800}>
-                        €{(item.price * trip.guests).toLocaleString()}
+                        €{(item.priceTotal ?? item.price ?? 0).toLocaleString()}
                       </Typography>
                     </Stack>
                   </CardContent>
@@ -209,24 +277,21 @@ export default function BookingPage() {
             {tab === 1 &&
               hotels.map((tier, i) => (
                 <Card
-                  key={tier.id}
+                  key={tier.id ?? i}
                   variant="outlined"
-                  sx={{
-                    borderColor: selectedHotel === i ? "primary.main" : "divider",
-                    cursor: "pointer",
-                  }}
+                  sx={{ borderColor: selectedHotel === i ? "primary.main" : "divider", cursor: "pointer" }}
                   onClick={() => setSelectedHotel(i)}
                 >
                   <CardContent>
-                    <Stack direction={{ xs: "column", sm: "row" }} spacing={2} justifyContent="space-between">
+                    <Stack direction="row" justifyContent="space-between" spacing={2}>
                       <Box>
-                        <Typography fontWeight={700}>{tier.label}</Typography>
+                        <Typography fontWeight={700}>{tier.name ?? tier.label}</Typography>
                         <Typography variant="body2" color="text.secondary">
-                          Breakfast included · Free Wi‑Fi · {quote?.nights} nights in {dest.title}
+                          {tier.meta ?? "Breakfast included · Free Wi‑Fi"}
                         </Typography>
                       </Box>
                       <Typography variant="h6" fontWeight={800}>
-                        €{(tier.nightly * (quote?.nights ?? 3)).toLocaleString()}
+                        €{(tier.total ?? tier.nightly * 3).toLocaleString()}
                       </Typography>
                     </Stack>
                   </CardContent>
@@ -237,15 +302,17 @@ export default function BookingPage() {
                 activities.map((act) => (
                   <Card key={act.id} variant="outlined">
                     <CardContent>
-                      <Stack direction={{ xs: "column", sm: "row" }} spacing={2} justifyContent="space-between">
+                      <Stack direction="row" justifyContent="space-between" spacing={2}>
                         <Box>
                           <Typography fontWeight={700}>{act.name}</Typography>
                           <Typography variant="body2" color="text.secondary">
-                            {act.duration} · {act.category} · ★ {act.rating}
+                            {act.dayLabel ? `Day ${act.day} · ` : ""}
+                            {act.duration}
+                            {act.description ? ` · ${act.description}` : ""}
                           </Typography>
                         </Box>
                         <Typography variant="h6" fontWeight={800}>
-                          €{(act.price * trip.guests).toLocaleString()}
+                          €{(act.priceTotal ?? act.price * booking.guests).toLocaleString()}
                         </Typography>
                       </Stack>
                     </CardContent>
@@ -253,17 +320,13 @@ export default function BookingPage() {
                 ))
               ) : (
                 <Alert severity="info">
-                  No experiences selected.{" "}
+                  No activities in this booking.{" "}
                   <Button
                     component={RouterLink}
-                    to={buildDestinationUrl(dest.id, {
-                      start: trip.start,
-                      end: trip.end,
-                      guests: trip.guests,
-                    })}
+                    to={buildItineraryPlannerUrl(dest.id, { start: booking.start, end: booking.end, travelers: booking.guests })}
                     size="small"
                   >
-                    Add on city page
+                    Add in itinerary planner
                   </Button>
                 </Alert>
               ))}
@@ -276,10 +339,10 @@ export default function BookingPage() {
               Booking summary
             </Typography>
             <Typography variant="body2" color="text.secondary" gutterBottom>
-              {dest.title} · {trip.guests} guest{trip.guests > 1 ? "s" : ""}
+              {dest.title} · {booking.guests} guest{booking.guests > 1 ? "s" : ""}
             </Typography>
             <Divider sx={{ my: 2 }} />
-            {quote?.lineItems.map((item) => (
+            {lineItems.map((item) => (
               <Stack key={item.label} direction="row" justifyContent="space-between" sx={{ mb: 1 }}>
                 <Typography variant="body2" color="text.secondary">
                   {item.label}
@@ -293,14 +356,19 @@ export default function BookingPage() {
             <Stack direction="row" justifyContent="space-between">
               <Typography fontWeight={700}>Total</Typography>
               <Typography variant="h5" fontWeight={800} color="primary.main">
-                €{quote?.total.toLocaleString()}
+                €{total.toLocaleString()}
               </Typography>
             </Stack>
             <Button fullWidth variant="contained" color="secondary" sx={{ mt: 3 }} onClick={() => setCheckoutOpen(true)}>
               Proceed to payment
             </Button>
-            <Button component={RouterLink} to={`/destination/${dest.id}`} fullWidth sx={{ mt: 1 }}>
-              Back to {dest.title}
+            <Button
+              component={RouterLink}
+              to={buildItineraryPlannerUrl(dest.id, { start: booking.start, end: booking.end, travelers: booking.guests })}
+              fullWidth
+              sx={{ mt: 1 }}
+            >
+              Back to itinerary
             </Button>
           </Paper>
         </Grid>
@@ -315,52 +383,29 @@ export default function BookingPage() {
         actions={
           <>
             <Button onClick={() => setCheckoutOpen(false)}>Cancel</Button>
-            <Button variant="contained" color="secondary" onClick={handlePayment}>
-              Pay €{quote?.total.toLocaleString()}
+            <Button variant="contained" color="secondary" onClick={handleContinueToTraveler}>
+              Pay €{total.toLocaleString()}
             </Button>
           </>
         }
       >
         <Stack spacing={1.5}>
           <Typography variant="body2" color="text.secondary">
-            You are booking <strong>{flights[selectedFlight]?.title}</strong> with{" "}
-            <strong>{hotels[selectedHotel]?.label ?? quote?.hotelTier}</strong> for {trip.start} – {trip.end}.
+            You are booking <strong>{flights[selectedFlight]?.title ?? flights[selectedFlight]?.airline ?? "flights"}</strong> with{" "}
+            <strong>{hotels[selectedHotel]?.name ?? hotels[selectedHotel]?.label ?? "your selected hotel"}</strong>.
           </Typography>
-          <Stack spacing={0.8}>
-            <Typography variant="body2" color="text.secondary">
-              Travelers: {trip.guests}
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              Experiences: {activities.length} selected
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              Payment: Visa / Mastercard · 3D Secure
-            </Typography>
-          </Stack>
+          <Typography variant="body2" color="text.secondary">
+            Next: enter passport and contact details before payment.
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            Itinerary activities: {activities.length} · Total reflects your latest planner edits.
+          </Typography>
           <Divider />
-          <Stack spacing={0.6}>
-            <Stack direction="row" justifyContent="space-between">
-              <Typography variant="body2" color="text.secondary">
-                Subtotal
-              </Typography>
-              <Typography variant="body2" fontWeight={700}>
-                €{quote?.subtotal.toLocaleString()}
-              </Typography>
-            </Stack>
-            <Stack direction="row" justifyContent="space-between">
-              <Typography variant="body2" color="text.secondary">
-                Fees & taxes
-              </Typography>
-              <Typography variant="body2" fontWeight={700}>
-                €{fees.toLocaleString()}
-              </Typography>
-            </Stack>
-            <Stack direction="row" justifyContent="space-between">
-              <Typography variant="subtitle2">Total</Typography>
-              <Typography variant="subtitle1" fontWeight={800}>
-                €{quote?.total.toLocaleString()}
-              </Typography>
-            </Stack>
+          <Stack direction="row" justifyContent="space-between">
+            <Typography variant="subtitle2">Total due</Typography>
+            <Typography variant="subtitle1" fontWeight={800}>
+              €{total.toLocaleString()}
+            </Typography>
           </Stack>
         </Stack>
       </AppModal>

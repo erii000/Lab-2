@@ -14,6 +14,8 @@ export default function StickyTripSummary({
   comparison,
   tripParams,
   hotelTierId,
+  onContinueBooking,
+  continueDisabled,
 }) {
   if (!visible || !destination) return null;
 
@@ -83,8 +85,10 @@ export default function StickyTripSummary({
             ) : null}
           </Box>
           <Button
-            component={RouterLink}
-            to={bookingUrl}
+            component={onContinueBooking ? "button" : RouterLink}
+            to={onContinueBooking ? undefined : bookingUrl}
+            onClick={onContinueBooking}
+            disabled={continueDisabled}
             variant="contained"
             color="secondary"
             size="large"

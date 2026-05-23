@@ -105,7 +105,10 @@ export function buildDestinationUrl(id, params = {}) {
 }
 
 export function buildBookingUrl(id, params = {}) {
-  const search = new URLSearchParams({ destination: id, ...params });
+  const { bookingId, guests, ...rest } = params;
+  const search = new URLSearchParams({ destination: id, ...rest });
+  if (guests) search.set("guests", String(guests));
+  if (bookingId) search.set("bookingId", bookingId);
   return `/booking?${search.toString()}`;
 }
 

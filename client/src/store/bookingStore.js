@@ -2,6 +2,7 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { BOOKING_STATUS, calculateBookingProgress, isDraftStatus } from "../utils/bookingConstants.js";
 import { createBookingFromConfigurator } from "../utils/bookingFactory.js";
+import { createBookingFromPlanner } from "../utils/bookingFromPlanner.js";
 
 const defaultUser = {
   id: "user_demo",
@@ -82,6 +83,18 @@ export const useBookingStore = create(
         }
         get().upsertBooking(booking);
         return booking;
+      },
+
+      continueBookingFromPlanner: (trip, existingBookingId) => {
+        const existing = existingBookingId ? get().getBookingById(existingBookingId) : null;
+        const booking = createBookingFromPlanner(trip, existing);
+        get().upsertBooking(booking);
+        return booking;
+      },
+
+      getCurrentBooking: () => {
+        const id = get().currentBookingId;
+        return id ? get().getBookingById(id) : null;
       },
 
       updateTraveler: (bookingId, travelerPatch) =>

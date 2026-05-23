@@ -50,8 +50,6 @@ export default function BookingDetailsPage() {
   const { showToast } = useToast();
   const getBookingById = useBookingStore((s) => s.getBookingById);
   const updateTraveler = useBookingStore((s) => s.updateTraveler);
-  const setPendingPayment = useBookingStore((s) => s.setPendingPayment);
-  const confirmPayment = useBookingStore((s) => s.confirmPayment);
   const deleteBooking = useBookingStore((s) => s.deleteBooking);
 
   const booking = getBookingById(bookingId);
@@ -93,10 +91,8 @@ export default function BookingDetailsPage() {
   }
 
   function handleConfirmPay() {
-    persistTraveler();
-    setPendingPayment(booking.id);
-    const ref = confirmPayment(booking.id);
-    navigate(`/bookings/${booking.id}/success`, { state: { reference: ref } });
+    if (canPay) persistTraveler();
+    navigate(`/bookings/${booking.id}/traveler`);
   }
 
   return (
@@ -297,7 +293,7 @@ export default function BookingDetailsPage() {
                 onClick={handleConfirmPay}
                 sx={{ fontWeight: 800, py: 1.25 }}
               >
-                Confirm & Pay
+                Continue to payment
               </Button>
             ) : (
               <Button

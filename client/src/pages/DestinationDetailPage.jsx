@@ -13,6 +13,7 @@ import SmartTripDrawer from "../components/destination/explore/SmartTripDrawer.j
 import StickyExploreFilters from "../components/destination/explore/StickyExploreFilters.jsx";
 import StickyTripSummary from "../components/destination/StickyTripSummary.jsx";
 import {
+  buildBookingUrl,
   getDestinationDetail,
   parseTripSearchParams,
   tripParamsToSearchParams,
@@ -236,7 +237,15 @@ export default function DestinationDetailPage() {
     const booking = continueBookingFromConfigurator(payload, editingBookingId ?? undefined);
     setEditingBookingId(booking.id);
     setDrawerOpen(false);
-    navigate(`/bookings/${booking.id}`);
+    navigate(
+      buildBookingUrl(dest.id, {
+        bookingId: booking.id,
+        start: filters.start,
+        end: filters.end,
+        guests: filters.guests,
+        budget: filters.budget,
+      }),
+    );
   }
 
   function handleCloseDrawer() {
@@ -372,6 +381,8 @@ export default function DestinationDetailPage() {
       <StickyTripSummary
         visible={Boolean(selectedDeparture && tripPackage)}
         destination={dest}
+        onContinueBooking={handleContinueBooking}
+        continueDisabled={!packageSelections}
         start={filters.start}
         end={filters.end}
         guests={filters.guests}

@@ -8,6 +8,7 @@ import AdminDashboardPage from "./pages/AdminDashboardPage.jsx";
 import AiAssistantPage from "./pages/AiAssistantPage.jsx";
 import AuditLogsPage from "./pages/AuditLogsPage.jsx";
 import BookingDetailsPage from "./pages/BookingDetailsPage.jsx";
+import BookingTravelerPage from "./pages/BookingTravelerPage.jsx";
 import BookingPage from "./pages/BookingPage.jsx";
 import BookingSuccessPage from "./pages/BookingSuccessPage.jsx";
 import BookingsDashboardPage from "./pages/BookingsDashboardPage.jsx";
@@ -41,6 +42,7 @@ export const router = createBrowserRouter([
           { path: "booking", element: <BookingPage /> },
           { path: "bookings", element: <BookingsDashboardPage /> },
           { path: "bookings/:bookingId", element: <BookingDetailsPage /> },
+          { path: "bookings/:bookingId/traveler", element: <BookingTravelerPage /> },
           { path: "bookings/:bookingId/success", element: <BookingSuccessPage /> },
           { path: "checkout", element: <Navigate to="/bookings" replace /> },
           { path: "contact", element: <ContactPage /> },

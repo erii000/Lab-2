@@ -23,7 +23,8 @@ import ExploreFiltersSidebar from "../components/explore/ExploreFiltersSidebar.j
 import ExploreSearchSummary from "../components/explore/ExploreSearchSummary.jsx";
 import ExploreTrending from "../components/explore/ExploreTrending.jsx";
 import { useBookingStore } from "../store/bookingStore.js";
-import { buildDestinationUrl, tripParamsToSearchParams } from "../utils/destinationSearch.js";
+import { buildDestinationUrl } from "../utils/destinationSearch.js";
+import { buildItineraryPlannerUrl } from "../utils/itineraryPlanner.js";
 import {
   buildExploreSearchParams,
   buildExploreUrl,
@@ -195,7 +196,17 @@ export default function SearchPage() {
                     <ExploreDestinationCard
                       destination={dest}
                       suggestReason={searchResult.mode === "alternatives" ? dest.badge : undefined}
-                      linkTo={buildDestinationUrl(dest.id, tripParamsToSearchParams(tripParams))}
+                      itineraryTo={buildItineraryPlannerUrl(dest.id, {
+                        ...tripParams,
+                        travelers: tripParams.guests,
+                        vibe: filters.experience || "romantic",
+                      })}
+                      tripTo={buildDestinationUrl(dest.id, {
+                        start: tripParams.start,
+                        end: tripParams.end,
+                        guests: tripParams.guests,
+                        budget: tripParams.budget,
+                      })}
                       saved={savedIds.includes(dest.id)}
                       onToggleSave={toggleSaved}
                     />
@@ -243,14 +254,17 @@ export default function SearchPage() {
 
             <Button
               component={RouterLink}
-              to={buildDestinationUrl(sortedResults[0]?.id || "paris", tripParamsToSearchParams(tripParams))}
+              to={buildItineraryPlannerUrl(sortedResults[0]?.id || "paris", {
+                ...tripParams,
+                travelers: tripParams.guests,
+              })}
               variant="contained"
               size="large"
               fullWidth
               disabled={!sortedResults.length}
               sx={{ mt: 6, py: 1.75, fontWeight: 800, borderRadius: 2.5, maxWidth: 400, mx: "auto", display: "block" }}
             >
-              Book trip
+              Build itinerary
             </Button>
           </Grid>
         </Grid>

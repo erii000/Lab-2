@@ -6,7 +6,8 @@ import { designTokens } from "../../theme/theme.js";
 
 export default function ExploreDestinationCard({
   destination,
-  linkTo,
+  itineraryTo,
+  tripTo,
   saved,
   onToggleSave,
   suggestReason,
@@ -17,6 +18,8 @@ export default function ExploreDestinationCard({
     <Card
       sx={{
         height: "100%",
+        display: "flex",
+        flexDirection: "column",
         borderRadius: 3,
         overflow: "hidden",
         border: `1px solid ${alpha(designTokens.brand.gold, 0.1)}`,
@@ -26,7 +29,6 @@ export default function ExploreDestinationCard({
           transform: "translateY(-6px)",
           boxShadow: `0 24px 48px ${alpha(designTokens.brand.navy, 0.35)}`,
           "& .explore-card-img": { transform: "scale(1.04)" },
-          "& .explore-card-cta": { opacity: 1 },
         },
       }}
     >
@@ -81,33 +83,16 @@ export default function ExploreDestinationCard({
         >
           <BookmarkRounded fontSize="small" />
         </IconButton>
-        <Button
-          component={RouterLink}
-          to={linkTo}
-          className="explore-card-cta"
-          variant="contained"
-          size="small"
-          sx={{
-            position: "absolute",
-            bottom: 12,
-            right: 12,
-            opacity: 0,
-            transition: "opacity 0.3s ease",
-            fontWeight: 700,
-          }}
-        >
-          View trip →
-        </Button>
       </Box>
 
-      <Stack spacing={0.75} sx={{ p: 2.25 }}>
+      <Stack spacing={0.75} sx={{ p: 2.25, flex: 1 }}>
         <Typography variant="h6" fontWeight={800}>
           {destination.title}
         </Typography>
         <Typography variant="body2" color="text.secondary">
           {destination.country}
         </Typography>
-        <Typography variant="body2" color="text.secondary" sx={{ lineHeight: 1.55, minHeight: 40 }}>
+        <Typography variant="body2" color="text.secondary" sx={{ lineHeight: 1.55, flex: 1 }}>
           {destination.aiSummary}
         </Typography>
         <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ pt: 1 }}>
@@ -120,6 +105,28 @@ export default function ExploreDestinationCard({
               {destination.rating}
             </Typography>
           </Stack>
+        </Stack>
+        <Stack spacing={1} sx={{ pt: 1.5 }}>
+          <Button
+            component={RouterLink}
+            to={itineraryTo}
+            variant="contained"
+            size="small"
+            fullWidth
+            sx={{ fontWeight: 700 }}
+          >
+            Build Itinerary
+          </Button>
+          <Button
+            component={RouterLink}
+            to={tripTo ?? itineraryTo}
+            variant="outlined"
+            size="small"
+            fullWidth
+            sx={{ fontWeight: 600, borderColor: alpha(designTokens.brand.gold, 0.35) }}
+          >
+            View trip
+          </Button>
         </Stack>
       </Stack>
     </Card>

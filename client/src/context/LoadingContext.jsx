@@ -1,5 +1,4 @@
 import { createContext, useCallback, useContext, useMemo, useState } from "react";
-import GlobalLoader from "../components/common/GlobalLoader.jsx";
 
 const LoadingContext = createContext(null);
 
@@ -37,12 +36,7 @@ export function LoadingProvider({ children }) {
     [activeRequests, runWithLoader, startLoading, stopLoading],
   );
 
-  return (
-    <LoadingContext.Provider value={value}>
-      {children}
-      <GlobalLoader open={activeRequests > 0} label="Syncing with server..." />
-    </LoadingContext.Provider>
-  );
+  return <LoadingContext.Provider value={value}>{children}</LoadingContext.Provider>;
 }
 
 export function useLoading() {

@@ -4,6 +4,7 @@ import { alpha } from "@mui/material/styles";
 import { Link as RouterLink } from "react-router-dom";
 import AppModal from "../common/AppModal.jsx";
 import { formatBookingDates, buildResumeDestinationUrl } from "../../utils/bookingFactory.js";
+import { buildBookingUrl } from "../../utils/destinationSearch.js";
 import { isDraftStatus } from "../../utils/bookingConstants.js";
 import { designTokens } from "../../theme/theme.js";
 import BookingProgressBar from "./BookingProgressBar.jsx";
@@ -14,6 +15,12 @@ export default function BookingCard({ booking, onDelete }) {
   const isDraft = isDraftStatus(booking.status);
   const ctaLabel =
     booking.status === "confirmed" || booking.status === "completed" ? "View trip" : "Continue booking";
+  const checkoutUrl = buildBookingUrl(booking.destinationId, {
+    bookingId: booking.id,
+    start: booking.start,
+    end: booking.end,
+    guests: booking.guests,
+  });
 
   function handleConfirmDelete() {
     onDelete?.(booking.id);
@@ -74,7 +81,7 @@ export default function BookingCard({ booking, onDelete }) {
                   </Button>
                   <Button
                     component={RouterLink}
-                    to={`/bookings/${booking.id}`}
+                    to={checkoutUrl}
                     variant="contained"
                     color="secondary"
                     size="small"

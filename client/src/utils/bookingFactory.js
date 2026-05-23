@@ -25,6 +25,7 @@ export function createBookingFromConfigurator({
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
     status,
+    source: "configurator",
     destinationId: destination.id,
     destinationTitle: destination.title,
     destinationImage: destination.image,
