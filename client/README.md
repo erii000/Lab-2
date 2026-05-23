@@ -9,21 +9,36 @@ React + Vite app for destination discovery, trip configuration, and bookings.
 
 ## Setup (for teammates)
 
+After you pull the latest code:
+
 ```bash
 cd client
 npm ci
+npm run verify
 ```
 
-Use `npm ci` (not `npm install`) so everyone gets the exact dependency versions from `package-lock.json`.
+Use **`npm ci`** (not `npm install`) so everyone gets the exact versions from `package-lock.json`.
+
+**Node.js 20+** is required (see `.nvmrc`). Check with `node -v`.
+
+### If something fails
+
+| Problem | Fix |
+| -------- | ----- |
+| `EPERM` / `EBUSY` on Windows during `npm ci` | Stop the dev server (`Ctrl+C`), close other terminals using the project, then run `npm ci` again |
+| `eslint` or `vite` not found | Run `npm ci` from the `client` folder (not the repo root) |
+| Blank page after pull | Hard refresh the browser; run `npm run dev` again |
+| Port already in use | Vite picks the next free port (e.g. 5174) — use the URL in the terminal |
+
+Do **not** commit `node_modules/` or `dist/` — they are gitignored.
 
 ## Verify before you push
 
 ```bash
-npm run lint
-npm run build
+npm run verify
 ```
 
-Both commands must exit with code **0**. GitHub Actions runs the same checks on pull requests.
+This runs lint and production build. Both must exit with code **0**. GitHub Actions runs the same checks on pull requests.
 
 ## Development
 

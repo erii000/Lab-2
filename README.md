@@ -2,15 +2,16 @@
 
 ## Frontend (React)
 
+Requires **Node.js 20+**.
+
 ```bash
 cd client
 npm ci
-npm run lint
-npm run build
+npm run verify    # lint + production build (run after every pull)
 npm run dev
 ```
 
-See [client/README.md](client/README.md) for details.
+See [client/README.md](client/README.md) for details and troubleshooting.
 
 ## Backend (.NET)
 

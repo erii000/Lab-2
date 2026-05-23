@@ -52,4 +52,10 @@ export default defineConfig([
       'react-refresh/only-export-components': 'off',
     },
   },
+  {
+    files: ['src/router.jsx'],
+    rules: {
+      'react-refresh/only-export-components': 'off',
+    },
+  },
 ])

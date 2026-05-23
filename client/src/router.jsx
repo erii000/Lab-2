@@ -1,29 +1,31 @@
+import { lazy } from "react";
 import { createBrowserRouter, Navigate } from "react-router-dom";
 import AdminLayout from "./layouts/AdminLayout.jsx";
 import AuthLayout from "./layouts/AuthLayout.jsx";
 import MainLayout from "./layouts/MainLayout.jsx";
 import RootLayout from "./layouts/RootLayout.jsx";
-import AiAssistantPage from "./pages/AiAssistantPage.jsx";
-import BookingDetailsPage from "./pages/BookingDetailsPage.jsx";
-import BookingTravelerPage from "./pages/BookingTravelerPage.jsx";
-import BookingPage from "./pages/BookingPage.jsx";
-import BookingSuccessPage from "./pages/BookingSuccessPage.jsx";
-import BookingsDashboardPage from "./pages/BookingsDashboardPage.jsx";
-import ContactPage from "./pages/ContactPage.jsx";
-import DestinationDetailPage from "./pages/DestinationDetailPage.jsx";
-import HomePage from "./pages/HomePage.jsx";
-import ItineraryPlannerPage from "./pages/ItineraryPlannerPage.jsx";
-import LoginPage from "./pages/LoginPage.jsx";
-import NotFoundPage from "./pages/NotFoundPage.jsx";
-import RegisterPage from "./pages/RegisterPage.jsx";
 import LegacySearchRedirect from "./components/routing/LegacySearchRedirect.jsx";
-import SearchPage from "./pages/SearchPage.jsx";
-import AdminBookingsPage from "./pages/admin/AdminBookingsPage.jsx";
-import AdminDashboardPage from "./pages/admin/AdminDashboardPage.jsx";
-import AdminSettingsPage from "./pages/admin/AdminSettingsPage.jsx";
-import AdminTripsPage from "./pages/admin/AdminTripsPage.jsx";
-import AdminReportsPage from "./pages/admin/AdminReportsPage.jsx";
-import AdminUsersPage from "./pages/admin/AdminUsersPage.jsx";
+
+const HomePage = lazy(() => import("./pages/HomePage.jsx"));
+const SearchPage = lazy(() => import("./pages/SearchPage.jsx"));
+const DestinationDetailPage = lazy(() => import("./pages/DestinationDetailPage.jsx"));
+const ItineraryPlannerPage = lazy(() => import("./pages/ItineraryPlannerPage.jsx"));
+const BookingPage = lazy(() => import("./pages/BookingPage.jsx"));
+const BookingsDashboardPage = lazy(() => import("./pages/BookingsDashboardPage.jsx"));
+const BookingDetailsPage = lazy(() => import("./pages/BookingDetailsPage.jsx"));
+const BookingTravelerPage = lazy(() => import("./pages/BookingTravelerPage.jsx"));
+const BookingSuccessPage = lazy(() => import("./pages/BookingSuccessPage.jsx"));
+const ContactPage = lazy(() => import("./pages/ContactPage.jsx"));
+const AiAssistantPage = lazy(() => import("./pages/AiAssistantPage.jsx"));
+const NotFoundPage = lazy(() => import("./pages/NotFoundPage.jsx"));
+const LoginPage = lazy(() => import("./pages/LoginPage.jsx"));
+const RegisterPage = lazy(() => import("./pages/RegisterPage.jsx"));
+const AdminDashboardPage = lazy(() => import("./pages/admin/AdminDashboardPage.jsx"));
+const AdminTripsPage = lazy(() => import("./pages/admin/AdminTripsPage.jsx"));
+const AdminBookingsPage = lazy(() => import("./pages/admin/AdminBookingsPage.jsx"));
+const AdminUsersPage = lazy(() => import("./pages/admin/AdminUsersPage.jsx"));
+const AdminReportsPage = lazy(() => import("./pages/admin/AdminReportsPage.jsx"));
+const AdminSettingsPage = lazy(() => import("./pages/admin/AdminSettingsPage.jsx"));
 
 export const router = createBrowserRouter([
   {
