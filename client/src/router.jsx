@@ -4,9 +4,7 @@ import AuthLayout from "./layouts/AuthLayout.jsx";
 import MainLayout from "./layouts/MainLayout.jsx";
 import RootLayout from "./layouts/RootLayout.jsx";
 import AboutHelpPage from "./pages/AboutHelpPage.jsx";
-import AdminDashboardPage from "./pages/AdminDashboardPage.jsx";
 import AiAssistantPage from "./pages/AiAssistantPage.jsx";
-import AuditLogsPage from "./pages/AuditLogsPage.jsx";
 import BookingDetailsPage from "./pages/BookingDetailsPage.jsx";
 import BookingTravelerPage from "./pages/BookingTravelerPage.jsx";
 import BookingPage from "./pages/BookingPage.jsx";
@@ -15,17 +13,17 @@ import BookingsDashboardPage from "./pages/BookingsDashboardPage.jsx";
 import ContactPage from "./pages/ContactPage.jsx";
 import DestinationDetailPage from "./pages/DestinationDetailPage.jsx";
 import HomePage from "./pages/HomePage.jsx";
-import ImportResultsPage from "./pages/ImportResultsPage.jsx";
 import ItineraryPlannerPage from "./pages/ItineraryPlannerPage.jsx";
 import LoginPage from "./pages/LoginPage.jsx";
 import NotFoundPage from "./pages/NotFoundPage.jsx";
-import PermissionsManagementPage from "./pages/PermissionsManagementPage.jsx";
-import RecommendationsPage from "./pages/RecommendationsPage.jsx";
 import RegisterPage from "./pages/RegisterPage.jsx";
-import RolesManagementPage from "./pages/RolesManagementPage.jsx";
 import LegacySearchRedirect from "./components/routing/LegacySearchRedirect.jsx";
 import SearchPage from "./pages/SearchPage.jsx";
-import UsersManagementPage from "./pages/UsersManagementPage.jsx";
+import AdminBookingsPage from "./pages/admin/AdminBookingsPage.jsx";
+import AdminDashboardPage from "./pages/admin/AdminDashboardPage.jsx";
+import AdminSettingsPage from "./pages/admin/AdminSettingsPage.jsx";
+import AdminTripsPage from "./pages/admin/AdminTripsPage.jsx";
+import AdminUsersPage from "./pages/admin/AdminUsersPage.jsx";
 
 export const router = createBrowserRouter([
   {
@@ -64,12 +62,17 @@ export const router = createBrowserRouter([
         element: <AdminLayout />,
         children: [
           { path: "admin", element: <AdminDashboardPage /> },
-          { path: "admin/users", element: <UsersManagementPage /> },
-          { path: "admin/roles", element: <RolesManagementPage /> },
-          { path: "admin/permissions", element: <PermissionsManagementPage /> },
-          { path: "admin/audit-logs", element: <AuditLogsPage /> },
-          { path: "admin/recommendations", element: <RecommendationsPage /> },
-          { path: "admin/import-results", element: <ImportResultsPage /> },
+          { path: "admin/trips", element: <AdminTripsPage /> },
+          { path: "admin/trips/:tripId", element: <Navigate to="/admin/trips" replace /> },
+          { path: "admin/bookings", element: <AdminBookingsPage /> },
+          { path: "admin/users", element: <AdminUsersPage /> },
+          { path: "admin/settings", element: <AdminSettingsPage /> },
+          { path: "admin/roles", element: <Navigate to="/admin/settings" replace /> },
+          { path: "admin/permissions", element: <Navigate to="/admin/settings" replace /> },
+          { path: "admin/audit-logs", element: <Navigate to="/admin" replace /> },
+          { path: "admin/content", element: <Navigate to="/admin" replace /> },
+          { path: "admin/recommendations", element: <Navigate to="/admin" replace /> },
+          { path: "admin/import-results", element: <Navigate to="/admin" replace /> },
         ],
       },
       { path: "*", element: <Navigate to="/404" replace /> },

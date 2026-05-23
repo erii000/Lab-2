@@ -1,180 +1,174 @@
-import { Outlet, useNavigate, useLocation } from "react-router-dom";
 import {
-    AppBar,
-    Avatar,
-    Badge,
-    Box,
-    CssBaseline,
-    Divider,
-    Drawer,
-    IconButton,
-    List,
-    ListItemButton,
-    ListItemIcon,
-    ListItemText,
-    Toolbar,
-    Typography,
+  DashboardRounded,
+  ExploreRounded,
+  MenuIcon,
+  ViewListRounded,
+} from "../ui/icons.jsx";
+import {
+  Box,
+  CssBaseline,
+  Drawer,
+  IconButton,
+  List,
+  ListItemButton,
+  ListItemIcon,
+  ListItemText,
+  Toolbar,
+  Typography,
 } from "@mui/material";
-import DashboardRoundedIcon from "@mui/icons-material/DashboardRounded";
-import GroupRoundedIcon from "@mui/icons-material/GroupRounded";
-import AdminPanelSettingsRoundedIcon from "@mui/icons-material/AdminPanelSettingsRounded";
-import SecurityRoundedIcon from "@mui/icons-material/SecurityRounded";
-import HistoryRoundedIcon from "@mui/icons-material/HistoryRounded";
-import RecommendRoundedIcon from "@mui/icons-material/RecommendRounded";
-import UploadFileRoundedIcon from "@mui/icons-material/UploadFileRounded";
-import NotificationsNoneRoundedIcon from "@mui/icons-material/NotificationsNoneRounded";
+import { alpha } from "@mui/material/styles";
+import PeopleOutlineRoundedIcon from "@mui/icons-material/PeopleOutlineRounded";
+import SettingsOutlinedIcon from "@mui/icons-material/SettingsOutlined";
+import { Navigate, Outlet, useLocation, useNavigate } from "react-router-dom";
+import { useState } from "react";
+import { Link as RouterLink } from "react-router-dom";
+import { adminColors } from "../components/admin/adminStyles.js";
+import { designTokens } from "../theme/theme.js";
+import { useAuthStore } from "../store/authStore.js";
 
-const drawerWidth = 260;
+const drawerWidth = 248;
 
 const menuItems = [
-    { label: "Dashboard", icon: <DashboardRoundedIcon />, path: "/admin" },
-    { label: "Users", icon: <GroupRoundedIcon />, path: "/admin/users" },
-    { label: "Roles", icon: <AdminPanelSettingsRoundedIcon />, path: "/admin/roles" },
-    { label: "Permissions", icon: <SecurityRoundedIcon />, path: "/admin/permissions" },
-    { label: "Audit Logs", icon: <HistoryRoundedIcon />, path: "/admin/audit-logs" },
-    { label: "Recommendations", icon: <RecommendRoundedIcon />, path: "/admin/recommendations" },
-    { label: "Import Results", icon: <UploadFileRoundedIcon />, path: "/admin/import-results" },
+  { label: "Dashboard", icon: DashboardRounded, path: "/admin" },
+  { label: "Trips", icon: ExploreRounded, path: "/admin/trips" },
+  { label: "Bookings", icon: ViewListRounded, path: "/admin/bookings" },
+  { label: "Users", icon: PeopleOutlineRoundedIcon, path: "/admin/users" },
+  { label: "Settings", icon: SettingsOutlinedIcon, path: "/admin/settings" },
 ];
 
+function NavList({ onNavigate }) {
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  return (
+    <List sx={{ px: 1.5, py: 2, flex: 1 }}>
+      {menuItems.map((item) => {
+        const active =
+          item.path === "/admin"
+            ? location.pathname === "/admin"
+            : location.pathname.startsWith(item.path);
+        const Icon = item.icon;
+        return (
+          <ListItemButton
+            key={item.path}
+            onClick={() => {
+              navigate(item.path);
+              onNavigate?.();
+            }}
+            sx={{
+              mb: 0.5,
+              borderRadius: 2.5,
+              py: 1.15,
+              transition: "background 0.2s ease",
+              bgcolor: active ? alpha(designTokens.brand.gold, 0.12) : "transparent",
+              border: `1px solid ${active ? alpha(designTokens.brand.gold, 0.3) : "transparent"}`,
+              "&:hover": { bgcolor: alpha(designTokens.brand.gold, 0.07) },
+            }}
+          >
+            <ListItemIcon sx={{ minWidth: 40, color: active ? adminColors.gold : alpha("#fff", 0.5) }}>
+              <Icon fontSize="small" />
+            </ListItemIcon>
+            <ListItemText
+              primary={item.label}
+              primaryTypographyProps={{
+                fontSize: 14,
+                fontWeight: active ? 700 : 500,
+                color: active ? "#fff" : alpha("#fff", 0.72),
+              }}
+            />
+          </ListItemButton>
+        );
+      })}
+    </List>
+  );
+}
+
 export default function AdminLayout() {
-    const navigate = useNavigate();
-    const location = useLocation();
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const isAdmin = useAuthStore((s) => s.session?.role === "admin");
 
-    return (
-        <Box sx={{ display: "flex", minHeight: "100vh", bgcolor: "#f8fafc" }}>
-            <CssBaseline />
+  if (!isAdmin) {
+    return <Navigate to="/login" replace />;
+  }
 
-            <AppBar
-                position="fixed"
-                elevation={0}
-                sx={{
-                    width: { md: `calc(100% - ${drawerWidth}px)` },
-                    ml: { md: `${drawerWidth}px` },
-                    bgcolor: "#0f172a",
-                    color: "#ffffff",
-                    borderBottom: "1px solid rgba(255,255,255,0.08)",
-                }}
+  const sidebar = (
+    <Box sx={{ height: "100%", display: "flex", flexDirection: "column" }}>
+      <Box sx={{ px: 2.5, py: 2.5 }}>
+        <Typography
+          component={RouterLink}
+          to="/"
+          variant="subtitle1"
+          fontWeight={800}
+          sx={{
+            color: "#fff",
+            textDecoration: "none",
+            letterSpacing: "-0.02em",
+            "&:hover": { color: adminColors.gold },
+          }}
+        >
+          Smart Travel
+        </Typography>
+      </Box>
+      <NavList onNavigate={() => setMobileOpen(false)} />
+    </Box>
+  );
 
-            >
-                <Toolbar sx={{ display: "flex", justifyContent: "space-between" }}>
-                    <Box>
-                        <Typography variant="h6" fontWeight={700}>
-                            Admin Dashboard
-                        </Typography>
-                        <Typography variant="body2" color="text.secondary">
-                            Manage platform settings and internal modules
-                        </Typography>
-                    </Box>
+  return (
+    <Box sx={{ display: "flex", minHeight: "100vh", bgcolor: adminColors.bg }}>
+      <CssBaseline />
 
-                    <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-                        <IconButton>
-                            <Badge badgeContent={3} color="error">
-                                <NotificationsNoneRoundedIcon />
-                            </Badge>
-                        </IconButton>
+      <Drawer
+        variant="permanent"
+        sx={{
+          display: { xs: "none", md: "block" },
+          width: drawerWidth,
+          flexShrink: 0,
+          "& .MuiDrawer-paper": {
+            width: drawerWidth,
+            boxSizing: "border-box",
+            bgcolor: adminColors.surface,
+            borderRight: `1px solid ${adminColors.border}`,
+          },
+        }}
+        open
+      >
+        {sidebar}
+      </Drawer>
 
-                        <Box sx={{ display: "flex", alignItems: "center", gap: 1.25 }}>
-                            <Avatar sx={{ bgcolor: "primary.main", width: 38, height: 38 }}>
-                                EA
-                            </Avatar>
-                            <Box>
-                                <Typography variant="body2" fontWeight={700}>
-                                    Eljesa Azemi
-                                </Typography>
-                                <Typography variant="caption" color="text.secondary">
-                                    Administrator
-                                </Typography>
-                            </Box>
-                        </Box>
-                    </Box>
-                </Toolbar>
-            </AppBar>
+      <Drawer
+        variant="temporary"
+        open={mobileOpen}
+        onClose={() => setMobileOpen(false)}
+        ModalProps={{ keepMounted: true }}
+        sx={{
+          display: { md: "none" },
+          "& .MuiDrawer-paper": {
+            width: drawerWidth,
+            bgcolor: adminColors.surface,
+            borderRight: `1px solid ${adminColors.border}`,
+          },
+        }}
+      >
+        {sidebar}
+      </Drawer>
 
-            <Drawer
-                variant="permanent"
-                sx={{
-                    display: { xs: "none", md: "block" },
-                    width: drawerWidth,
-                    flexShrink: 0,
-                    "& .MuiDrawer-paper": {
-                        width: drawerWidth,
-                        boxSizing: "border-box",
-                        bgcolor: "#0f172a",
-                        color: "#fff",
-                        borderRight: "none",
-                    },
-                }}
-            >
-                <Toolbar>
-                    <Box>
-                        <Typography variant="h6" fontWeight={800}>
-                            SmartTravel
-                        </Typography>
-                        <Typography variant="body2" sx={{ opacity: 0.75 }}>
-                            Admin Panel
-                        </Typography>
-                    </Box>
-                </Toolbar>
+      <Box sx={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column" }}>
+        <Toolbar
+          sx={{
+            display: { md: "none" },
+            borderBottom: `1px solid ${adminColors.border}`,
+            minHeight: 56,
+          }}
+        >
+          <IconButton color="inherit" edge="start" onClick={() => setMobileOpen(true)}>
+            <MenuIcon />
+          </IconButton>
+        </Toolbar>
 
-                <Divider sx={{ borderColor: "rgba(255,255,255,0.08)" }} />
-
-                <List sx={{ p: 1.5 }}>
-                    {menuItems.map((item) => {
-                        const active = location.pathname === item.path;
-                        return (
-                            <ListItemButton
-                                key={item.path}
-                                onClick={() => navigate(item.path)}
-                                sx={{
-                                    mb: 0.75,
-                                    borderRadius: 2.5,
-                                    bgcolor: active ? "rgba(255,255,255,0.12)" : "transparent",
-                                    "&:hover": {
-                                        bgcolor: "rgba(255,255,255,0.08)",
-                                    },
-                                }}
-                            >
-                                <ListItemIcon sx={{ color: "#fff", minWidth: 42 }}>
-                                    {item.icon}
-                                </ListItemIcon>
-                                <ListItemText
-                                    primary={item.label}
-                                    primaryTypographyProps={{
-                                        fontSize: 14,
-                                        fontWeight: active ? 700 : 500,
-                                    }}
-                                />
-                            </ListItemButton>
-                        );
-                    })}
-                </List>
-            </Drawer>
-
-            <Box
-                component="main"
-                sx={{
-                    flexGrow: 1,
-                    width: { md: `calc(100% - ${drawerWidth}px)` },
-                    minHeight: "100vh",
-                    bgcolor: "#f8fafc",
-                    overflowY: "auto",
-                    px: 3,
-                    pb: 4,
-                    pt: 12,
-
-                    "& h1, & h2, & h3, & h4, & h5, & h6": {
-                        color: "#b9923f",
-                    },
-                    "& .MuiTypography-h1, & .MuiTypography-h2, & .MuiTypography-h3, & .MuiTypography-h4, & .MuiTypography-h5, & .MuiTypography-h6": {
-                        color: "#b9923f",
-                    },
-                    "& .MuiTypography-body1, & .MuiTypography-body2": {
-                        color: "#64748b",
-                    },
-                }}
-            >
-                <Outlet />
-            </Box>
+        <Box component="main" sx={{ flex: 1, p: { xs: 2, md: 3.5 }, overflow: "auto" }}>
+          <Outlet />
         </Box>
-    );
+      </Box>
+    </Box>
+  );
 }

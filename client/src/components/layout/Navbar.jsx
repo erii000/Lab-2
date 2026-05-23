@@ -1,4 +1,4 @@
-import { BrandMonogramLogo, MenuIcon } from "../../ui/icons.jsx";
+import { BrandMonogramLogo, DashboardRounded, MenuIcon } from "../../ui/icons.jsx";
 import {
   AppBar,
   Badge,
@@ -13,13 +13,40 @@ import {
   ListItemText,
   Stack,
   Toolbar,
+  Tooltip,
   Typography,
   useMediaQuery,
 } from "@mui/material";
 import { alpha, useTheme } from "@mui/material/styles";
 import { useMemo, useState } from "react";
 import { Link as RouterLink, useLocation } from "react-router-dom";
+import { useAuthStore } from "../../store/authStore.js";
 import { useBookingStore } from "../../store/bookingStore.js";
+
+function AdminDashboardIcon({ onNavigate, sx }) {
+  const isAdmin = useAuthStore((s) => s.session?.role === "admin");
+  if (!isAdmin) return null;
+
+  return (
+    <Tooltip title="Admin dashboard">
+      <IconButton
+        component={RouterLink}
+        to="/admin"
+        onClick={onNavigate}
+        color="inherit"
+        aria-label="Admin dashboard"
+        sx={{
+          border: `1px solid ${alpha("#d4af6a", 0.35)}`,
+          bgcolor: alpha("#d4af6a", 0.08),
+          "&:hover": { bgcolor: alpha("#d4af6a", 0.16) },
+          ...sx,
+        }}
+      >
+        <DashboardRounded fontSize="small" />
+      </IconButton>
+    </Tooltip>
+  );
+}
 
 const navLinks = [
   { label: "Home", to: "/", description: "Landing & quick search" },
@@ -58,6 +85,9 @@ export default function Navbar() {
         </List>
         <Divider sx={{ mt: 0.5 }} />
         <Stack spacing={1.1} sx={{ p: 2 }}>
+          <Stack direction="row" spacing={1} alignItems="center" justifyContent="flex-end">
+            <AdminDashboardIcon onNavigate={() => setMobileOpen(false)} />
+          </Stack>
           <Button
             variant="outlined"
             component={RouterLink}
@@ -184,6 +214,7 @@ export default function Navbar() {
             )}
 
             <Stack direction="row" spacing={0.6} alignItems="center" sx={{ flexShrink: 0 }}>
+              <AdminDashboardIcon sx={{ display: { xs: "none", md: "inline-flex" } }} />
               {isMdUp && (
                 <>
                   <Button
@@ -215,9 +246,12 @@ export default function Navbar() {
                 </>
               )}
               {!isMdUp && (
-                <IconButton color="inherit" edge="end" onClick={() => setMobileOpen(true)}>
-                  <MenuIcon />
-                </IconButton>
+                <>
+                  <AdminDashboardIcon />
+                  <IconButton color="inherit" edge="end" onClick={() => setMobileOpen(true)}>
+                    <MenuIcon />
+                  </IconButton>
+                </>
               )}
             </Stack>
           </Toolbar>

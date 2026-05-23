@@ -10,11 +10,16 @@ import {
 } from "@mui/material";
 import { alpha } from "@mui/material/styles";
 import { useState } from "react";
-import { Link as RouterLink } from "react-router-dom";
+import { Link as RouterLink, useNavigate } from "react-router-dom";
+import { useToast } from "../context/ToastContext.jsx";
+import { ADMIN_DEMO, useAuthStore } from "../store/authStore.js";
 import AppButton from "../components/common/AppButton.jsx";
 import AppInput from "../components/common/AppInput.jsx";
 
 export default function LoginPage() {
+  const navigate = useNavigate();
+  const { showToast } = useToast();
+  const login = useAuthStore((s) => s.login);
   const [form, setForm] = useState({
     email: "",
     password: "",
@@ -52,6 +57,21 @@ export default function LoginPage() {
     if (Object.keys(nextErrors).length > 0) {
       return;
     }
+
+    const result = login(form.email, form.password);
+    if (!result.ok) {
+      setSubmitError({ password: result.message });
+      return;
+    }
+
+    if (result.role === "admin") {
+      showToast({ message: "Welcome back, admin.", severity: "success" });
+      navigate("/admin", { replace: true });
+      return;
+    }
+
+    showToast({ message: "Signed in successfully.", severity: "success" });
+    navigate("/", { replace: true });
   };
 
   return (
@@ -120,6 +140,9 @@ export default function LoginPage() {
         <Link component={RouterLink} to="/register" fontWeight={600}>
           Register
         </Link>
+      </Typography>
+      <Typography variant="caption" color="text.secondary" textAlign="center" display="block">
+        Admin demo: {ADMIN_DEMO.email} · password {ADMIN_DEMO.password}
       </Typography>
     </Stack>
   );

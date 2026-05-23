@@ -246,3 +246,7 @@ export const CompareRounded = mk(
 export const WarningAmberRounded = mk(
   "M1 21h22L12 2zm12-3h-2v-2h2zm0-4h-2v-4h2z",
 );
+
+export const MoreVertRounded = mk(
+  "M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z",
+);
