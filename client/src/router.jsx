@@ -3,7 +3,6 @@ import AdminLayout from "./layouts/AdminLayout.jsx";
 import AuthLayout from "./layouts/AuthLayout.jsx";
 import MainLayout from "./layouts/MainLayout.jsx";
 import RootLayout from "./layouts/RootLayout.jsx";
-import AboutHelpPage from "./pages/AboutHelpPage.jsx";
 import AiAssistantPage from "./pages/AiAssistantPage.jsx";
 import BookingDetailsPage from "./pages/BookingDetailsPage.jsx";
 import BookingTravelerPage from "./pages/BookingTravelerPage.jsx";
@@ -47,7 +46,7 @@ export const router = createBrowserRouter([
           { path: "profile", element: <Navigate to="/contact" replace /> },
           { path: "assistant", element: <AiAssistantPage /> },
           { path: "notifications", element: <Navigate to="/" replace /> },
-          { path: "about", element: <AboutHelpPage /> },
+          { path: "about", element: <Navigate to="/contact" replace /> },
           { path: "404", element: <NotFoundPage /> },
         ],
       },

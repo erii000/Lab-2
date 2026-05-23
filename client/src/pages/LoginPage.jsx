@@ -89,7 +89,7 @@ export default function LoginPage() {
           }
           label={<Typography variant="body2" sx={{ color: alpha("#fff", 0.5) }}>Remember me</Typography>}
         />
-        <Link component={RouterLink} to="/about" sx={{ color: designTokens.brand.gold, fontWeight: 600, fontSize: "0.875rem" }}>
+        <Link component={RouterLink} to="/contact" sx={{ color: designTokens.brand.gold, fontWeight: 600, fontSize: "0.875rem" }}>
           Forgot password?
         </Link>
       </Stack>
