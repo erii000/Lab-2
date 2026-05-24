@@ -3,6 +3,11 @@ using TravelAssistant.Common.Middleware;
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.Services.AddHttpClient("UpstreamProbe", client =>
+{
+    client.Timeout = TimeSpan.FromSeconds(5);
+});
+
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
@@ -34,6 +39,7 @@ builder.Services.AddReverseProxy()
 var app = builder.Build();
 
 app.UseMiddleware<GlobalExceptionMiddleware>();
+app.UseWebSockets();
 
 if (app.Environment.IsDevelopment())
 {

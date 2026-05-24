@@ -6,6 +6,7 @@ namespace TravelAssistant.Services.UserService.Controllers;
 
 [ApiController]
 [Route("api/auth")]
+[Route("api/v1/auth")]
 public sealed class AuthController : ControllerBase
 {
     private readonly IAuthService _authService;

@@ -26,4 +26,7 @@
     <None Remove="..\RealTimeCommunicationService\appsettings.json" />
     <None Remove="..\RealTimeCommunicationService\appsettings.Development.json" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\TravelAssistant.Common\TravelAssistant.Common.csproj" />
+  </ItemGroup>
 </Project>

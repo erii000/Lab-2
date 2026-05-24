@@ -11,6 +11,7 @@ using TravelAssistant.Services.BookingService.Data;
 using TravelAssistant.Services.BookingService.Repositories;
 using TravelAssistant.Services.BookingService.Services.Bookings;
 using TravelAssistant.Services.BookingService.Validation;
+using TravelAssistant.Common.Middleware;
 
 var rootEnvPath = Path.GetFullPath(Path.Combine(Directory.GetCurrentDirectory(), "..", "..", "global-settings.env"));
 var envPath = Path.Combine(Directory.GetCurrentDirectory(), ".env");
@@ -81,6 +82,15 @@ builder.Services.AddScoped<IBookingRepository, EfBookingRepository>();
 builder.Services.AddScoped<IBookingWorkflowService, BookingWorkflowService>();
 
 var app = builder.Build();
+
+if (app.Environment.IsDevelopment())
+{
+    using var scope = app.Services.CreateScope();
+    var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+    db.Database.Migrate();
+}
+
+app.UseMiddleware<GlobalExceptionMiddleware>();
 
 if (app.Environment.IsDevelopment())
 {

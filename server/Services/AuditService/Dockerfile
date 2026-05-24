@@ -1,11 +1,12 @@
 FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
 WORKDIR /src
 
-COPY ["Services/AuditService/AuditService.csproj", "Services/AuditService/"]
-RUN dotnet restore "Services/AuditService/AuditService.csproj"
+COPY ["TravelAssistant.Common/TravelAssistant.Common.csproj", "TravelAssistant.Common/"]
+COPY ["server/Services/AuditService/AuditService.csproj", "server/Services/AuditService/"]
+RUN dotnet restore "server/Services/AuditService/AuditService.csproj"
 
 COPY . .
-WORKDIR "/src/Services/AuditService"
+WORKDIR "/src/server/Services/AuditService"
 RUN dotnet publish "AuditService.csproj" -c Release -o /app/publish /p:UseAppHost=false
 
 FROM mcr.microsoft.com/dotnet/aspnet:9.0 AS final

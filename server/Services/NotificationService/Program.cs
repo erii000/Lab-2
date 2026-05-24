@@ -9,6 +9,7 @@ using TravelAssistant.Services.NotificationService.Interfaces;
 using TravelAssistant.Services.NotificationService.Services;
 using TravelAssistant.Services.NotificationService.Services.Interfaces;
 using TravelAssistant.Services.RealTimeCommunicationService.Hubs;
+using TravelAssistant.Common.Middleware;
 
 var rootEnvPath = Path.GetFullPath(Path.Combine(Directory.GetCurrentDirectory(), "..", "..", "global-settings.env"));
 var envPath = Path.Combine(Directory.GetCurrentDirectory(), ".env");
@@ -78,6 +79,8 @@ builder.Services.AddSignalR();
 builder.Services.AddScoped<INotificationService, TravelAssistant.Services.NotificationService.Services.NotificationService>();
 builder.Services.AddScoped<IRealtimeNotificationService, RealtimeNotificationService>();
 
+builder.Services.AddHealthChecks();
+
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
@@ -112,6 +115,8 @@ builder.Services.AddSwaggerGen(options =>
 
 var app = builder.Build();
 
+app.UseMiddleware<GlobalExceptionMiddleware>();
+
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -122,6 +127,7 @@ app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
+app.MapHealthChecks("/health");
 app.MapHub<NotificationsHub>("/hubs/notifications");
 app.MapGet("/api/ping", () => Results.Ok(new { status = "ok", service = "NotificationService" }));
 

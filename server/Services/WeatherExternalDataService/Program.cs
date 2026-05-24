@@ -2,12 +2,13 @@ using DotNetEnv;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
-using Microsoft.OpenApi;
+using Microsoft.OpenApi.Models;
 using System.Text;
 using TravelAssistant.Services.WeatherExternalDataService.Configuration;
 using TravelAssistant.Services.WeatherExternalDataService.Services.Flights;
 using TravelAssistant.Services.WeatherExternalDataService.Services.Transport;
 using TravelAssistant.Services.WeatherExternalDataService.Services.Weather;
+using TravelAssistant.Common.Middleware;
 
 var envPath = Path.Combine(Directory.GetCurrentDirectory(), ".env");
 var rootEnvPath = Path.GetFullPath(Path.Combine(Directory.GetCurrentDirectory(), "..", "..", "global-settings.env"));
@@ -136,6 +137,8 @@ builder.Services.AddScoped<IWeatherClient, OpenMeteoWeatherClient>();
 builder.Services.AddHealthChecks();
 
 var app = builder.Build();
+
+app.UseMiddleware<GlobalExceptionMiddleware>();
 
 if (app.Environment.IsDevelopment())
 {

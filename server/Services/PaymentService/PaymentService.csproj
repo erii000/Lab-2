@@ -20,4 +20,7 @@
     <PackageReference Include="Swashbuckle.AspNetCore" Version="7.2.0" />
     <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.3.1" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\TravelAssistant.Common\TravelAssistant.Common.csproj" />
+  </ItemGroup>
 </Project>

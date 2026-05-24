@@ -11,6 +11,7 @@ using TravelAssistant.Services.PaymentService.Data;
 using TravelAssistant.Services.PaymentService.Repositories;
 using TravelAssistant.Services.PaymentService.Services.Payments;
 using TravelAssistant.Services.PaymentService.Validation;
+using TravelAssistant.Common.Middleware;
 
 var rootEnvPath = Path.GetFullPath(Path.Combine(Directory.GetCurrentDirectory(), "..", "..", "global-settings.env"));
 var envPath = Path.Combine(Directory.GetCurrentDirectory(), ".env");
@@ -104,6 +105,15 @@ builder.Services.AddScoped<IPaymentCheckoutService, PaymentCheckoutOrchestrator>
 builder.Services.AddScoped<IPaymentWebhookService, StripePaymentWebhookService>();
 
 var app = builder.Build();
+
+if (app.Environment.IsDevelopment())
+{
+    using var scope = app.Services.CreateScope();
+    var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+    db.Database.Migrate();
+}
+
+app.UseMiddleware<GlobalExceptionMiddleware>();
 
 if (app.Environment.IsDevelopment())
 {

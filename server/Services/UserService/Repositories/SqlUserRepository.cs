@@ -76,4 +76,10 @@ public sealed class SqlUserRepository : IUserRepository
 
         return (items, totalCount);
     }
+
+    public async Task BulkAddAsync(IEnumerable<User> users, CancellationToken ct = default)
+    {
+        _dbContext.Users.AddRange(users);
+        await _dbContext.SaveChangesAsync(ct);
+    }
 }

@@ -1,3 +1,4 @@
+using TravelAssistant.Services.PaymentService.DTOs.Payments;
 using TravelAssistant.Services.PaymentService.Models.Entities;
 
 namespace TravelAssistant.Services.PaymentService.Repositories;
@@ -12,4 +13,6 @@ public interface IPaymentRepository
     Task<bool> LogExistsForEventAsync(string externalEventId, CancellationToken cancellationToken = default);
     Task SaveChangesAsync(CancellationToken cancellationToken = default);
     Task<Payment?> GetTrackedByIdAsync(int id, CancellationToken cancellationToken = default);
+    Task<(IReadOnlyList<Payment> Items, int Total)> SearchAsync(PaymentSearchRequest request, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<Payment>> ListForExportAsync(PaymentSearchRequest request, int maxRows, CancellationToken cancellationToken = default);
 }

@@ -13,6 +13,7 @@ using TravelAssistant.Services.ItineraryService.Services;
 using TravelAssistant.Services.ItineraryService.Services.Interfaces;
 using TravelAssistant.Services.ItineraryService.Services.ItineraryPlanning;
 using TravelAssistant.Services.ItineraryService.Validation;
+using TravelAssistant.Common.Middleware;
 
 var envPath = Path.Combine(Directory.GetCurrentDirectory(), ".env");
 var rootEnvPath = Path.GetFullPath(Path.Combine(Directory.GetCurrentDirectory(), "..", "..", "global-settings.env"));
@@ -91,6 +92,15 @@ builder.Services.AddScoped<IItineraryPlanningService, ItineraryPlanningService>(
 builder.Services.AddScoped<IItinerarySearchService, ItinerarySearchService>();
 
 var app = builder.Build();
+
+if (app.Environment.IsDevelopment())
+{
+    using var scope = app.Services.CreateScope();
+    var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+    db.Database.Migrate();
+}
+
+app.UseMiddleware<GlobalExceptionMiddleware>();
 
 if (app.Environment.IsDevelopment())
 {

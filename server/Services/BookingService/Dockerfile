@@ -1,11 +1,12 @@
 FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
 WORKDIR /src
 
-COPY ["Services/BookingService/BookingService.csproj", "Services/BookingService/"]
-RUN dotnet restore "Services/BookingService/BookingService.csproj"
+COPY ["TravelAssistant.Common/TravelAssistant.Common.csproj", "TravelAssistant.Common/"]
+COPY ["server/Services/BookingService/BookingService.csproj", "server/Services/BookingService/"]
+RUN dotnet restore "server/Services/BookingService/BookingService.csproj"
 
 COPY . .
-WORKDIR "/src/Services/BookingService"
+WORKDIR "/src/server/Services/BookingService"
 RUN dotnet publish "BookingService.csproj" -c Release -o /app/publish /p:UseAppHost=false
 
 FROM mcr.microsoft.com/dotnet/aspnet:9.0 AS final

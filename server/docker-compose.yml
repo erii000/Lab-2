@@ -17,15 +17,32 @@ services:
     volumes:
       - mssql-data:/var/opt/mssql
 
+  # Creates Initial Catalog used by CONNECTIONSTRINGS__DEFAULTCONNECTION (default lab2DB in .env.docker.example).
+  mssql-init:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    depends_on:
+      mssql:
+        condition: service_healthy
+    environment:
+      MSSQL_SA_PASSWORD: "${MSSQL_SA_PASSWORD}"
+    entrypoint: ["/bin/bash", "-ec"]
+    command:
+      - |
+        until /opt/mssql-tools18/bin/sqlcmd -S mssql -U sa -P "$$MSSQL_SA_PASSWORD" -C -Q "SELECT 1" >/dev/null 2>&1; do sleep 2; done
+        /opt/mssql-tools18/bin/sqlcmd -S mssql -U sa -P "$$MSSQL_SA_PASSWORD" -C -Q "IF DB_ID('lab2DB') IS NULL CREATE DATABASE lab2DB"
+    restart: "no"
+
   apigateway:
     build:
-      context: .
-      dockerfile: ApiGateway/Dockerfile
+      context: ..
+      dockerfile: server/ApiGateway/Dockerfile
     ports:
       - "5161:8080"
     depends_on:
       mssql:
         condition: service_healthy
+      mssql-init:
+        condition: service_completed_successfully
     environment: &service_env
       ASPNETCORE_ENVIRONMENT: "Development"
       ASPNETCORE_URLS: "http://+:8080"
@@ -36,49 +53,80 @@ services:
       Jwt__AccessTokenMinutes: "${JWT__ACCESSTOKENMINUTES:-30}"
       Jwt__RefreshTokenDays: "${JWT__REFRESHTOKENDAYS:-7}"
       Cors__AllowedOrigins__0: "${CORS__ALLOWEDORIGINS__0:-http://localhost:5173}"
+      Cors__AllowedOrigins__1: "${CORS__ALLOWEDORIGINS__1:-http://127.0.0.1:5173}"
+      ReverseProxy__Clusters__user-cluster__Destinations__destination1__Address: "http://userservice:8080/"
+      ReverseProxy__Clusters__itinerary-cluster__Destinations__destination1__Address: "http://itineraryservice:8080/"
+      ReverseProxy__Clusters__booking-cluster__Destinations__destination1__Address: "http://bookingservice:8080/"
+      ReverseProxy__Clusters__payment-cluster__Destinations__destination1__Address: "http://paymentservice:8080/"
+      ReverseProxy__Clusters__notification-cluster__Destinations__destination1__Address: "http://notificationservice:8080/"
+      ReverseProxy__Clusters__audit-cluster__Destinations__destination1__Address: "http://auditservice:8080/"
+      ReverseProxy__Clusters__rtc-cluster__Destinations__destination1__Address: "http://realtimecommunicationservice:8080/"
+      ReverseProxy__Clusters__weather-cluster__Destinations__destination1__Address: "http://weatherexternaldataservice:8080/"
+      ReverseProxy__Clusters__support-cluster__Destinations__destination1__Address: "http://supportservice:8080/"
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+
+  mongo:
+    image: mongo:7
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: "${MONGO_ROOT_USERNAME:-root}"
+      MONGO_INITDB_ROOT_PASSWORD: "${MONGO_ROOT_PASSWORD:-changeme}"
 
   userservice:
     build:
-      context: .
-      dockerfile: Services/UserService/Dockerfile
+      context: ..
+      dockerfile: server/Services/UserService/Dockerfile
     ports:
       - "62381:8080"
     depends_on:
       mssql:
         condition: service_healthy
+      mssql-init:
+        condition: service_completed_successfully
     environment: *service_env
 
   itineraryservice:
     build:
-      context: .
-      dockerfile: Services/ItineraryService/Dockerfile
+      context: ..
+      dockerfile: server/Services/ItineraryService/Dockerfile
     ports:
       - "63189:8080"
     depends_on:
       mssql:
         condition: service_healthy
+      mssql-init:
+        condition: service_completed_successfully
     environment: *service_env
 
   bookingservice:
     build:
-      context: .
-      dockerfile: Services/BookingService/Dockerfile
+      context: ..
+      dockerfile: server/Services/BookingService/Dockerfile
     ports:
       - "63191:8080"
     depends_on:
       mssql:
         condition: service_healthy
+      mssql-init:
+        condition: service_completed_successfully
     environment: *service_env
 
   paymentservice:
     build:
-      context: .
-      dockerfile: Services/PaymentService/Dockerfile
+      context: ..
+      dockerfile: server/Services/PaymentService/Dockerfile
     ports:
       - "63187:8080"
     depends_on:
       mssql:
         condition: service_healthy
+      mssql-init:
+        condition: service_completed_successfully
     environment:
       <<: *service_env
       Stripe__SecretKey: "${STRIPE__SECRETKEY:-}"
@@ -90,57 +138,67 @@ services:
 
   notificationservice:
     build:
-      context: .
-      dockerfile: Services/NotificationService/Dockerfile
+      context: ..
+      dockerfile: server/Services/NotificationService/Dockerfile
     ports:
       - "62375:8080"
     depends_on:
       mssql:
         condition: service_healthy
+      mssql-init:
+        condition: service_completed_successfully
     environment: *service_env
 
   auditservice:
     build:
-      context: .
-      dockerfile: Services/AuditService/Dockerfile
+      context: ..
+      dockerfile: server/Services/AuditService/Dockerfile
     ports:
       - "65486:8080"
     depends_on:
       mssql:
         condition: service_healthy
+      mssql-init:
+        condition: service_completed_successfully
     environment: *service_env
 
   realtimecommunicationservice:
     build:
-      context: .
-      dockerfile: Services/RealTimeCommunicationService/Dockerfile
+      context: ..
+      dockerfile: server/Services/RealTimeCommunicationService/Dockerfile
     ports:
       - "62379:8080"
     depends_on:
       mssql:
         condition: service_healthy
+      mssql-init:
+        condition: service_completed_successfully
     environment: *service_env
 
   supportservice:
     build:
-      context: .
-      dockerfile: Services/SupportService/Dockerfile
+      context: ..
+      dockerfile: server/Services/SupportService/Dockerfile
     ports:
       - "50395:8080"
     depends_on:
       mssql:
         condition: service_healthy
+      mssql-init:
+        condition: service_completed_successfully
     environment: *service_env
 
   weatherexternaldataservice:
     build:
-      context: .
-      dockerfile: Services/WeatherExternalDataService/Dockerfile
+      context: ..
+      dockerfile: server/Services/WeatherExternalDataService/Dockerfile
     ports:
       - "61219:8080"
     depends_on:
       mssql:
         condition: service_healthy
+      mssql-init:
+        condition: service_completed_successfully
     environment:
       <<: *service_env
       ExternalApis__AviationStack__AccessKey: "${EXTERNALAPIS__AVIATIONSTACK__ACCESSKEY:-}"

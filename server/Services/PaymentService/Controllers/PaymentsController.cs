@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using TravelAssistant.Common.Export;
 using TravelAssistant.Services.PaymentService.DTOs.Payments;
+using TravelAssistant.Services.PaymentService.Models.Entities;
 using TravelAssistant.Services.PaymentService.Repositories;
 using TravelAssistant.Services.PaymentService.Security;
 using TravelAssistant.Services.PaymentService.Services.Payments;
@@ -23,6 +25,107 @@ public sealed class PaymentsController : ControllerBase
         _paymentCheckoutService = paymentCheckoutService;
         _paymentWebhookService = paymentWebhookService;
         _paymentRepository = paymentRepository;
+    }
+
+    [HttpGet("search")]
+    [Authorize(Roles = "Admin")]
+    public async Task<IActionResult> Search([FromQuery] PaymentSearchRequest request, CancellationToken cancellationToken)
+    {
+        var (items, total) = await _paymentRepository.SearchAsync(request, cancellationToken);
+        var mapped = items.Select(PaymentQueryService.ToDto).ToList();
+        return Ok(new
+        {
+            Total = total,
+            Page = request.Page < 1 ? 1 : request.Page,
+            PageSize = Math.Clamp(request.PageSize, 1, 100),
+            Items = mapped
+        });
+    }
+
+    [HttpGet("export")]
+    [Authorize(Roles = "Admin")]
+    public async Task<IActionResult> Export([FromQuery] string format = "json", [FromQuery] PaymentSearchRequest? filters = null, CancellationToken cancellationToken = default)
+    {
+        filters ??= new PaymentSearchRequest();
+        var items = await _paymentRepository.ListForExportAsync(filters, 5000, cancellationToken);
+        var headers = new[]
+        {
+            "Id", "UserId", "BookingId", "Amount", "Currency", "PaymentMethod", "PaymentStatus", "ExternalReference", "PaidAt", "CreatedAt"
+        };
+        var rows = items.Select(p => new[]
+        {
+            p.Id.ToString(),
+            p.UserId.ToString(),
+            p.BookingId.ToString(),
+            p.Amount.ToString(System.Globalization.CultureInfo.InvariantCulture),
+            p.Currency ?? "",
+            p.PaymentMethod,
+            p.PaymentStatus,
+            p.ExternalReference ?? "",
+            p.PaidAt?.ToString("O") ?? "",
+            p.CreatedAt.ToString("O")
+        }).ToList();
+
+        var normalized = (format ?? "json").Trim().ToLowerInvariant();
+        return normalized switch
+        {
+            "csv" => File(TabularExport.ToCsv(headers, rows), "text/csv", $"payments-{DateTime.UtcNow:yyyyMMdd}.csv"),
+            "xlsx" => File(
+                TabularExport.ToXlsx("Payments", headers, rows),
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                $"payments-{DateTime.UtcNow:yyyyMMdd}.xlsx"),
+            _ => File(TabularExport.ToJsonUtf8(items.Select(PaymentQueryService.ToDto)), "application/json", $"payments-{DateTime.UtcNow:yyyyMMdd}.json")
+        };
+    }
+
+    public sealed class PaymentImportRow
+    {
+        public int UserId { get; set; }
+        public int BookingId { get; set; }
+        public decimal Amount { get; set; }
+        public string? Currency { get; set; }
+        public string PaymentMethod { get; set; } = "";
+        public string PaymentStatus { get; set; } = "";
+        public string? ExternalReference { get; set; }
+    }
+
+    [HttpPost("import")]
+    [Authorize(Roles = "Admin")]
+    public async Task<IActionResult> Import([FromBody] IReadOnlyList<PaymentImportRow>? rows, CancellationToken cancellationToken)
+    {
+        if (rows is null || rows.Count == 0)
+            return BadRequest(new { error = "Empty payload." });
+
+        var errors = new List<object>();
+        var entities = new List<Payment>();
+        for (var i = 0; i < rows.Count; i++)
+        {
+            var r = rows[i];
+            if (r.UserId <= 0 || r.BookingId <= 0 || string.IsNullOrWhiteSpace(r.PaymentMethod) ||
+                string.IsNullOrWhiteSpace(r.PaymentStatus))
+                errors.Add(new { row = i + 1, message = "UserId, BookingId, PaymentMethod, and PaymentStatus are required." });
+            else
+                entities.Add(new Payment
+                {
+                    UserId = r.UserId,
+                    BookingId = r.BookingId,
+                    Amount = r.Amount,
+                    Currency = string.IsNullOrWhiteSpace(r.Currency) ? null : r.Currency.Trim().ToUpperInvariant(),
+                    PaymentMethod = r.PaymentMethod.Trim(),
+                    PaymentStatus = r.PaymentStatus.Trim(),
+                    ExternalReference = string.IsNullOrWhiteSpace(r.ExternalReference) ? null : r.ExternalReference.Trim(),
+                    CreatedAt = DateTime.UtcNow
+                });
+        }
+
+        if (errors.Count > 0)
+            return BadRequest(new { errors });
+
+        foreach (var p in entities)
+            await _paymentRepository.AddAsync(p, cancellationToken);
+
+        await _paymentRepository.SaveChangesAsync(cancellationToken);
+        return Ok(new { inserted = entities.Count });
     }
 
     [HttpPost("checkout")]

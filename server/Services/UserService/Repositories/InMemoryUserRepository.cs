@@ -71,5 +71,17 @@ public sealed class InMemoryUserRepository : IUserRepository
 
         return Task.FromResult(((IEnumerable<User>)items, totalCount));
     }
+
+    public Task BulkAddAsync(IEnumerable<User> users, CancellationToken cancellationToken = default)
+    {
+        foreach (var user in users)
+        {
+            var id = Interlocked.Increment(ref _nextId);
+            user.Id = id;
+            _users.TryAdd(id, user);
+        }
+
+        return Task.CompletedTask;
+    }
 }
 

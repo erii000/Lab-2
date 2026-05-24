@@ -10,5 +10,6 @@ public interface IUserRepository
     Task<User> AddAsync(User user, CancellationToken cancellationToken = default);
     Task<User> UpdateAsync(User user, CancellationToken cancellationToken = default);
     Task<(IEnumerable<User> Users, int TotalCount)> GetUsersAsync(UserQueryParams query, CancellationToken cancellationToken = default);
+    Task BulkAddAsync(IEnumerable<User> users, CancellationToken cancellationToken = default);
 }
 

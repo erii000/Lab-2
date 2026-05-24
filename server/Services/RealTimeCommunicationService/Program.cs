@@ -8,6 +8,7 @@ using TravelAssistant.Services.RealTimeCommunicationService.Data;
 using TravelAssistant.Services.RealTimeCommunicationService.Hubs;
 using TravelAssistant.Services.RealTimeCommunicationService.Interfaces;
 using TravelAssistant.Services.RealTimeCommunicationService.Services;
+using TravelAssistant.Common.Middleware;
 
 var rootEnvPath = Path.GetFullPath(Path.Combine(Directory.GetCurrentDirectory(), "..", "..", "global-settings.env"));
 var envPath = Path.Combine(Directory.GetCurrentDirectory(), ".env");
@@ -76,6 +77,7 @@ builder.Services
 
 builder.Services.AddAuthorization();
 builder.Services.AddSignalR();
+builder.Services.AddHealthChecks();
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
@@ -90,6 +92,8 @@ builder.Services.AddSwaggerGen(options =>
 
 var app = builder.Build();
 
+app.UseMiddleware<GlobalExceptionMiddleware>();
+
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -101,6 +105,7 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+app.MapHealthChecks("/health");
 app.MapHub<NotificationsHub>("/hubs/notifications");
 app.MapGet("/api/ping", () => Results.Ok(new { status = "ok", service = "RealTimeCommunicationService" }));
 

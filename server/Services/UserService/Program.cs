@@ -11,6 +11,7 @@ using TravelAssistant.Services.UserService.Repositories.Interfaces;
 using TravelAssistant.Services.UserService.Services;
 using TravelAssistant.Services.UserService.Services.Auth;
 using TravelAssistant.Services.UserService.Services.Interfaces;
+using TravelAssistant.Common.Middleware;
 
 var envPath = Path.Combine(Directory.GetCurrentDirectory(), ".env");
 var rootEnvPath = Path.GetFullPath(Path.Combine(Directory.GetCurrentDirectory(), "..", "..", "global-settings.env"));
@@ -101,6 +102,15 @@ builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IUserSearchService, UserSearchService>();
 
 var app = builder.Build();
+
+if (app.Environment.IsDevelopment())
+{
+    using var scope = app.Services.CreateScope();
+    var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+    db.Database.Migrate();
+}
+
+app.UseMiddleware<GlobalExceptionMiddleware>();
 
 if (app.Environment.IsDevelopment())
 {

@@ -15,4 +15,7 @@
     </PackageReference>
     <PackageReference Include="Swashbuckle.AspNetCore" Version="7.2.0" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\TravelAssistant.Common\TravelAssistant.Common.csproj" />
+  </ItemGroup>
 </Project>

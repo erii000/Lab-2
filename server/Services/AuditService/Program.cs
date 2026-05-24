@@ -7,6 +7,7 @@ using Microsoft.OpenApi.Models;
 using TravelAssistant.Services.AuditService.Data;
 using TravelAssistant.Services.AuditService.Interfaces;
 using TravelAssistant.Services.AuditService.Services;
+using TravelAssistant.Common.Middleware;
 
 var rootEnvPath = Path.GetFullPath(Path.Combine(Directory.GetCurrentDirectory(), "..", "..", "global-settings.env"));
 var envPath = Path.Combine(Directory.GetCurrentDirectory(), ".env");
@@ -56,6 +57,7 @@ builder.Services
 
 builder.Services.AddAuthorization();
 builder.Services.AddScoped<IAuditLogService, AuditLogService>();
+builder.Services.AddHealthChecks();
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
@@ -94,6 +96,8 @@ builder.Services.AddSwaggerGen(options =>
 
 var app = builder.Build();
 
+app.UseMiddleware<GlobalExceptionMiddleware>();
+
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -104,6 +108,7 @@ app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
+app.MapHealthChecks("/health");
 app.MapGet("/api/ping", () => Results.Ok(new { status = "ok", service = "AuditService" }));
 
 app.Run();
