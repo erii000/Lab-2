@@ -96,10 +96,17 @@ public sealed class ApplicationDbContext : DbContext
         {
             entity.ToTable("Destinations");
             entity.HasKey(x => x.Id);
+            entity.Property(x => x.Slug).HasMaxLength(64).IsRequired();
+            entity.HasIndex(x => x.Slug).IsUnique().HasDatabaseName("IX_Destinations_Slug");
             entity.Property(x => x.Name).HasMaxLength(100).IsRequired();
             entity.Property(x => x.Country).HasMaxLength(100).IsRequired();
             entity.Property(x => x.City).HasMaxLength(100).IsRequired();
-            entity.Property(x => x.Description).HasMaxLength(500);
+            entity.Property(x => x.Description).HasMaxLength(2000);
+            entity.Property(x => x.ImageUrl).HasMaxLength(500);
+            entity.Property(x => x.PriceFrom).HasColumnType("decimal(10,2)");
+            entity.Property(x => x.Rating).HasColumnType("decimal(3,1)");
+            entity.Property(x => x.Tag).HasMaxLength(80);
+            entity.Property(x => x.CatalogJson).HasColumnType("nvarchar(max)").IsRequired();
             entity.Property(x => x.CreatedAt).HasColumnType("datetime").IsRequired();
             entity.Property(x => x.UpdatedAt).HasColumnType("datetime");
         });

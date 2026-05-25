@@ -4,7 +4,9 @@ import { Outlet } from "react-router-dom";
 import Footer from "../components/layout/Footer.jsx";
 import Navbar from "../components/layout/Navbar.jsx";
 
-const API_STATUS_URL = "http://localhost:5161/api/status";
+import { API_BASE_URL } from "../api/config.js";
+
+const API_STATUS_URL = `${API_BASE_URL}/api/status`;
 
 export default function MainLayout() {
   const [apiStatus, setApiStatus] = useState(null);

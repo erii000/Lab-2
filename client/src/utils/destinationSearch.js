@@ -1,4 +1,4 @@
-import { destinationById, destinations } from "../data/destinations.js";
+import { getCatalogDestinations, getDestinationById } from "../data/destinations.js";
 
 const MS_PER_DAY = 86_400_000;
 
@@ -40,6 +40,7 @@ export function resolveDestinationId(query) {
   const q = normalizeQuery(query);
   if (!q) return null;
 
+  const destinations = getCatalogDestinations();
   const exact = destinations.find(
     (d) =>
       normalizeQuery(d.title) === q ||
@@ -88,7 +89,7 @@ export function searchDestinations({ query = "", budget, tripType, maxResults = 
 }
 
 export function getDestinationDetail(id) {
-  const base = destinationById[id];
+  const base = getDestinationById(id);
   if (!base) return null;
   return base;
 }
@@ -140,7 +141,7 @@ export function getAvailabilityWindows(
   destinationId,
   { weeks = 10, guests = 2, budget } = {},
 ) {
-  const dest = destinationById[destinationId];
+  const dest = getDestinationById(destinationId);
   if (!dest) return [];
 
   const guestCount = Math.max(1, Number(guests) || 1);

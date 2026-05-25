@@ -12,4 +12,5 @@ public sealed class BookingDetailResponse
     public string? Currency { get; init; }
     public DateOnly BookingDate { get; init; }
     public string Status { get; init; } = string.Empty;
+    public string? MetadataJson { get; init; }
 }

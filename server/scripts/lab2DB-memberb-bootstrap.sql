@@ -1,0 +1,267 @@
+/*
+  Idempotent bootstrap for shared lab2DB — Booking + Itinerary Member B tables.
+  Safe to re-run (Docker, Azure, local). Run before EF migrations on empty or partial DBs.
+*/
+SET NOCOUNT ON;
+
+/* ---- Itinerary: Destinations (full catalog schema) ---- */
+IF OBJECT_ID(N'dbo.Destinations', N'U') IS NULL
+BEGIN
+    CREATE TABLE dbo.Destinations
+    (
+        Id INT IDENTITY(1, 1) NOT NULL PRIMARY KEY,
+        Slug NVARCHAR(64) NOT NULL CONSTRAINT DF_Destinations_Slug DEFAULT (N''),
+        Name NVARCHAR(100) NOT NULL,
+        Country NVARCHAR(100) NOT NULL,
+        City NVARCHAR(100) NOT NULL,
+        Description NVARCHAR(2000) NULL,
+        ImageUrl NVARCHAR(500) NULL,
+        PriceFrom DECIMAL(10, 2) NULL,
+        Rating DECIMAL(3, 1) NULL,
+        ReviewCount INT NOT NULL CONSTRAINT DF_Destinations_ReviewCount DEFAULT (0),
+        Tag NVARCHAR(80) NULL,
+        CatalogJson NVARCHAR(MAX) NOT NULL CONSTRAINT DF_Destinations_CatalogJson DEFAULT (N'{}'),
+        CreatedAt DATETIME NOT NULL CONSTRAINT DF_Destinations_CreatedAt DEFAULT (SYSUTCDATETIME()),
+        UpdatedAt DATETIME NULL
+    );
+END;
+
+IF COL_LENGTH(N'dbo.Destinations', N'Slug') IS NULL
+    ALTER TABLE dbo.Destinations ADD Slug NVARCHAR(64) NOT NULL CONSTRAINT DF_Destinations_Slug2 DEFAULT (N'');
+IF COL_LENGTH(N'dbo.Destinations', N'CatalogJson') IS NULL
+    ALTER TABLE dbo.Destinations ADD CatalogJson NVARCHAR(MAX) NOT NULL CONSTRAINT DF_Destinations_CatalogJson2 DEFAULT (N'{}');
+IF COL_LENGTH(N'dbo.Destinations', N'ImageUrl') IS NULL
+    ALTER TABLE dbo.Destinations ADD ImageUrl NVARCHAR(500) NULL;
+IF COL_LENGTH(N'dbo.Destinations', N'PriceFrom') IS NULL
+    ALTER TABLE dbo.Destinations ADD PriceFrom DECIMAL(10, 2) NULL;
+IF COL_LENGTH(N'dbo.Destinations', N'Rating') IS NULL
+    ALTER TABLE dbo.Destinations ADD Rating DECIMAL(3, 1) NULL;
+IF COL_LENGTH(N'dbo.Destinations', N'ReviewCount') IS NULL
+    ALTER TABLE dbo.Destinations ADD ReviewCount INT NOT NULL CONSTRAINT DF_Destinations_ReviewCount2 DEFAULT (0);
+IF COL_LENGTH(N'dbo.Destinations', N'Tag') IS NULL
+    ALTER TABLE dbo.Destinations ADD Tag NVARCHAR(80) NULL;
+
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_Destinations_Slug' AND object_id = OBJECT_ID(N'dbo.Destinations'))
+BEGIN
+    UPDATE dbo.Destinations SET Slug = CONCAT(N'legacy-', Id) WHERE Slug = N'' OR Slug IS NULL;
+    CREATE UNIQUE INDEX IX_Destinations_Slug ON dbo.Destinations (Slug);
+END;
+
+/* ---- Itinerary: Itineraries ---- */
+IF OBJECT_ID(N'dbo.Itineraries', N'U') IS NULL
+BEGIN
+    CREATE TABLE dbo.Itineraries
+    (
+        Id INT IDENTITY(1, 1) NOT NULL PRIMARY KEY,
+        UserId INT NOT NULL,
+        Title NVARCHAR(100) NOT NULL,
+        Destination NVARCHAR(120) NOT NULL,
+        Country NVARCHAR(100) NULL,
+        Description NVARCHAR(2000) NULL,
+        StartDate DATE NOT NULL,
+        EndDate DATE NOT NULL,
+        CreatedAt DATETIME NOT NULL CONSTRAINT DF_Itineraries_CreatedAt DEFAULT (SYSUTCDATETIME()),
+        UpdatedAt DATETIME NULL
+    );
+    CREATE INDEX IX_Itineraries_UserId ON dbo.Itineraries (UserId);
+END;
+
+IF COL_LENGTH(N'dbo.Itineraries', N'Destination') IS NULL
+BEGIN
+    ALTER TABLE dbo.Itineraries ADD Destination NVARCHAR(120) NULL;
+    EXEC(N'UPDATE dbo.Itineraries SET Destination = LEFT(Title, 120) WHERE Destination IS NULL');
+    ALTER TABLE dbo.Itineraries ALTER COLUMN Destination NVARCHAR(120) NOT NULL;
+END;
+
+IF OBJECT_ID(N'dbo.ItineraryDays', N'U') IS NULL
+BEGIN
+    CREATE TABLE dbo.ItineraryDays
+    (
+        Id INT IDENTITY(1, 1) NOT NULL PRIMARY KEY,
+        ItineraryId INT NOT NULL,
+        DayNumber INT NOT NULL,
+        [Date] DATE NOT NULL,
+        TransportSuggestion NVARCHAR(200) NOT NULL,
+        MealSuggestion NVARCHAR(200) NOT NULL,
+        CreatedAt DATETIME2 NOT NULL CONSTRAINT DF_ItineraryDays_CreatedAt DEFAULT (SYSUTCDATETIME()),
+        CONSTRAINT FK_ItineraryDays_Itineraries FOREIGN KEY (ItineraryId)
+            REFERENCES dbo.Itineraries (Id) ON DELETE CASCADE
+    );
+    CREATE INDEX IX_ItineraryDays_ItineraryId ON dbo.ItineraryDays (ItineraryId);
+END;
+
+IF OBJECT_ID(N'dbo.ItineraryDayActivities', N'U') IS NULL
+BEGIN
+    CREATE TABLE dbo.ItineraryDayActivities
+    (
+        Id INT IDENTITY(1, 1) NOT NULL PRIMARY KEY,
+        ItineraryDayId INT NOT NULL,
+        SortOrder INT NOT NULL,
+        Description NVARCHAR(500) NOT NULL,
+        CONSTRAINT FK_ItineraryDayActivities_Days FOREIGN KEY (ItineraryDayId)
+            REFERENCES dbo.ItineraryDays (Id) ON DELETE CASCADE
+    );
+    CREATE INDEX IX_ItineraryDayActivities_DayId ON dbo.ItineraryDayActivities (ItineraryDayId);
+END;
+
+IF OBJECT_ID(N'dbo.TravelPreferences', N'U') IS NULL
+BEGIN
+    CREATE TABLE dbo.TravelPreferences
+    (
+        Id INT IDENTITY(1, 1) NOT NULL PRIMARY KEY,
+        UserId INT NOT NULL,
+        PreferredTransport NVARCHAR(100) NULL,
+        PreferredAccommodation NVARCHAR(100) NULL,
+        BudgetMin DECIMAL(10, 2) NULL,
+        BudgetMax DECIMAL(10, 2) NULL,
+        FavoriteDestinationType NVARCHAR(100) NULL,
+        CreatedAt DATETIME2 NOT NULL CONSTRAINT DF_TravelPreferences_CreatedAt DEFAULT (SYSUTCDATETIME()),
+        UpdatedAt DATETIME2 NULL
+    );
+    CREATE INDEX IX_TravelPreferences_UserId ON dbo.TravelPreferences (UserId);
+END;
+
+IF OBJECT_ID(N'dbo.Trips', N'U') IS NULL
+BEGIN
+    CREATE TABLE dbo.Trips
+    (
+        Id INT IDENTITY(1, 1) NOT NULL PRIMARY KEY,
+        UserId INT NOT NULL,
+        Title NVARCHAR(100) NOT NULL,
+        StartDate DATE NOT NULL,
+        EndDate DATE NOT NULL,
+        Budget DECIMAL(10, 2) NULL,
+        Status NVARCHAR(50) NOT NULL,
+        CreatedAt DATETIME NOT NULL CONSTRAINT DF_Trips_CreatedAt DEFAULT (SYSUTCDATETIME()),
+        UpdatedAt DATETIME NULL
+    );
+    CREATE INDEX IX_Trips_UserId ON dbo.Trips (UserId);
+END;
+
+IF OBJECT_ID(N'dbo.TripDestinations', N'U') IS NULL
+BEGIN
+    CREATE TABLE dbo.TripDestinations
+    (
+        Id INT IDENTITY(1, 1) NOT NULL PRIMARY KEY,
+        TripId INT NOT NULL,
+        DestinationId INT NOT NULL,
+        VisitDate DATE NULL,
+        CONSTRAINT FK_TripDestinations_Trips FOREIGN KEY (TripId)
+            REFERENCES dbo.Trips (Id) ON DELETE CASCADE,
+        CONSTRAINT FK_TripDestinations_Destinations FOREIGN KEY (DestinationId)
+            REFERENCES dbo.Destinations (Id) ON DELETE CASCADE
+    );
+    CREATE INDEX IX_TripDestinations_TripId ON dbo.TripDestinations (TripId);
+    CREATE INDEX IX_TripDestinations_DestinationId ON dbo.TripDestinations (DestinationId);
+END;
+
+IF OBJECT_ID(N'dbo.TripParticipants', N'U') IS NULL
+BEGIN
+    CREATE TABLE dbo.TripParticipants
+    (
+        Id INT IDENTITY(1, 1) NOT NULL PRIMARY KEY,
+        TripId INT NOT NULL,
+        UserId INT NOT NULL,
+        Role NVARCHAR(50) NULL,
+        JoinedAt DATETIME NOT NULL CONSTRAINT DF_TripParticipants_JoinedAt DEFAULT (SYSUTCDATETIME()),
+        CONSTRAINT FK_TripParticipants_Trips FOREIGN KEY (TripId)
+            REFERENCES dbo.Trips (Id) ON DELETE CASCADE
+    );
+    CREATE INDEX IX_TripParticipants_TripId ON dbo.TripParticipants (TripId);
+    CREATE INDEX IX_TripParticipants_UserId ON dbo.TripParticipants (UserId);
+END;
+
+/* ---- Booking: Bookings ---- */
+IF OBJECT_ID(N'dbo.Bookings', N'U') IS NULL
+BEGIN
+    CREATE TABLE dbo.Bookings
+    (
+        Id INT IDENTITY(1, 1) NOT NULL PRIMARY KEY,
+        UserId INT NOT NULL,
+        ItineraryId INT NULL,
+        BookingType NVARCHAR(50) NOT NULL,
+        Provider NVARCHAR(100) NOT NULL,
+        ReferenceCode NVARCHAR(100) NOT NULL,
+        Amount DECIMAL(10, 2) NULL,
+        Currency NVARCHAR(10) NULL,
+        BookingDate DATE NOT NULL,
+        Status NVARCHAR(50) NOT NULL,
+        MetadataJson NVARCHAR(MAX) NULL,
+        CreatedAt DATETIME NOT NULL CONSTRAINT DF_Bookings_CreatedAt DEFAULT (SYSUTCDATETIME()),
+        UpdatedAt DATETIME NULL
+    );
+    CREATE INDEX IX_Bookings_UserId ON dbo.Bookings (UserId);
+END;
+
+IF COL_LENGTH(N'dbo.Bookings', N'Provider') IS NULL
+    ALTER TABLE dbo.Bookings ADD Provider NVARCHAR(100) NOT NULL CONSTRAINT DF_Bookings_Provider DEFAULT (N'');
+IF COL_LENGTH(N'dbo.Bookings', N'ReferenceCode') IS NULL
+    ALTER TABLE dbo.Bookings ADD ReferenceCode NVARCHAR(100) NOT NULL CONSTRAINT DF_Bookings_ReferenceCode DEFAULT (N'');
+IF COL_LENGTH(N'dbo.Bookings', N'Amount') IS NULL
+    ALTER TABLE dbo.Bookings ADD Amount DECIMAL(10, 2) NULL;
+IF COL_LENGTH(N'dbo.Bookings', N'Currency') IS NULL
+    ALTER TABLE dbo.Bookings ADD Currency NVARCHAR(10) NULL;
+IF COL_LENGTH(N'dbo.Bookings', N'MetadataJson') IS NULL
+    ALTER TABLE dbo.Bookings ADD MetadataJson NVARCHAR(MAX) NULL;
+
+IF OBJECT_ID(N'dbo.Flights', N'U') IS NULL
+BEGIN
+    CREATE TABLE dbo.Flights
+    (
+        Id INT IDENTITY(1, 1) NOT NULL PRIMARY KEY,
+        UserId INT NOT NULL,
+        FromCity NVARCHAR(100) NOT NULL,
+        ToCity NVARCHAR(100) NOT NULL,
+        DepartureDate DATETIME NOT NULL,
+        ArrivalDate DATETIME NOT NULL,
+        Airline NVARCHAR(100) NULL,
+        Price DECIMAL(10, 2) NULL,
+        CreatedAt DATETIME NOT NULL CONSTRAINT DF_Flights_CreatedAt DEFAULT (SYSUTCDATETIME()),
+        UpdatedAt DATETIME NULL
+    );
+    CREATE INDEX IX_Flights_UserId ON dbo.Flights (UserId);
+END;
+
+IF OBJECT_ID(N'dbo.Hotels', N'U') IS NULL
+BEGIN
+    CREATE TABLE dbo.Hotels
+    (
+        Id INT IDENTITY(1, 1) NOT NULL PRIMARY KEY,
+        DestinationId INT NOT NULL,
+        Name NVARCHAR(100) NOT NULL,
+        Address NVARCHAR(255) NULL,
+        Rating DECIMAL(2, 1) NULL,
+        PricePerNight DECIMAL(10, 2) NULL,
+        CreatedAt DATETIME NOT NULL CONSTRAINT DF_Hotels_CreatedAt DEFAULT (SYSUTCDATETIME()),
+        UpdatedAt DATETIME NULL
+    );
+    CREATE INDEX IX_Hotels_DestinationId ON dbo.Hotels (DestinationId);
+END;
+
+IF OBJECT_ID(N'dbo.SavedTrips', N'U') IS NULL
+BEGIN
+    CREATE TABLE dbo.SavedTrips
+    (
+        Id INT IDENTITY(1, 1) NOT NULL PRIMARY KEY,
+        UserId INT NOT NULL,
+        TripId INT NOT NULL,
+        SavedAt DATETIME NOT NULL CONSTRAINT DF_SavedTrips_SavedAt DEFAULT (SYSUTCDATETIME())
+    );
+    CREATE INDEX IX_SavedTrips_UserId ON dbo.SavedTrips (UserId);
+    CREATE INDEX IX_SavedTrips_TripId ON dbo.SavedTrips (TripId);
+END;
+
+IF OBJECT_ID(N'dbo.TransportOptions', N'U') IS NULL
+BEGIN
+    CREATE TABLE dbo.TransportOptions
+    (
+        Id INT IDENTITY(1, 1) NOT NULL PRIMARY KEY,
+        DestinationId INT NOT NULL,
+        [Type] NVARCHAR(50) NOT NULL,
+        Provider NVARCHAR(100) NULL,
+        Price DECIMAL(10, 2) NULL,
+        CreatedAt DATETIME NOT NULL CONSTRAINT DF_TransportOptions_CreatedAt DEFAULT (SYSUTCDATETIME()),
+        UpdatedAt DATETIME NULL
+    );
+    CREATE INDEX IX_TransportOptions_DestinationId ON dbo.TransportOptions (DestinationId);
+END;

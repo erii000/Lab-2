@@ -28,7 +28,8 @@ import HomeFeaturedDestinations from "../components/home/HomeFeaturedDestination
 import HomeHowItWorks from "../components/home/HomeHowItWorks.jsx";
 import HomeTestimonials from "../components/home/HomeTestimonials.jsx";
 import HomeTrustStats from "../components/home/HomeTrustStats.jsx";
-import { quickSuggestions } from "../components/home/homeData.js";
+import { getQuickSuggestions } from "../components/home/homeData.js";
+import { useCatalogStore } from "../store/catalogStore.js";
 import HeroSearchBar from "../components/search/HeroSearchBar.jsx";
 import MlRecommendationsRail from "../components/search/MlRecommendationsRail.jsx";
 import { buildDestinationUrl } from "../utils/destinationSearch.js";
@@ -53,6 +54,8 @@ const highlights = [
 ];
 
 export default function HomePage() {
+  useCatalogStore((s) => s.loaded);
+  const quickSuggestions = getQuickSuggestions();
   const theme = useTheme();
   const isXs = useMediaQuery(theme.breakpoints.down("sm"));
   const isMdDown = useMediaQuery(theme.breakpoints.down("md"));
@@ -242,7 +245,7 @@ export default function HomePage() {
                         <Stack direction="row" alignItems="center" spacing={0.35}>
                           <StarRounded sx={{ fontSize: 14, color: designTokens.brand.gold }} />
                           <Typography variant="caption" sx={{ color: designTokens.brand.champagne, fontWeight: 700 }}>
-                            {item.rating.toFixed(1)}
+                            {item.rating != null ? Number(item.rating).toFixed(1) : "—"}
                           </Typography>
                         </Stack>
                       </Stack>

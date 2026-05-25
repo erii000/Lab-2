@@ -55,6 +55,9 @@ public sealed class EfBookingRepository : IBookingRepository
     {
         var query = _dbContext.Bookings.AsQueryable();
 
+        if (request.UserId.HasValue)
+            query = query.Where(x => x.UserId == request.UserId.Value);
+
         if (!string.IsNullOrWhiteSpace(request.Q))
         {
             var q = request.Q.Trim();

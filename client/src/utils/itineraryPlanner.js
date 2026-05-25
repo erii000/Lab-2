@@ -1,4 +1,4 @@
-import { destinationById } from "../data/destinations.js";
+import { getDestinationById } from "../data/destinations.js";
 import {
   defaultTripDates,
   diffNights,
@@ -67,7 +67,7 @@ function activityFromCatalog(act, time, guests) {
 }
 
 export function buildInitialTrip(params) {
-  const dest = destinationById[params.destinationId] ?? destinationById.paris;
+  const dest = getDestinationById(params.destinationId) ?? getDestinationById("paris");
   const guests = params.travelers;
   const acts = dest.activities ?? [];
   const nights = diffNights(params.start, params.end);

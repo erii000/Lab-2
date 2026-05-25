@@ -21,4 +21,9 @@
   <ItemGroup>
     <ProjectReference Include="..\..\..\TravelAssistant.Common\TravelAssistant.Common.csproj" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="..\..\Scripts\lab2DB-memberb-bootstrap.sql" Link="Scripts\lab2DB-memberb-bootstrap.sql">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
 </Project>

@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using TravelAssistant.Services.UserService.Models.Entities;
+using UserService.Models;
 
 namespace TravelAssistant.Services.UserService.Data
 {
@@ -11,6 +12,8 @@ namespace TravelAssistant.Services.UserService.Data
 
         public DbSet<User> Users { get; set; }
         public DbSet<RefreshToken> RefreshTokens { get; set; }
+        public DbSet<Roles> Roles { get; set; }
+        public DbSet<UserRoles> UserRoles { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -41,6 +44,32 @@ namespace TravelAssistant.Services.UserService.Data
                 entity.HasOne(x => x.User)
                     .WithMany(x => x.RefreshTokens)
                     .HasForeignKey(x => x.UserId)
+                    .OnDelete(DeleteBehavior.Cascade);
+            });
+
+            modelBuilder.Entity<Roles>(entity =>
+            {
+                entity.ToTable("Roles");
+                entity.HasKey(x => x.RolesId);
+                entity.Property(x => x.Name).HasMaxLength(50).IsRequired();
+                entity.Property(x => x.Description).HasMaxLength(255).IsRequired();
+                entity.Property(x => x.CreatedAt).HasColumnType("datetime2").IsRequired();
+            });
+
+            modelBuilder.Entity<UserRoles>(entity =>
+            {
+                entity.ToTable("UserRoles");
+                entity.HasKey(x => x.UserRoleId);
+                entity.Property(x => x.AssignedAt).HasColumnType("datetime2").IsRequired();
+
+                entity.HasOne(x => x.User)
+                    .WithMany(x => x.UserRoles)
+                    .HasForeignKey(x => x.UserId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasOne(x => x.Role)
+                    .WithMany()
+                    .HasForeignKey(x => x.RoleId)
                     .OnDelete(DeleteBehavior.Cascade);
             });
         }

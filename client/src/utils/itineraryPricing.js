@@ -1,4 +1,4 @@
-import { destinationById } from "../data/destinations.js";
+import { getDestinationById } from "../data/destinations.js";
 import { calculateTripQuote, generateTripOffers } from "./destinationSearch.js";
 
 /** Match planner row id back to catalog activity id when possible */
@@ -53,7 +53,7 @@ export function plannerDaysToBookingItinerary(days) {
  * Full pricing from planner timeline — activities total drives the experiences line.
  */
 export function computePlannerPricing(trip) {
-  const destination = trip.destination ?? destinationById[trip.params?.destinationId];
+  const destination = trip.destination ?? getDestinationById(trip.params?.destinationId);
   if (!destination) {
     return { summary: { activities: 0, hotel: 0, flights: 0, total: 0 }, quote: null };
   }

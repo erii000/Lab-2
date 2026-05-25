@@ -29,6 +29,7 @@ public sealed class ApplicationDbContext : DbContext
             entity.Property(x => x.Currency).HasMaxLength(10);
             entity.Property(x => x.BookingDate).HasColumnType("date").IsRequired();
             entity.Property(x => x.Status).HasMaxLength(50).IsRequired();
+            entity.Property(x => x.MetadataJson).HasColumnType("nvarchar(max)");
             entity.Property(x => x.CreatedAt).HasColumnType("datetime").IsRequired();
             entity.Property(x => x.UpdatedAt).HasColumnType("datetime");
             entity.HasIndex(x => x.UserId).HasDatabaseName("IX_Bookings_UserId");

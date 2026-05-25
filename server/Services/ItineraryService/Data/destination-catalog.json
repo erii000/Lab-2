@@ -1,0 +1,1130 @@
+[
+  {
+    "id": "paris",
+    "title": "Paris",
+    "country": "France",
+    "region": "Western Europe",
+    "aliases": [
+      "paris",
+      "paris france",
+      "île-de-france"
+    ],
+    "priceFrom": 720,
+    "flightEstimate": 185,
+    "rating": 4.8,
+    "reviewCount": 2847,
+    "tag": "Prestige City",
+    "tripTypes": [
+      "Culture",
+      "City",
+      "Food"
+    ],
+    "bestSeason": "Apr – Oct",
+    "timezone": "GMT+1",
+    "airportCode": "CDG",
+    "image": "https://images.unsplash.com/photo-1502602898657-3e91760cbb34?auto=format&fit=crop&w=1400&q=80",
+    "description": "Iconic boulevards, world-class museums, and Michelin-starred dining in the City of Light.",
+    "gallery": [
+      "https://images.unsplash.com/photo-1502602898657-3e91760cbb34?auto=format&fit=crop&w=1600&q=80",
+      "https://images.unsplash.com/photo-1499856871958-5b9627545d1a?auto=format&fit=crop&w=1600&q=80",
+      "https://images.unsplash.com/photo-1511739001486-6bfe10ce785f?auto=format&fit=crop&w=1600&q=80"
+    ],
+    "weather": {
+      "tempC": 18,
+      "condition": "Partly cloudy",
+      "seasonTip": "Layer up for evening Seine walks."
+    },
+    "highlights": [
+      "Eiffel Tower at sunset",
+      "Louvre private access",
+      "Montmartre art quarter"
+    ],
+    "activities": [
+      {
+        "id": "paris-seine",
+        "name": "Seine dinner cruise",
+        "duration": "2h 30m",
+        "price": 89,
+        "category": "Experience",
+        "description": "Gourmet cruise with live music and skyline views.",
+        "rating": 4.7
+      },
+      {
+        "id": "paris-louvre",
+        "name": "Louvre guided tour",
+        "duration": "3h",
+        "price": 65,
+        "category": "Culture",
+        "description": "Skip-the-line access with expert art historian.",
+        "rating": 4.7
+      },
+      {
+        "id": "paris-versailles",
+        "name": "Versailles day trip",
+        "duration": "6h",
+        "price": 120,
+        "category": "Day trip",
+        "description": "Palace gardens, Hall of Mirrors, and royal apartments.",
+        "rating": 4.7
+      },
+      {
+        "id": "paris-food",
+        "name": "Left Bank food walk",
+        "duration": "4h",
+        "price": 95,
+        "category": "Food",
+        "description": "Pastry, cheese, and wine tastings in Saint-Germain.",
+        "rating": 4.7
+      },
+      {
+        "id": "paris-bike",
+        "name": "Champs-Élysées bike tour",
+        "duration": "2h",
+        "price": 45,
+        "category": "Adventure",
+        "description": "Guided cycle through landmarks and hidden courtyards.",
+        "rating": 4.7
+      }
+    ],
+    "reviews": [
+      {
+        "author": "Elena M.",
+        "rating": 5,
+        "text": "Flawless itinerary — every reservation was on time."
+      },
+      {
+        "author": "James K.",
+        "rating": 5,
+        "text": "The Seine cruise was the highlight of our anniversary trip."
+      }
+    ],
+    "aiItineraryTeaser": "Day 1: Eiffel & Trocadéro · Day 2: Louvre & Latin Quarter · Day 3: Versailles & gourmet dinner",
+    "hotelTiers": [
+      {
+        "id": "boutique",
+        "label": "Boutique 4★",
+        "nightly": 145
+      },
+      {
+        "id": "luxury",
+        "label": "Luxury 5★",
+        "nightly": 285
+      }
+    ]
+  },
+  {
+    "id": "rome",
+    "title": "Rome",
+    "country": "Italy",
+    "region": "Southern Europe",
+    "aliases": [
+      "rome",
+      "roma",
+      "rome italy"
+    ],
+    "priceFrom": 640,
+    "flightEstimate": 165,
+    "rating": 4.7,
+    "reviewCount": 3120,
+    "tag": "Historic Capital",
+    "tripTypes": [
+      "Culture",
+      "City",
+      "Food"
+    ],
+    "bestSeason": "Mar – Jun, Sep – Nov",
+    "timezone": "GMT+1",
+    "airportCode": "FCO",
+    "image": "https://images.unsplash.com/photo-1529260830199-42c24126f198?auto=format&fit=crop&w=1400&q=80",
+    "description": "Ancient ruins, Vatican masterpieces, and trattorias serving Rome's legendary cucina.",
+    "gallery": [
+      "https://images.unsplash.com/photo-1529260830199-42c24126f198?auto=format&fit=crop&w=1600&q=80",
+      "https://images.unsplash.com/photo-1552832230-c0197dd311b5?auto=format&fit=crop&w=1600&q=80",
+      "https://images.unsplash.com/photo-1525872724824-8a5d5c4e8f0e?auto=format&fit=crop&w=1600&q=80"
+    ],
+    "weather": {
+      "tempC": 22,
+      "condition": "Sunny",
+      "seasonTip": "Book Colosseum slots early — afternoons sell out."
+    },
+    "highlights": [
+      "Colosseum underground",
+      "Vatican Museums",
+      "Trastevere evenings"
+    ],
+    "activities": [
+      {
+        "id": "rome-colosseum",
+        "name": "Colosseum & Forum pass",
+        "duration": "4h",
+        "price": 72,
+        "category": "Culture",
+        "description": "Priority entry with archaeologist guide.",
+        "rating": 4.7
+      },
+      {
+        "id": "rome-vatican",
+        "name": "Vatican & Sistine Chapel",
+        "duration": "3h 30m",
+        "price": 85,
+        "category": "Culture",
+        "description": "Early-access morning tour before crowds.",
+        "rating": 4.7
+      },
+      {
+        "id": "rome-cooking",
+        "name": "Roman pasta cooking class",
+        "duration": "3h",
+        "price": 78,
+        "category": "Food",
+        "description": "Hands-on cacio e pepe and tiramisu workshop.",
+        "rating": 4.7
+      },
+      {
+        "id": "rome-tuscany",
+        "name": "Tuscany wine day trip",
+        "duration": "10h",
+        "price": 135,
+        "category": "Day trip",
+        "description": "Chianti vineyards, farmhouse lunch, and hill towns.",
+        "rating": 4.7
+      },
+      {
+        "id": "rome-vespa",
+        "name": "Vespa night tour",
+        "duration": "2h",
+        "price": 95,
+        "category": "Adventure",
+        "description": "Zip through illuminated piazzas with a local rider.",
+        "rating": 4.7
+      }
+    ],
+    "reviews": [
+      {
+        "author": "Sofia R.",
+        "rating": 5,
+        "text": "Vatican tour at 7am was worth every euro — zero queues."
+      },
+      {
+        "author": "Mark T.",
+        "rating": 4,
+        "text": "Incredible history; pack comfortable shoes for cobblestones."
+      }
+    ],
+    "aiItineraryTeaser": "Day 1: Ancient Rome · Day 2: Vatican City · Day 3: Trastevere & food tour",
+    "hotelTiers": [
+      {
+        "id": "boutique",
+        "label": "Boutique 4★",
+        "nightly": 128
+      },
+      {
+        "id": "luxury",
+        "label": "Luxury 5★",
+        "nightly": 245
+      }
+    ]
+  },
+  {
+    "id": "tokyo",
+    "title": "Tokyo",
+    "country": "Japan",
+    "region": "East Asia",
+    "aliases": [
+      "tokyo",
+      "tokyo japan"
+    ],
+    "priceFrom": 1120,
+    "flightEstimate": 620,
+    "rating": 4.9,
+    "reviewCount": 4102,
+    "tag": "Future Classic",
+    "tripTypes": [
+      "City",
+      "Culture",
+      "Food"
+    ],
+    "bestSeason": "Mar – May, Oct – Nov",
+    "timezone": "GMT+9",
+    "airportCode": "NRT",
+    "image": "https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?auto=format&fit=crop&w=1400&q=80",
+    "description": "Neon districts, serene temples, and the world's most exciting dining scene in one metropolis.",
+    "gallery": [
+      "https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?auto=format&fit=crop&w=1600&q=80",
+      "https://images.unsplash.com/photo-1536098561742-ca998e48cbcc?auto=format&fit=crop&w=1600&q=80",
+      "https://images.unsplash.com/photo-1503899036084-c55cdd92da56?auto=format&fit=crop&w=1600&q=80"
+    ],
+    "weather": {
+      "tempC": 20,
+      "condition": "Clear",
+      "seasonTip": "Carry cash for smaller shrines and ramen shops."
+    },
+    "highlights": [
+      "Shibuya crossing",
+      "TeamLab exhibits",
+      "Tsukiji outer market"
+    ],
+    "activities": [
+      {
+        "id": "tokyo-team",
+        "name": "teamLab Borderless",
+        "duration": "3h",
+        "price": 38,
+        "category": "Experience",
+        "description": "Immersive digital art museum tickets.",
+        "rating": 4.7
+      },
+      {
+        "id": "tokyo-sushi",
+        "name": "Tsukiji sushi breakfast",
+        "duration": "2h",
+        "price": 110,
+        "category": "Food",
+        "description": "Omakase at top-rated counter seats.",
+        "rating": 4.7
+      },
+      {
+        "id": "tokyo-mt",
+        "name": "Mt. Fuji day trip",
+        "duration": "12h",
+        "price": 165,
+        "category": "Day trip",
+        "description": "Lake Kawaguchi views and bullet train return.",
+        "rating": 4.7
+      },
+      {
+        "id": "tokyo-tea",
+        "name": "Traditional tea ceremony",
+        "duration": "1h 30m",
+        "price": 55,
+        "category": "Culture",
+        "description": "Kimono welcome and matcha in historic house.",
+        "rating": 4.7
+      },
+      {
+        "id": "tokyo-akihabara",
+        "name": "Akihabara tech tour",
+        "duration": "3h",
+        "price": 48,
+        "category": "City",
+        "description": "Retro gaming, anime culture, and gadget alleys.",
+        "rating": 4.7
+      }
+    ],
+    "reviews": [
+      {
+        "author": "Yuki H.",
+        "rating": 5,
+        "text": "Perfect blend of tradition and hyper-modern — loved every day."
+      },
+      {
+        "author": "Anna L.",
+        "rating": 5,
+        "text": "Sushi breakfast tour was unforgettable."
+      }
+    ],
+    "aiItineraryTeaser": "Day 1: Asakusa & Skytree · Day 2: Shibuya & Harajuku · Day 3: Fuji & onsen",
+    "hotelTiers": [
+      {
+        "id": "boutique",
+        "label": "Design hotel 4★",
+        "nightly": 195
+      },
+      {
+        "id": "luxury",
+        "label": "Luxury 5★",
+        "nightly": 380
+      }
+    ]
+  },
+  {
+    "id": "london",
+    "title": "London",
+    "country": "United Kingdom",
+    "region": "Western Europe",
+    "aliases": [
+      "london",
+      "london uk",
+      "london england"
+    ],
+    "priceFrom": 780,
+    "flightEstimate": 195,
+    "rating": 4.6,
+    "reviewCount": 3560,
+    "tag": "Royal Heritage",
+    "tripTypes": [
+      "City",
+      "Culture"
+    ],
+    "bestSeason": "May – Sep",
+    "timezone": "GMT+0",
+    "airportCode": "LHR",
+    "image": "https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?auto=format&fit=crop&w=1400&q=80",
+    "description": "West End theatre, royal palaces, and neighbourhoods spanning centuries of global influence.",
+    "gallery": [
+      "https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?auto=format&fit=crop&w=1600&q=80",
+      "https://images.unsplash.com/photo-1529655683826-aba9b80e24d7?auto=format&fit=crop&w=1600&q=80",
+      "https://images.unsplash.com/photo-1520986606214-8b4569090ca0?auto=format&fit=crop&w=1600&q=80"
+    ],
+    "weather": {
+      "tempC": 16,
+      "condition": "Light rain possible",
+      "seasonTip": "Always pack a compact umbrella."
+    },
+    "highlights": [
+      "Tower of London",
+      "Westminster Abbey",
+      "Borough Market"
+    ],
+    "activities": [
+      {
+        "id": "london-eye",
+        "name": "London Eye & Thames",
+        "duration": "2h",
+        "price": 42,
+        "category": "Experience",
+        "description": "Private capsule upgrade with champagne.",
+        "rating": 4.7
+      },
+      {
+        "id": "london-westminster",
+        "name": "Westminster walking tour",
+        "duration": "3h",
+        "price": 58,
+        "category": "Culture",
+        "description": "Big Ben, Parliament, and Churchill War Rooms.",
+        "rating": 4.7
+      },
+      {
+        "id": "london-theatre",
+        "name": "West End show tickets",
+        "duration": "3h",
+        "price": 95,
+        "category": "Entertainment",
+        "description": "Premium stalls for top musical or play.",
+        "rating": 4.7
+      },
+      {
+        "id": "london-hampton",
+        "name": "Hampton Court Palace",
+        "duration": "5h",
+        "price": 72,
+        "category": "Day trip",
+        "description": "Tudor kitchens, maze, and riverboat option.",
+        "rating": 4.7
+      },
+      {
+        "id": "london-pub",
+        "name": "Historic pub crawl",
+        "duration": "3h",
+        "price": 68,
+        "category": "Food",
+        "description": "Five centuries of ale history with local guide.",
+        "rating": 4.7
+      }
+    ],
+    "reviews": [
+      {
+        "author": "Oliver P.",
+        "rating": 5,
+        "text": "Theatre night was spectacular — seats were perfect."
+      },
+      {
+        "author": "Nina W.",
+        "rating": 4,
+        "text": "Rainy but magical — museums saved the day."
+      }
+    ],
+    "aiItineraryTeaser": "Day 1: Westminster & South Bank · Day 2: Museums & markets · Day 3: Windsor day trip",
+    "hotelTiers": [
+      {
+        "id": "boutique",
+        "label": "Boutique 4★",
+        "nightly": 165
+      },
+      {
+        "id": "luxury",
+        "label": "Luxury 5★",
+        "nightly": 310
+      }
+    ]
+  },
+  {
+    "id": "new-york",
+    "title": "New York",
+    "country": "United States",
+    "region": "North America",
+    "aliases": [
+      "new york",
+      "nyc",
+      "new york city",
+      "manhattan"
+    ],
+    "priceFrom": 890,
+    "flightEstimate": 480,
+    "rating": 4.7,
+    "reviewCount": 5201,
+    "tag": "Iconic Metropolis",
+    "tripTypes": [
+      "City",
+      "Culture",
+      "Food"
+    ],
+    "bestSeason": "Apr – Jun, Sep – Nov",
+    "timezone": "GMT-5",
+    "airportCode": "JFK",
+    "image": "https://images.unsplash.com/photo-1496442226666-8d4d0e62e6e9?auto=format&fit=crop&w=1400&q=80",
+    "description": "Skyline views, Broadway energy, and neighbourhoods that define global culture.",
+    "gallery": [
+      "https://images.unsplash.com/photo-1496442226666-8d4d0e62e6e9?auto=format&fit=crop&w=1600&q=80",
+      "https://images.unsplash.com/photo-1485871981521-5b1fd3805eee?auto=format&fit=crop&w=1600&q=80",
+      "https://images.unsplash.com/photo-1500917293891-ef795e6e27aa?auto=format&fit=crop&w=1600&q=80"
+    ],
+    "weather": {
+      "tempC": 19,
+      "condition": "Clear",
+      "seasonTip": "Book observation decks at golden hour."
+    },
+    "highlights": [
+      "Statue of Liberty",
+      "Central Park",
+      "Brooklyn Bridge"
+    ],
+    "activities": [
+      {
+        "id": "nyc-helicopter",
+        "name": "Manhattan helicopter tour",
+        "duration": "20m",
+        "price": 245,
+        "category": "Experience",
+        "description": "Aerial views of skyline and harbor.",
+        "rating": 4.7
+      },
+      {
+        "id": "nyc-broadway",
+        "name": "Broadway premium seats",
+        "duration": "3h",
+        "price": 165,
+        "category": "Entertainment",
+        "description": "Orchestra seating for hit production.",
+        "rating": 4.7
+      },
+      {
+        "id": "nyc-food",
+        "name": "Brooklyn food tour",
+        "duration": "4h",
+        "price": 88,
+        "category": "Food",
+        "description": "DUMBO, Williamsburg bites, and waterfront views.",
+        "rating": 4.7
+      },
+      {
+        "id": "nyc-moma",
+        "name": "MoMA & Met combo",
+        "duration": "6h",
+        "price": 75,
+        "category": "Culture",
+        "description": "Skip-line passes to two world-class museums.",
+        "rating": 4.7
+      },
+      {
+        "id": "nyc-statue",
+        "name": "Statue of Liberty cruise",
+        "duration": "4h",
+        "price": 62,
+        "category": "Experience",
+        "description": "Pedestal access and Ellis Island included.",
+        "rating": 4.7
+      }
+    ],
+    "reviews": [
+      {
+        "author": "Chris D.",
+        "rating": 5,
+        "text": "Helicopter tour at sunset — absolutely unreal."
+      },
+      {
+        "author": "Priya S.",
+        "rating": 5,
+        "text": "Food tour covered more than we could eat in a week."
+      }
+    ],
+    "aiItineraryTeaser": "Day 1: Midtown & Central Park · Day 2: Downtown & Statue · Day 3: Brooklyn & Broadway",
+    "hotelTiers": [
+      {
+        "id": "boutique",
+        "label": "Boutique 4★",
+        "nightly": 220
+      },
+      {
+        "id": "luxury",
+        "label": "Luxury 5★",
+        "nightly": 420
+      }
+    ]
+  },
+  {
+    "id": "barcelona",
+    "title": "Barcelona",
+    "country": "Spain",
+    "region": "Southern Europe",
+    "aliases": [
+      "barcelona",
+      "barcelona spain",
+      "catalonia"
+    ],
+    "priceFrom": 580,
+    "flightEstimate": 145,
+    "rating": 4.7,
+    "reviewCount": 2980,
+    "tag": "Mediterranean Style",
+    "tripTypes": [
+      "City",
+      "Culture",
+      "Relaxing"
+    ],
+    "bestSeason": "May – Oct",
+    "timezone": "GMT+1",
+    "airportCode": "BCN",
+    "image": "https://images.unsplash.com/photo-1583422409516-2895a77efded?auto=format&fit=crop&w=1400&q=80",
+    "description": "Gaudí architecture, beach mornings, and tapas bars that stay lively until midnight.",
+    "gallery": [
+      "https://images.unsplash.com/photo-1583422409516-2895a77efded?auto=format&fit=crop&w=1600&q=80",
+      "https://images.unsplash.com/photo-1562883676-8c7feb83f7b9?auto=format&fit=crop&w=1600&q=80",
+      "https://images.unsplash.com/photo-1558642452-9d2a7deb7f62?auto=format&fit=crop&w=1600&q=80"
+    ],
+    "weather": {
+      "tempC": 24,
+      "condition": "Sunny",
+      "seasonTip": "Sagrada Família timed entry is essential."
+    },
+    "highlights": [
+      "Sagrada Família",
+      "Gothic Quarter",
+      "Barceloneta beach"
+    ],
+    "activities": [
+      {
+        "id": "bcn-sagrada",
+        "name": "Sagrada Família tour",
+        "duration": "2h",
+        "price": 48,
+        "category": "Culture",
+        "description": "Tower access with expert Gaudí guide.",
+        "rating": 4.7
+      },
+      {
+        "id": "bcn-tapas",
+        "name": "Gothic Quarter tapas crawl",
+        "duration": "3h 30m",
+        "price": 72,
+        "category": "Food",
+        "description": "Six stops with wine pairings.",
+        "rating": 4.7
+      },
+      {
+        "id": "bcn-montserrat",
+        "name": "Montserrat monastery trip",
+        "duration": "6h",
+        "price": 85,
+        "category": "Day trip",
+        "description": "Mountain views, choir, and cable car.",
+        "rating": 4.7
+      },
+      {
+        "id": "bcn-bike",
+        "name": "Beach & architecture bike tour",
+        "duration": "3h",
+        "price": 42,
+        "category": "Adventure",
+        "description": "Coastal path and Eixample modernisme.",
+        "rating": 4.7
+      },
+      {
+        "id": "bcn-flamenco",
+        "name": "Authentic flamenco show",
+        "duration": "2h",
+        "price": 68,
+        "category": "Entertainment",
+        "description": "Intimate tablao with live guitar.",
+        "rating": 4.7
+      }
+    ],
+    "reviews": [
+      {
+        "author": "Lucía G.",
+        "rating": 5,
+        "text": "Tapas tour felt local, not touristy — loved it."
+      },
+      {
+        "author": "Tom B.",
+        "rating": 4,
+        "text": "Beach + culture combo is unbeatable."
+      }
+    ],
+    "aiItineraryTeaser": "Day 1: Gaudí masterpieces · Day 2: Gothic Quarter & beach · Day 3: Montserrat",
+    "hotelTiers": [
+      {
+        "id": "boutique",
+        "label": "Boutique 4★",
+        "nightly": 118
+      },
+      {
+        "id": "luxury",
+        "label": "Luxury 5★",
+        "nightly": 225
+      }
+    ]
+  },
+  {
+    "id": "dubai",
+    "title": "Dubai",
+    "country": "United Arab Emirates",
+    "region": "Middle East",
+    "aliases": [
+      "dubai",
+      "dubai uae"
+    ],
+    "priceFrom": 950,
+    "flightEstimate": 420,
+    "rating": 4.8,
+    "reviewCount": 2675,
+    "tag": "Ultra Luxury",
+    "tripTypes": [
+      "City",
+      "Adventure",
+      "Relaxing"
+    ],
+    "bestSeason": "Nov – Mar",
+    "timezone": "GMT+4",
+    "airportCode": "DXB",
+    "image": "https://images.unsplash.com/photo-1512453979798-5ea266f8880c?auto=format&fit=crop&w=1400&q=80",
+    "description": "Record-breaking architecture, desert safaris, and five-star hospitality at every turn.",
+    "gallery": [
+      "https://images.unsplash.com/photo-1512453979798-5ea266f8880c?auto=format&fit=crop&w=1600&q=80",
+      "https://images.unsplash.com/photo-1518684079-3c830dcef090?auto=format&fit=crop&w=1600&q=80",
+      "https://images.unsplash.com/photo-1582672060017-352f29ceae3f?auto=format&fit=crop&w=1600&q=80"
+    ],
+    "weather": {
+      "tempC": 28,
+      "condition": "Sunny",
+      "seasonTip": "Reserve Burj Khalifa at sunset for best views."
+    },
+    "highlights": [
+      "Burj Khalifa At the Top",
+      "Desert safari",
+      "Dubai Marina"
+    ],
+    "activities": [
+      {
+        "id": "dubai-burj",
+        "name": "Burj Khalifa SKY deck",
+        "duration": "2h",
+        "price": 95,
+        "category": "Experience",
+        "description": "Levels 124 + 148 with fast-track entry.",
+        "rating": 4.7
+      },
+      {
+        "id": "dubai-safari",
+        "name": "Premium desert safari",
+        "duration": "6h",
+        "price": 125,
+        "category": "Adventure",
+        "description": "Dune bashing, falcon show, and BBQ dinner.",
+        "rating": 4.7
+      },
+      {
+        "id": "dubai-yacht",
+        "name": "Marina yacht charter",
+        "duration": "3h",
+        "price": 210,
+        "category": "Experience",
+        "description": "Private 40ft yacht with crew and refreshments.",
+        "rating": 4.7
+      },
+      {
+        "id": "dubai-old",
+        "name": "Old Dubai & souks tour",
+        "duration": "4h",
+        "price": 55,
+        "category": "Culture",
+        "description": "Abra ride, gold souk, and heritage district.",
+        "rating": 4.7
+      },
+      {
+        "id": "dubai-atlantis",
+        "name": "Aquaventure day pass",
+        "duration": "Full day",
+        "price": 88,
+        "category": "Relaxing",
+        "description": "Waterpark access at Atlantis The Palm.",
+        "rating": 4.7
+      }
+    ],
+    "reviews": [
+      {
+        "author": "Ahmed F.",
+        "rating": 5,
+        "text": "Desert safari exceeded expectations — premium camp was stunning."
+      },
+      {
+        "author": "Lisa C.",
+        "rating": 5,
+        "text": "Service level is unmatched anywhere we've traveled."
+      }
+    ],
+    "aiItineraryTeaser": "Day 1: Marina & Palm · Day 2: Old Dubai & souks · Day 3: Desert safari",
+    "hotelTiers": [
+      {
+        "id": "boutique",
+        "label": "Premium 4★",
+        "nightly": 185
+      },
+      {
+        "id": "luxury",
+        "label": "Palace 5★",
+        "nightly": 450
+      }
+    ]
+  },
+  {
+    "id": "bali",
+    "title": "Bali",
+    "country": "Indonesia",
+    "region": "Southeast Asia",
+    "aliases": [
+      "bali",
+      "denpasar",
+      "ubud",
+      "bali indonesia"
+    ],
+    "priceFrom": 820,
+    "flightEstimate": 540,
+    "rating": 4.8,
+    "reviewCount": 3890,
+    "tag": "Island Escape",
+    "tripTypes": [
+      "Relaxing",
+      "Nature",
+      "Culture"
+    ],
+    "bestSeason": "Apr – Oct",
+    "timezone": "GMT+8",
+    "airportCode": "DPS",
+    "image": "https://images.unsplash.com/photo-1537996194471-e657df975ab4?auto=format&fit=crop&w=1400&q=80",
+    "description": "Rice terraces, cliffside temples, and wellness retreats in Indonesia's island paradise.",
+    "gallery": [
+      "https://images.unsplash.com/photo-1537996194471-e657df975ab4?auto=format&fit=crop&w=1600&q=80",
+      "https://images.unsplash.com/photo-1555404738-4f57f4696c0b?auto=format&fit=crop&w=1600&q=80",
+      "https://images.unsplash.com/photo-1518548419970-58e050b0e0b9?auto=format&fit=crop&w=1600&q=80"
+    ],
+    "weather": {
+      "tempC": 29,
+      "condition": "Tropical",
+      "seasonTip": "Temple visits require sarong — often provided on site."
+    },
+    "highlights": [
+      "Ubud rice terraces",
+      "Uluwatu temple",
+      "Seminyak beach clubs"
+    ],
+    "activities": [
+      {
+        "id": "bali-terrace",
+        "name": "Tegallalang rice terrace tour",
+        "duration": "4h",
+        "price": 45,
+        "category": "Nature",
+        "description": "Swing photos, local coffee, and village walk.",
+        "rating": 4.7
+      },
+      {
+        "id": "bali-temple",
+        "name": "Uluwatu sunset & Kecak",
+        "duration": "4h",
+        "price": 38,
+        "category": "Culture",
+        "description": "Clifftop temple and fire dance performance.",
+        "rating": 4.7
+      },
+      {
+        "id": "bali-spa",
+        "name": "Luxury spa ritual",
+        "duration": "3h",
+        "price": 95,
+        "category": "Relaxing",
+        "description": "Balinese massage, flower bath, and organic lunch.",
+        "rating": 4.7
+      },
+      {
+        "id": "bali-dive",
+        "name": "Nusa Penida snorkeling",
+        "duration": "8h",
+        "price": 78,
+        "category": "Adventure",
+        "description": "Manta rays, crystal bay, and speedboat transfer.",
+        "rating": 4.7
+      },
+      {
+        "id": "bali-cooking",
+        "name": "Ubud farm cooking class",
+        "duration": "5h",
+        "price": 65,
+        "category": "Food",
+        "description": "Market visit and traditional feast preparation.",
+        "rating": 4.7
+      }
+    ],
+    "reviews": [
+      {
+        "author": "Mia K.",
+        "rating": 5,
+        "text": "Spa day was the reset we needed — pure bliss."
+      },
+      {
+        "author": "Daniel R.",
+        "rating": 5,
+        "text": "Snorkeling with mantas was a once-in-a-lifetime moment."
+      }
+    ],
+    "aiItineraryTeaser": "Day 1: Ubud culture · Day 2: South temples & beaches · Day 3: Wellness & cuisine",
+    "hotelTiers": [
+      {
+        "id": "boutique",
+        "label": "Villa resort 4★",
+        "nightly": 135
+      },
+      {
+        "id": "luxury",
+        "label": "Cliff resort 5★",
+        "nightly": 295
+      }
+    ]
+  },
+  {
+    "id": "istanbul",
+    "title": "Istanbul",
+    "country": "Turkey",
+    "region": "Europe & Asia",
+    "aliases": [
+      "istanbul",
+      "istanbul turkey",
+      "constantinople"
+    ],
+    "priceFrom": 520,
+    "flightEstimate": 175,
+    "rating": 4.7,
+    "reviewCount": 2410,
+    "tag": "Crossroads",
+    "tripTypes": [
+      "Culture",
+      "City",
+      "Food"
+    ],
+    "bestSeason": "Apr – Jun, Sep – Oct",
+    "timezone": "GMT+3",
+    "airportCode": "IST",
+    "image": "https://images.unsplash.com/photo-1524231757912-21f4fe3a7200?auto=format&fit=crop&w=1400&q=80",
+    "description": "Where continents meet — mosques, bazaars, and Bosphorus cruises in a living museum.",
+    "gallery": [
+      "https://images.unsplash.com/photo-1524231757912-21f4fe3a7200?auto=format&fit=crop&w=1600&q=80",
+      "https://images.unsplash.com/photo-1541432901042-2d8bd64dd4d4?auto=format&fit=crop&w=1600&q=80",
+      "https://images.unsplash.com/photo-1528181304800-259b08848526?auto=format&fit=crop&w=1600&q=80"
+    ],
+    "weather": {
+      "tempC": 21,
+      "condition": "Mild",
+      "seasonTip": "Dress modestly for mosque visits; scarves provided."
+    },
+    "highlights": [
+      "Hagia Sophia",
+      "Grand Bazaar",
+      "Bosphorus strait"
+    ],
+    "activities": [
+      {
+        "id": "ist-hagia",
+        "name": "Hagia Sophia & Blue Mosque",
+        "duration": "3h",
+        "price": 52,
+        "category": "Culture",
+        "description": "Skip-line combo with licensed historian.",
+        "rating": 4.7
+      },
+      {
+        "id": "ist-bosphorus",
+        "name": "Bosphorus dinner cruise",
+        "duration": "3h",
+        "price": 75,
+        "category": "Experience",
+        "description": "Two continents, live music, and meze feast.",
+        "rating": 4.7
+      },
+      {
+        "id": "ist-hamam",
+        "name": "Historic Turkish hammam",
+        "duration": "2h",
+        "price": 68,
+        "category": "Relaxing",
+        "description": "Traditional scrub and oil massage ritual.",
+        "rating": 4.7
+      },
+      {
+        "id": "ist-food",
+        "name": "Street food & bazaar tour",
+        "duration": "4h",
+        "price": 58,
+        "category": "Food",
+        "description": "Simit, kebab, baklava, and spice market tastings.",
+        "rating": 4.7
+      },
+      {
+        "id": "ist-cappadocia",
+        "name": "Cappadocia day flight",
+        "duration": "14h",
+        "price": 320,
+        "category": "Day trip",
+        "description": "Hot-air balloon option and fairy chimneys.",
+        "rating": 4.7
+      }
+    ],
+    "reviews": [
+      {
+        "author": "Zeynep A.",
+        "rating": 5,
+        "text": "Bosphorus cruise at dusk — magical atmosphere."
+      },
+      {
+        "author": "Paul E.",
+        "rating": 4,
+        "text": "Rich history and incredible value for luxury experiences."
+      }
+    ],
+    "aiItineraryTeaser": "Day 1: Sultanahmet icons · Day 2: Bazaars & hammam · Day 3: Bosphorus & Asian side",
+    "hotelTiers": [
+      {
+        "id": "boutique",
+        "label": "Boutique 4★",
+        "nightly": 98
+      },
+      {
+        "id": "luxury",
+        "label": "Luxury 5★",
+        "nightly": 195
+      }
+    ]
+  },
+  {
+    "id": "sydney",
+    "title": "Sydney",
+    "country": "Australia",
+    "region": "Oceania",
+    "aliases": [
+      "sydney",
+      "sydney australia"
+    ],
+    "priceFrom": 1180,
+    "flightEstimate": 890,
+    "rating": 4.8,
+    "reviewCount": 1985,
+    "tag": "Harbour City",
+    "tripTypes": [
+      "City",
+      "Nature",
+      "Adventure"
+    ],
+    "bestSeason": "Sep – Nov, Mar – May",
+    "timezone": "GMT+10",
+    "airportCode": "SYD",
+    "image": "https://images.unsplash.com/photo-1506973035872-a4ec16b8e8d9?auto=format&fit=crop&w=1400&q=80",
+    "description": "Harbour icons, coastal walks, and a vibrant food scene under the Southern sun.",
+    "gallery": [
+      "https://images.unsplash.com/photo-1506973035872-a4ec16b8e8d9?auto=format&fit=crop&w=1600&q=80",
+      "https://images.unsplash.com/photo-1523482580672-f10919f9f67a?auto=format&fit=crop&w=1600&q=80",
+      "https://images.unsplash.com/photo-1528072168893-3d3c0e4e0b0e?auto=format&fit=crop&w=1600&q=80"
+    ],
+    "weather": {
+      "tempC": 23,
+      "condition": "Bright",
+      "seasonTip": "Bondi to Coogee walk is best in the morning."
+    },
+    "highlights": [
+      "Sydney Opera House",
+      "Harbour Bridge",
+      "Bondi Beach"
+    ],
+    "activities": [
+      {
+        "id": "syd-opera",
+        "name": "Opera House backstage tour",
+        "duration": "2h",
+        "price": 55,
+        "category": "Culture",
+        "description": "Exclusive rooms and harbour-side stories.",
+        "rating": 4.7
+      },
+      {
+        "id": "syd-bridge",
+        "name": "BridgeClimb express",
+        "duration": "3h",
+        "price": 185,
+        "category": "Adventure",
+        "description": "Summit views with safety gear and photos.",
+        "rating": 4.7
+      },
+      {
+        "id": "syd-harbour",
+        "name": "Harbour lunch cruise",
+        "duration": "3h",
+        "price": 92,
+        "category": "Experience",
+        "description": "Three-course lunch past Opera House and coves.",
+        "rating": 4.7
+      },
+      {
+        "id": "syd-wildlife",
+        "name": "Taronga Zoo + ferry",
+        "duration": "5h",
+        "price": 48,
+        "category": "Nature",
+        "description": "Native wildlife with skyline ferry approach.",
+        "rating": 4.7
+      },
+      {
+        "id": "syd-wine",
+        "name": "Hunter Valley wine tour",
+        "duration": "10h",
+        "price": 145,
+        "category": "Day trip",
+        "description": "Cellar doors, cheese, and vineyard lunch.",
+        "rating": 4.7
+      }
+    ],
+    "reviews": [
+      {
+        "author": "Kate M.",
+        "rating": 5,
+        "text": "Bridge climb was thrilling — photos came out amazing."
+      },
+      {
+        "author": "Hiro T.",
+        "rating": 5,
+        "text": "Harbour cruise at lunch — perfect introduction to the city."
+      }
+    ],
+    "aiItineraryTeaser": "Day 1: Harbour icons · Day 2: Beaches & coastal walk · Day 3: Blue Mountains or wine country",
+    "hotelTiers": [
+      {
+        "id": "boutique",
+        "label": "Harbour 4★",
+        "nightly": 175
+      },
+      {
+        "id": "luxury",
+        "label": "Luxury 5★",
+        "nightly": 340
+      }
+    ]
+  }
+]

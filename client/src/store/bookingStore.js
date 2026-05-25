@@ -1,9 +1,32 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
+import { fetchMergedBookings, pushBookingToApi } from "../services/bookingSync.js";
 import { BOOKING_STATUS, calculateBookingProgress, isDraftStatus } from "../utils/bookingConstants.js";
 import { createBookingFromConfigurator } from "../utils/bookingFactory.js";
 import { createBookingFromPlanner } from "../utils/bookingFromPlanner.js";
 import { sessionToAuthUser } from "./sessionUser.js";
+
+function readAccessToken() {
+  try {
+    const raw = localStorage.getItem("sta-auth-v2");
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    return parsed?.state?.session?.accessToken ?? null;
+  } catch {
+    return null;
+  }
+}
+
+async function persistBookingToApi(booking) {
+  const token = readAccessToken();
+  if (!token || !booking) return booking;
+  try {
+    const serverId = await pushBookingToApi(token, booking);
+    return { ...booking, serverId };
+  } catch {
+    return booking;
+  }
+}
 
 const defaultUser = sessionToAuthUser(null);
 
@@ -22,7 +45,19 @@ export const useBookingStore = create(
 
       setCurrentBooking: (bookingId) => set({ currentBookingId: bookingId }),
 
-      getBookingById: (id) => get().bookingDrafts.find((b) => b.id === id),
+      getBookingById: (id) =>
+        get().bookingDrafts.find((b) => b.id === id || String(b.serverId) === String(id)),
+
+      syncFromApi: async (accessToken) => {
+        const token = accessToken ?? readAccessToken();
+        if (!token) return;
+        try {
+          const merged = await fetchMergedBookings(token, get().bookingDrafts);
+          set({ bookingDrafts: merged });
+        } catch {
+          /* offline */
+        }
+      },
 
       getDraftCount: () =>
         get().bookingDrafts.filter((b) => isDraftStatus(b.status)).length,
@@ -35,20 +70,33 @@ export const useBookingStore = create(
           return { bookingDrafts, currentBookingId };
         }),
 
-      upsertBooking: (booking) =>
-        set((state) => {
-          const idx = state.bookingDrafts.findIndex((b) => b.id === booking.id);
-          const next = { ...booking, updatedAt: new Date().toISOString(), progress: calculateBookingProgress(booking) };
-          if (idx >= 0) {
-            const bookingDrafts = [...state.bookingDrafts];
-            bookingDrafts[idx] = next;
-            return { bookingDrafts, currentBookingId: next.id };
-          }
-          return {
-            bookingDrafts: [next, ...state.bookingDrafts],
+      upsertBooking: (booking, options = {}) => {
+        const idx = get().bookingDrafts.findIndex((b) => b.id === booking.id);
+        let next = {
+          ...booking,
+          updatedAt: new Date().toISOString(),
+          progress: calculateBookingProgress(booking),
+        };
+        if (idx >= 0) {
+          const bookingDrafts = [...get().bookingDrafts];
+          bookingDrafts[idx] = next;
+          set({ bookingDrafts, currentBookingId: next.id });
+        } else {
+          set({
+            bookingDrafts: [next, ...get().bookingDrafts],
             currentBookingId: next.id,
-          };
-        }),
+          });
+        }
+        if (options.skipSync) return next;
+        persistBookingToApi(next).then((synced) => {
+          if (!synced.serverId || synced.serverId === next.serverId) {
+            if (synced !== next) get().upsertBooking(synced, { skipSync: true });
+            return;
+          }
+          get().upsertBooking(synced, { skipSync: true });
+        });
+        return next;
+      },
 
       saveDraftFromConfigurator: (payload, existingBookingId) => {
         const existing = existingBookingId ? get().getBookingById(existingBookingId) : null;
@@ -134,23 +182,18 @@ export const useBookingStore = create(
         })),
 
       confirmPayment: (bookingId, paymentMeta = {}) => {
-        const ref = `STA-${bookingId.slice(-6).toUpperCase()}`;
-        set((state) => ({
-          bookingDrafts: state.bookingDrafts.map((b) =>
-            b.id === bookingId
-              ? {
-                  ...b,
-                  status: BOOKING_STATUS.CONFIRMED,
-                  bookingReference: ref,
-                  progress: 100,
-                  paymentMethod: paymentMeta.paymentMethod ?? b.paymentMethod,
-                  paymentCardDisplay: paymentMeta.paymentCardDisplay ?? b.paymentCardDisplay,
-                  paymentTransactionId: paymentMeta.transactionId ?? b.paymentTransactionId,
-                  updatedAt: new Date().toISOString(),
-                }
-              : b,
-          ),
-        }));
+        const booking = get().getBookingById(bookingId);
+        const ref = booking?.bookingReference ?? `STA-${String(bookingId).slice(-6).toUpperCase()}`;
+        if (booking) {
+          get().upsertBooking({
+            ...booking,
+            status: BOOKING_STATUS.CONFIRMED,
+            bookingReference: ref,
+            paymentMethod: paymentMeta.paymentMethod ?? booking.paymentMethod,
+            paymentCardDisplay: paymentMeta.paymentCardDisplay ?? booking.paymentCardDisplay,
+            paymentTransactionId: paymentMeta.transactionId ?? booking.paymentTransactionId,
+          });
+        }
         return ref;
       },
 

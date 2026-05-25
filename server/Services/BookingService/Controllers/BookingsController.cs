@@ -22,6 +22,41 @@ public sealed class BookingsController : ControllerBase
         _bookingRepository = bookingRepository;
     }
 
+    /// <summary>Bookings for the signed-in user.</summary>
+    [HttpGet]
+    public async Task<IActionResult> ListMine(CancellationToken cancellationToken)
+    {
+        var userId = User.GetUserId();
+        if (userId is null)
+            return Unauthorized();
+
+        var request = new BookingSearchRequest
+        {
+            UserId = userId.Value,
+            Page = 1,
+            PageSize = 100,
+            SortBy = "bookingDate",
+            SortOrder = "desc"
+        };
+        var (items, total) = await _bookingRepository.SearchAsync(request, cancellationToken);
+        var mapped = items.Select(b => new
+        {
+            b.Id,
+            b.UserId,
+            b.ItineraryId,
+            b.BookingType,
+            b.Provider,
+            b.ReferenceCode,
+            b.Amount,
+            b.Currency,
+            b.BookingDate,
+            b.Status,
+            b.MetadataJson
+        }).ToList();
+
+        return Ok(new { Total = total, Items = mapped });
+    }
+
     [HttpGet("search")]
     [Authorize(Roles = "Admin")]
     public async Task<IActionResult> Search([FromQuery] BookingSearchRequest request, CancellationToken cancellationToken)
@@ -38,7 +73,8 @@ public sealed class BookingsController : ControllerBase
             b.Amount,
             b.Currency,
             b.BookingDate,
-            b.Status
+            b.Status,
+            b.MetadataJson
         }).ToList();
 
         return Ok(new

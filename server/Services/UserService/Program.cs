@@ -6,6 +6,7 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using TravelAssistant.Services.UserService.Configuration;
 using TravelAssistant.Services.UserService.Data;
+using ReferenceDataSeeder = TravelAssistant.Services.UserService.Data.ReferenceDataSeeder;
 using TravelAssistant.Services.UserService.Repositories;
 using TravelAssistant.Services.UserService.Repositories.Interfaces;
 using TravelAssistant.Services.UserService.Services;
@@ -103,11 +104,29 @@ builder.Services.AddScoped<IUserSearchService, UserSearchService>();
 
 var app = builder.Build();
 
-if (app.Environment.IsDevelopment())
+using (var scope = app.Services.CreateScope())
 {
-    using var scope = app.Services.CreateScope();
     var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-    db.Database.Migrate();
+    if (app.Environment.IsDevelopment())
+    {
+        try
+        {
+            db.Database.Migrate();
+        }
+        catch (Exception ex)
+        {
+            app.Logger.LogWarning(ex, "Database migrate skipped — service will start but auth may fail until SQL is reachable.");
+        }
+    }
+
+    try
+    {
+        await ReferenceDataSeeder.SeedAsync(db);
+    }
+    catch (Exception ex)
+    {
+        app.Logger.LogWarning(ex, "Reference data seed skipped — check ConnectionStrings:DefaultConnection.");
+    }
 }
 
 app.UseMiddleware<GlobalExceptionMiddleware>();

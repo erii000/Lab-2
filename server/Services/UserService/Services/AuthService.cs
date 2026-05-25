@@ -9,6 +9,7 @@ using TravelAssistant.Services.UserService.Contracts.Auth;
 using TravelAssistant.Services.UserService.Models.Entities;
 using TravelAssistant.Services.UserService.Repositories.Interfaces;
 using TravelAssistant.Services.UserService.Services.Interfaces;
+using UserService.Models;
 
 namespace TravelAssistant.Services.UserService.Services.Auth;
 
@@ -32,7 +33,7 @@ public sealed class AuthService : IAuthService
 
     public async Task<AuthResponse> RegisterAsync(RegisterRequest request, CancellationToken cancellationToken = default)
     {
-        var existing = await _userRepository.GetByEmailAsync(request.Email, cancellationToken);
+        var existing = await _userRepository.GetByEmailAsync(request.Email.Trim().ToLowerInvariant(), cancellationToken);
         if (existing is not null)
         {
             throw new InvalidOperationException("Email already exists.");
@@ -53,7 +54,7 @@ public sealed class AuthService : IAuthService
 
     public async Task<AuthResponse> LoginAsync(LoginRequest request, CancellationToken cancellationToken = default)
     {
-        var user = await _userRepository.GetByEmailAsync(request.Email, cancellationToken)
+        var user = await _userRepository.GetByEmailAsync(request.Email.Trim().ToLowerInvariant(), cancellationToken)
             ?? throw new UnauthorizedAccessException("Invalid credentials.");
 
         if (!user.IsActive || !BCrypt.Net.BCrypt.Verify(request.Password, user.PasswordHash))
@@ -104,21 +105,36 @@ public sealed class AuthService : IAuthService
         };
     }
 
+    private static IEnumerable<string> ResolveRoleNames(User user)
+    {
+        var fromDb = user.UserRoles
+            .Where(ur => ur.Role is not null && !string.IsNullOrWhiteSpace(ur.Role.Name))
+            .Select(ur => ur.Role!.Name)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+        return fromDb.Count > 0 ? fromDb : new[] { DefaultTravelerRole };
+    }
+
     private string CreateAccessToken(User user, DateTime expiresAt)
     {
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtOptions.SecretKey));
         var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
-        var claims = new[]
+        var roleClaims = ResolveRoleNames(user)
+            .Select(role => new Claim(ClaimTypes.Role, role))
+            .ToList();
+
+        var claims = new List<Claim>
         {
-            new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
-            new Claim("First Name: ", user.FirstName),
-            new Claim("Last Name: ", user.LastName),
-            new Claim(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
-            new Claim(JwtRegisteredClaimNames.Email, user.Email),
-            new Claim(ClaimTypes.Role, DefaultTravelerRole),
-            new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
+            new(ClaimTypes.NameIdentifier, user.Id.ToString()),
+            new(ClaimTypes.GivenName, user.FirstName),
+            new(ClaimTypes.Surname, user.LastName),
+            new(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
+            new(JwtRegisteredClaimNames.Email, user.Email),
+            new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
         };
+        claims.AddRange(roleClaims);
 
         var token = new JwtSecurityToken(
             issuer: _jwtOptions.Issuer,

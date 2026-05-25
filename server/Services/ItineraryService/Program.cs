@@ -14,6 +14,7 @@ using TravelAssistant.Services.ItineraryService.Services.Interfaces;
 using TravelAssistant.Services.ItineraryService.Services.ItineraryPlanning;
 using TravelAssistant.Services.ItineraryService.Validation;
 using TravelAssistant.Common.Middleware;
+using TravelAssistant.Common.Database;
 
 var envPath = Path.Combine(Directory.GetCurrentDirectory(), ".env");
 var rootEnvPath = Path.GetFullPath(Path.Combine(Directory.GetCurrentDirectory(), "..", "..", "global-settings.env"));
@@ -93,11 +94,32 @@ builder.Services.AddScoped<IItinerarySearchService, ItinerarySearchService>();
 
 var app = builder.Build();
 
-if (app.Environment.IsDevelopment())
+using (var scope = app.Services.CreateScope())
 {
-    using var scope = app.Services.CreateScope();
     var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-    db.Database.Migrate();
+    var logger = scope.ServiceProvider.GetRequiredService<ILoggerFactory>().CreateLogger("ItineraryService");
+    await Lab2DbSchemaBootstrap.EnsureMemberBSchemaAsync(db, logger);
+    if (app.Environment.IsDevelopment())
+    {
+        try
+        {
+            db.Database.Migrate();
+        }
+        catch (Exception ex)
+        {
+            app.Logger.LogWarning(ex, "Itinerary database migrate skipped.");
+        }
+    }
+
+    try
+    {
+        await DestinationCatalogSeeder.SeedAsync(db);
+        await TripCatalogSeeder.SeedAsync(db);
+    }
+    catch (Exception ex)
+    {
+        app.Logger.LogWarning(ex, "Catalog seed skipped.");
+    }
 }
 
 app.UseMiddleware<GlobalExceptionMiddleware>();

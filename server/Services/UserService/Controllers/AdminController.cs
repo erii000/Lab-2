@@ -22,14 +22,6 @@ public class AdminController : ControllerBase
     public async Task<IActionResult> GetAllUsers([FromQuery] UserQueryParams query, CancellationToken ct)
     {
         var (users, totalCount) = await _userRepository.GetUsersAsync(query, ct);
-
-        var response = new
-        {
-            TotalCount = totalCount,
-            PageSize = query.PageSize,
-            CurrentPage = query.PageNumber,
-            Items = users
-        };
-        return Ok(response);
+        return Ok(UserListMapper.ToPagedResponse(users, totalCount, query));
     }
 }

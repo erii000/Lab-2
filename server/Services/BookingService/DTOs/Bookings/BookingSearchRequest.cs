@@ -2,6 +2,7 @@ namespace TravelAssistant.Services.BookingService.DTOs.Bookings;
 
 public sealed class BookingSearchRequest
 {
+    public int? UserId { get; set; }
     public string? Q { get; set; }
     public string? Status { get; set; }
     public string? Provider { get; set; }

@@ -23,11 +23,15 @@ import AssessmentRoundedIcon from "@mui/icons-material/AssessmentRounded";
 import PeopleOutlineRoundedIcon from "@mui/icons-material/PeopleOutlineRounded";
 import SettingsOutlinedIcon from "@mui/icons-material/SettingsOutlined";
 import { Navigate, Outlet, useLocation, useNavigate } from "react-router-dom";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link as RouterLink } from "react-router-dom";
 import { adminColors } from "../components/admin/adminStyles.js";
 import { designTokens } from "../theme/theme.js";
 import { useAuthStore } from "../store/authStore.js";
+import { useAdminBookingsStore } from "../store/adminBookingsStore.js";
+import { useAdminTripsStore } from "../store/adminTripsStore.js";
+import { useAdminUsersStore } from "../store/adminUsersStore.js";
+import { useCatalogStore } from "../store/catalogStore.js";
 
 const drawerWidth = 248;
 
@@ -89,7 +93,16 @@ function NavList({ onNavigate }) {
 
 export default function AdminLayout() {
   const [mobileOpen, setMobileOpen] = useState(false);
-  const isAdmin = useAuthStore((s) => s.session?.role === "admin");
+  const session = useAuthStore((s) => s.session);
+  const isAdmin = session?.role === "admin";
+
+  useEffect(() => {
+    if (!session?.accessToken || !isAdmin) return;
+    useCatalogStore.getState().hydrate();
+    useAdminBookingsStore.getState().hydrateFromApi(session.accessToken);
+    useAdminTripsStore.getState().hydrateFromApi(session.accessToken);
+    useAdminUsersStore.getState().hydrateFromApi(session.accessToken);
+  }, [session?.accessToken, isAdmin]);
 
   if (!isAdmin) {
     return <Navigate to="/login" replace />;

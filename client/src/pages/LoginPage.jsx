@@ -16,6 +16,7 @@ export default function LoginPage() {
   const login = useAuthStore((s) => s.login);
   const [form, setForm] = useState({ email: "", password: "" });
   const [submitError, setSubmitError] = useState({});
+  const [submitting, setSubmitting] = useState(false);
 
   const setField = (field) => (e) => {
     setForm((f) => ({ ...f, [field]: e.target.value }));
@@ -27,7 +28,7 @@ export default function LoginPage() {
     });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     const nextErrors = {};
     const emailError = validateEmail(form.email);
@@ -37,7 +38,10 @@ export default function LoginPage() {
     setSubmitError(nextErrors);
     if (Object.keys(nextErrors).length) return;
 
-    const result = login(form.email, form.password);
+    setSubmitting(true);
+    const result = await login(form.email, form.password);
+    setSubmitting(false);
+
     if (!result.ok) {
       setSubmitError({ password: result.message });
       return;
@@ -94,12 +98,12 @@ export default function LoginPage() {
         </Link>
       </Stack>
 
-      <AppButton type="submit" tone="primary" fullWidth sx={authPrimaryButtonSx}>
-        Sign in
+      <AppButton type="submit" tone="primary" fullWidth sx={authPrimaryButtonSx} disabled={submitting}>
+        {submitting ? "Signing in…" : "Sign in"}
       </AppButton>
 
       <Typography variant="caption" sx={{ color: alpha("#fff", 0.4), textAlign: "center", lineHeight: 1.5 }}>
-        Demo admin · {ADMIN_DEMO.email} · {ADMIN_DEMO.password}
+        Team admin (Azure DB) · {ADMIN_DEMO.email}
       </Typography>
     </Stack>
   );

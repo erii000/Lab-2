@@ -1,8 +1,31 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { adminBookings as initialBookings } from "../data/adminData.js";
+import * as bookingsApi from "../api/bookingsApi.js";
+import { fetchAdminBookings } from "../services/adminDataSync.js";
+import { adminStatusToApi } from "../utils/bookingMappers.js";
 import { enrichBooking, formatActivityTimestamp } from "../utils/adminBookingActivity.js";
 import { adminNotify } from "../utils/adminNotify.js";
+
+function readAccessToken() {
+  try {
+    const raw = localStorage.getItem("sta-auth-v2");
+    const parsed = JSON.parse(raw ?? "{}");
+    return parsed?.state?.session?.accessToken ?? null;
+  } catch {
+    return null;
+  }
+}
+
+async function patchServerStatus(booking, statusKey) {
+  const token = readAccessToken();
+  if (!token || !booking?.serverId) return;
+  try {
+    await bookingsApi.patchBookingStatus(token, booking.serverId, adminStatusToApi(statusKey));
+  } catch {
+    /* keep local state */
+  }
+}
 
 const RECENT_IDS = ["BK-92841", "BK-92838", "BK-92835", "BK-92831", "BK-92828"];
 
@@ -64,6 +87,22 @@ export const useAdminBookingsStore = create(
   persist(
     (set, get) => ({
   bookings: initialBookings.map((b) => enrichBooking({ ...b })),
+  loadedFromApi: false,
+
+  hydrateFromApi: async (accessToken) => {
+    const token = accessToken ?? readAccessToken();
+    if (!token) return;
+    try {
+      const bookings = await fetchAdminBookings(token);
+      if (bookings.length > 0) {
+        set({ bookings, loadedFromApi: true });
+      } else {
+        set({ loadedFromApi: true });
+      }
+    } catch {
+      set({ loadedFromApi: true });
+    }
+  },
 
   updateBookingStatus: (bookingId, statusKey) => {
     const booking = get().bookings.find((b) => b.id === bookingId);
@@ -75,6 +114,7 @@ export const useAdminBookingsStore = create(
     }));
     const opt = BOOKING_STATUS_OPTIONS.find((o) => o.value === statusKey);
     if (booking) {
+      patchServerStatus(booking, statusKey);
       adminNotify({
         type: "booking",
         title: "Booking status updated",
@@ -97,6 +137,7 @@ export const useAdminBookingsStore = create(
     set((state) => ({
       bookings: state.bookings.map((b) => (b.id === bookingId ? next : b)),
     }));
+    patchServerStatus(next, "confirmed");
     adminNotify({
       type: "booking",
       title: "Booking approved",
@@ -135,6 +176,7 @@ export const useAdminBookingsStore = create(
     set((state) => ({
       bookings: state.bookings.map((b) => (b.id === bookingId ? next : b)),
     }));
+    patchServerStatus(next, "cancelled");
     adminNotify({
       type: "booking",
       title: "Booking cancelled",
@@ -173,6 +215,7 @@ export const useAdminBookingsStore = create(
     set((state) => ({
       bookings: state.bookings.map((b) => (b.id === bookingId ? next : b)),
     }));
+    patchServerStatus(next, status);
     adminNotify({
       type: "booking",
       title: isFull ? "Full refund processed" : "Partial refund processed",

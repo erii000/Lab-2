@@ -8,9 +8,9 @@ export function sessionToAuthUser(session) {
     };
   }
 
-  const safeId = session.email.replace(/[^a-z0-9]/gi, "_").slice(0, 48);
+  const id = session.userId != null ? `user_${session.userId}` : session.email.replace(/[^a-z0-9]/gi, "_").slice(0, 48);
   return {
-    id: `user_${safeId}`,
+    id,
     name: session.name?.trim() || session.email.split("@")[0],
     email: session.email,
   };

@@ -1,4 +1,4 @@
-import { destinations } from "../data/destinations.js";
+import { getCatalogDestinations } from "../data/destinations.js";
 
 const STYLE_KEYWORDS = {
   romantic: ["romantic", "couple", "honeymoon", "paris", "venice"],
@@ -13,6 +13,7 @@ const STYLE_KEYWORDS = {
  * Simulates a recommendation model using user signals — no external API required.
  */
 export function buildUserTravelProfile({ savedDestinationIds = [], recentSearches = [], bookings = [] }) {
+  const destinations = getCatalogDestinations();
   const destinationCounts = {};
   const budgetSamples = [];
   const styleVotes = {};
@@ -66,6 +67,7 @@ export function scoreDestination(dest, profile) {
 }
 
 export function getPersonalizedRecommendations(signals, { limit = 6 } = {}) {
+  const destinations = getCatalogDestinations();
   const profile = buildUserTravelProfile(signals);
   const seen = new Set(signals.savedDestinationIds ?? []);
 

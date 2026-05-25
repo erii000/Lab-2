@@ -1,4 +1,4 @@
-import { destinationById, destinations } from "../data/destinations.js";
+import { getCatalogDestinations, getDestinationById } from "../data/destinations.js";
 import {
   normalizeQuery,
   resolveDestinationId,
@@ -93,7 +93,8 @@ function applySidebarFilters(list, filters) {
 }
 
 function getAlternativeSuggestions(targetId, budget) {
-  const target = targetId ? destinationById[targetId] : null;
+  const destinations = getCatalogDestinations();
+  const target = targetId ? getDestinationById(targetId) : null;
   const pool = destinations.filter((d) => d.id !== targetId);
   const suggestions = [];
 
@@ -159,7 +160,7 @@ export function runExploreSearch(filters) {
   const strictForCity =
     resolvedId &&
     exact.some((d) => d.id === resolvedId) &&
-    (!budget || destinationById[resolvedId].priceFrom <= budget);
+    (!budget || getDestinationById(resolvedId)?.priceFrom <= budget);
 
   let mode = "exact";
   let results = exact;
@@ -170,6 +171,7 @@ export function runExploreSearch(filters) {
     alternatives = getAlternativeSuggestions(resolvedId, budget);
     alternatives = applySidebarFilters(alternatives, { ...filters, budget: null });
     if (!alternatives.length) {
+      const destinations = getCatalogDestinations();
       alternatives = applySidebarFilters(
         [...destinations].sort((a, b) => a.priceFrom - b.priceFrom),
         { ...filters, budget: null },
@@ -189,7 +191,7 @@ export function runExploreSearch(filters) {
 }
 
 function buildAiInsight(resolvedId, query, budget, mode) {
-  const dest = resolvedId ? destinationById[resolvedId] : null;
+  const dest = resolvedId ? getDestinationById(resolvedId) : null;
   if (mode === "alternatives" && dest && budget && dest.priceFrom > budget) {
     return `${dest.title} trips often start above €${budget}. Try similar cities below or raise your budget slightly.`;
   }
@@ -221,14 +223,14 @@ export function sortExploreResults(list, sortBy) {
 
 export function getTrendingDestinations() {
   return ["barcelona", "paris", "tokyo", "rome", "dubai", "bali"]
-    .map((id) => destinationById[id])
+    .map((id) => getDestinationById(id))
     .filter(Boolean);
 }
 
 export function getDiscoveryGroups(query) {
   const q = normalizeQuery(query);
   const ref = resolveDestinationId(query);
-  const refDest = ref ? destinationById[ref] : null;
+  const refDest = ref ? getDestinationById(ref) : null;
 
   return [
     {

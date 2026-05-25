@@ -12,6 +12,7 @@ using TravelAssistant.Services.BookingService.Repositories;
 using TravelAssistant.Services.BookingService.Services.Bookings;
 using TravelAssistant.Services.BookingService.Validation;
 using TravelAssistant.Common.Middleware;
+using TravelAssistant.Common.Database;
 
 var rootEnvPath = Path.GetFullPath(Path.Combine(Directory.GetCurrentDirectory(), "..", "..", "global-settings.env"));
 var envPath = Path.Combine(Directory.GetCurrentDirectory(), ".env");
@@ -83,11 +84,22 @@ builder.Services.AddScoped<IBookingWorkflowService, BookingWorkflowService>();
 
 var app = builder.Build();
 
-if (app.Environment.IsDevelopment())
+using (var scope = app.Services.CreateScope())
 {
-    using var scope = app.Services.CreateScope();
     var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-    db.Database.Migrate();
+    var logger = scope.ServiceProvider.GetRequiredService<ILoggerFactory>().CreateLogger("BookingService");
+    await Lab2DbSchemaBootstrap.EnsureMemberBSchemaAsync(db, logger);
+    if (app.Environment.IsDevelopment())
+    {
+        try
+        {
+            db.Database.Migrate();
+        }
+        catch (Exception ex)
+        {
+            app.Logger.LogWarning(ex, "Booking database migrate skipped.");
+        }
+    }
 }
 
 app.UseMiddleware<GlobalExceptionMiddleware>();

@@ -3,10 +3,14 @@ import { alpha } from "@mui/material/styles";
 import { Link as RouterLink } from "react-router-dom";
 import { StarRounded } from "../../ui/icons.jsx";
 import { buildDestinationUrl } from "../../utils/destinationSearch.js";
-import { featuredDestinations } from "./homeData.js";
+import { getFeaturedDestinations } from "./homeData.js";
 import { designTokens } from "../../theme/theme.js";
+import { useCatalogStore } from "../../store/catalogStore.js";
 
 export default function HomeFeaturedDestinations() {
+  useCatalogStore((s) => s.loaded);
+  const featuredDestinations = getFeaturedDestinations();
+
   return (
     <Grid container spacing={2.5}>
       {featuredDestinations.map((dest) => (
@@ -56,7 +60,7 @@ export default function HomeFeaturedDestinations() {
               <Chip label={dest.country} size="small" sx={{ fontWeight: 700, bgcolor: alpha("#000", 0.45) }} />
               <Chip
                 icon={<StarRounded sx={{ fontSize: "14px !important", color: `${designTokens.brand.gold} !important` }} />}
-                label={dest.rating.toFixed(1)}
+                label={dest.rating != null ? Number(dest.rating).toFixed(1) : "—"}
                 size="small"
                 sx={{ fontWeight: 700, bgcolor: alpha("#000", 0.45), ml: "auto" }}
               />

@@ -13,9 +13,10 @@ import { designTokens } from "../theme/theme.js";
 export default function RegisterPage() {
   const navigate = useNavigate();
   const { showToast } = useToast();
-  const login = useAuthStore((s) => s.login);
+  const register = useAuthStore((s) => s.register);
   const [form, setForm] = useState({ fullName: "", email: "", password: "", confirmPassword: "" });
   const [submitError, setSubmitError] = useState({});
+  const [submitting, setSubmitting] = useState(false);
 
   const setField = (field) => (e) => {
     setForm((f) => ({ ...f, [field]: e.target.value }));
@@ -27,7 +28,7 @@ export default function RegisterPage() {
     });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     const nextErrors = {};
     if (validateName(form.fullName)) nextErrors.fullName = validateName(form.fullName);
@@ -37,13 +38,19 @@ export default function RegisterPage() {
     setSubmitError(nextErrors);
     if (Object.keys(nextErrors).length) return;
 
-    const result = login(form.email, form.password, { name: form.fullName });
+    setSubmitting(true);
+    const result = await register({
+      fullName: form.fullName,
+      email: form.email,
+      password: form.password,
+    });
+    setSubmitting(false);
+
     if (result.ok) {
       showToast({ message: `Welcome, ${form.fullName.split(" ")[0]}.`, severity: "success" });
       navigate("/", { replace: true });
     } else {
-      showToast({ message: "Account created. Please sign in.", severity: "success" });
-      navigate("/login", { replace: true });
+      setSubmitError({ email: result.message });
     }
   };
 
@@ -113,8 +120,8 @@ export default function RegisterPage() {
         }
       />
 
-      <AppButton type="submit" tone="primary" fullWidth sx={authPrimaryButtonSx}>
-        Create account
+      <AppButton type="submit" tone="primary" fullWidth sx={authPrimaryButtonSx} disabled={submitting}>
+        {submitting ? "Creating account…" : "Create account"}
       </AppButton>
     </Stack>
   );

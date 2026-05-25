@@ -1,4 +1,4 @@
-import { destinations, popularDestinations } from "../../data/destinations.js";
+import { getCatalogDestinations, getPopularDestinations } from "../../data/destinations.js";
 
 export const trustStats = [
   {
@@ -29,9 +29,12 @@ export const trustStats = [
 
 export const featuredDestinationIds = ["paris", "tokyo", "barcelona"];
 
-export const featuredDestinations = featuredDestinationIds
-  .map((id) => destinations.find((d) => d.id === id))
-  .filter(Boolean);
+export function getFeaturedDestinations() {
+  const destinations = getCatalogDestinations();
+  return featuredDestinationIds
+    .map((id) => destinations.find((d) => d.id === id))
+    .filter(Boolean);
+}
 
 export function tripDurationLabel(dest) {
   const dayMatches = dest.aiItineraryTeaser?.match(/Day \d/g);
@@ -40,7 +43,8 @@ export function tripDurationLabel(dest) {
   return "5–7 days";
 }
 
-export const quickSuggestions = popularDestinations.slice(0, 8).map((d, index) => ({
+export function getQuickSuggestions() {
+  return getPopularDestinations(8).map((d, index) => ({
   id: d.id,
   name: d.title,
   country: d.country,
@@ -48,9 +52,10 @@ export const quickSuggestions = popularDestinations.slice(0, 8).map((d, index) =
   priceFrom: d.priceFrom,
   rating: d.rating,
   duration: tripDurationLabel(d),
-  trending: index < 2 || d.rating >= 4.85,
-  popular: d.reviewCount > 2500,
-}));
+  trending: index < 2 || (d.rating ?? 0) >= 4.85,
+  popular: (d.reviewCount ?? 0) > 2500,
+  }));
+}
 
 export const howItWorksSteps = [
   {

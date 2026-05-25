@@ -1,4 +1,4 @@
-import { destinations } from "./destinations.js";
+import { FALLBACK_DESTINATIONS } from "./destinationsFallback.js";
 
 export const dashboardMetrics = {
   totalBookings: 1248,
@@ -63,7 +63,7 @@ const tripNames = {
 const tripStyles = ["Romantic", "Luxury", "Adventure", "Family", "City break", "Beach"];
 const tripStatuses = ["active", "draft", "archived"];
 
-export const adminTrips = destinations.slice(0, 8).map((d, i) => ({
+export const adminTrips = FALLBACK_DESTINATIONS.slice(0, 8).map((d, i) => ({
   id: d.id,
   title: tripNames[d.id] ?? `${d.title} Journey`,
   subtitle: tripStyles[i % tripStyles.length] + " Getaway",
@@ -298,7 +298,7 @@ export const contentBlocks = {
     "https://images.unsplash.com/photo-1488646953014-85cb44e25828?auto=format&fit=crop&w=1600&q=80",
 };
 
-export const contentDestinations = destinations.slice(0, 8).map((d) => ({
+export const contentDestinations = FALLBACK_DESTINATIONS.slice(0, 8).map((d) => ({
   id: d.id,
   title: d.title,
   country: d.country,

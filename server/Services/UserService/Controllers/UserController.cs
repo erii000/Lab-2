@@ -42,13 +42,23 @@ public class UserController : ControllerBase
             return NotFound("User no longer exists.");
         }
 
+        var roles = user.UserRoles
+            .Where(ur => ur.Role != null)
+            .Select(ur => ur.Role!.Name)
+            .Distinct()
+            .ToList();
+
+        if (roles.Count == 0)
+            roles.Add("Traveler");
+
         return Ok(new
         {
             user.Id,
             user.FirstName,
             user.LastName,
             user.Email,
-            user.CreatedAt
+            user.CreatedAt,
+            Roles = roles
         });
     }
 
@@ -67,24 +77,7 @@ public class UserController : ControllerBase
     public async Task<IActionResult> ListUsers([FromQuery] UserQueryParams query, CancellationToken ct)
     {
         var (users, totalCount) = await _userRepository.GetUsersAsync(query, ct);
-        var items = users.Select(u => new
-        {
-            u.Id,
-            u.FirstName,
-            u.LastName,
-            u.Email,
-            u.IsActive,
-            u.CreatedAt,
-            Roles = u.UserRoles.Where(ur => ur.Role != null).Select(ur => ur.Role!.Name).ToList()
-        }).ToList();
-
-        return Ok(new
-        {
-            TotalCount = totalCount,
-            PageSize = query.PageSize,
-            CurrentPage = query.PageNumber,
-            Items = items
-        });
+        return Ok(UserListMapper.ToPagedResponse(users, totalCount, query));
     }
 
     [Authorize(Roles = "Admin")]

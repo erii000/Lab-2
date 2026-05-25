@@ -19,14 +19,18 @@ public sealed class SqlUserRepository : IUserRepository
     public Task<User?> GetByEmailAsync(string email, CancellationToken cancellationToken = default)
     {
         var normalizedEmail = email.Trim().ToLowerInvariant();
-        return _dbContext.Users.FirstOrDefaultAsync(
-            x => x.Email.ToLower() == normalizedEmail,
-            cancellationToken);
+        return _dbContext.Users
+            .Include(x => x.UserRoles)
+            .ThenInclude(ur => ur.Role)
+            .FirstOrDefaultAsync(x => x.Email.ToLower() == normalizedEmail, cancellationToken);
     }
 
     public Task<User?> GetByIdAsync(int id, CancellationToken cancellationToken = default)
     {
-        return _dbContext.Users.FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+        return _dbContext.Users
+            .Include(x => x.UserRoles)
+            .ThenInclude(ur => ur.Role)
+            .FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
     }
 
     public async Task<User> AddAsync(User user, CancellationToken cancellationToken = default)

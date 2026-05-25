@@ -12,24 +12,12 @@ import {
     Typography,
 } from "@mui/material";
 
-const usersData = [
-    { id: 1, name: "Eljesa Azemi", email: "eljesa@example.com", role: "Admin", status: "Active" },
-    { id: 2, name: "Arber Krasniqi", email: "arber@example.com", role: "Manager", status: "Active" },
-    { id: 3, name: "Sara Berisha", email: "sara@example.com", role: "User", status: "Inactive" },
-    { id: 4, name: "Blend Dema", email: "blend@example.com", role: "Editor", status: "Active" },
-    { id: 5, name: "Diona Gashi", email: "diona@example.com", role: "User", status: "Active" },
-    { id: 6, name: "Luan Hoxha", email: "luan@example.com", role: "Manager", status: "Inactive" },
-    { id: 7, name: "Ariana Kelmendi", email: "ariana@example.com", role: "Editor", status: "Active" },
-    { id: 8, name: "Besnik Rama", email: "besnik@example.com", role: "User", status: "Active" },
-    { id: 9, name: "Era Bytyqi", email: "era@example.com", role: "Admin", status: "Active" },
-    { id: 10, name: "Gent Dervishi", email: "gent@example.com", role: "User", status: "Inactive" },
-    { id: 11, name: "Rina Shala", email: "rina@example.com", role: "Editor", status: "Active" },
-    { id: 12, name: "Valon Krasniqi", email: "valon@example.com", role: "Manager", status: "Active" },
-];
+import { useAdminUsers } from "../hooks/useAdminUsers.js";
 
 const rowsPerPage = 5;
 
 export default function UsersManagementPage() {
+    const { users: usersData, loading, error } = useAdminUsers();
     const [search, setSearch] = useState("");
     const [roleFilter, setRoleFilter] = useState("All");
     const [statusFilter, setStatusFilter] = useState("All");
@@ -72,7 +60,7 @@ export default function UsersManagementPage() {
         });
 
         return result;
-    }, [search, roleFilter, statusFilter, sortBy]);
+    }, [usersData, search, roleFilter, statusFilter, sortBy]);
 
     const totalPages = Math.ceil(filteredAndSortedUsers.length / rowsPerPage);
 
@@ -108,8 +96,13 @@ export default function UsersManagementPage() {
                     Users Management
                 </Typography>
                 <Typography variant="body1" color="text.secondary">
-                    View, filter, sort, and manage platform users.
+                    View, filter, sort, and manage platform users from the shared database.
                 </Typography>
+                {error && (
+                    <Typography variant="body2" color="error" sx={{ mt: 1 }}>
+                        {error}
+                    </Typography>
+                )}
             </Box>
 
             <Card elevation={0} sx={{ borderRadius: 4, border: "1px solid #e2e8f0" }}>
@@ -148,6 +141,7 @@ export default function UsersManagementPage() {
                                 <MenuItem value="Manager">Manager</MenuItem>
                                 <MenuItem value="Editor">Editor</MenuItem>
                                 <MenuItem value="User">User</MenuItem>
+                                <MenuItem value="Traveler">Traveler</MenuItem>
                             </TextField>
 
                             <TextField
@@ -204,7 +198,18 @@ export default function UsersManagementPage() {
                                 </Box>
                             ))}
 
-                            {paginatedUsers.length > 0 ? (
+                            {loading ? (
+                                <Box
+                                    sx={{
+                                        gridColumn: "1 / -1",
+                                        p: 3,
+                                        textAlign: "center",
+                                        color: "text.secondary",
+                                    }}
+                                >
+                                    Loading users…
+                                </Box>
+                            ) : paginatedUsers.length > 0 ? (
                                 paginatedUsers.map((user) => (
                                     <Box key={user.id} sx={{ display: "contents" }}>
                                         <Box sx={{ p: 2, borderBottom: "1px solid #e2e8f0" }}>{user.id}</Box>

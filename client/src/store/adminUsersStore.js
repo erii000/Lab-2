@@ -1,13 +1,40 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { adminUsers as seedUsers } from "../data/adminData.js";
+import { fetchAdminUsers } from "../services/adminDataSync.js";
 import { enrichUser } from "../utils/adminUsers.js";
 import { adminNotify } from "../utils/adminNotify.js";
+
+function readAccessToken() {
+  try {
+    const raw = localStorage.getItem("sta-auth-v2");
+    const parsed = JSON.parse(raw ?? "{}");
+    return parsed?.state?.session?.accessToken ?? null;
+  } catch {
+    return null;
+  }
+}
 
 export const useAdminUsersStore = create(
   persist(
     (set, get) => ({
       users: seedUsers.map(enrichUser),
+      loadedFromApi: false,
+
+      hydrateFromApi: async (accessToken) => {
+        const token = accessToken ?? readAccessToken();
+        if (!token) return;
+        try {
+          const users = await fetchAdminUsers(token);
+          if (users.length > 0) {
+            set({ users, loadedFromApi: true });
+          } else {
+            set({ loadedFromApi: true });
+          }
+        } catch {
+          set({ loadedFromApi: true });
+        }
+      },
 
       updateUser: (id, patch) => {
         set((s) => ({

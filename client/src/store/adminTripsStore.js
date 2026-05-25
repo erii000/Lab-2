@@ -1,8 +1,19 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { adminTrips as initialTrips } from "../data/adminData.js";
+import { fetchAdminTrips } from "../services/adminDataSync.js";
 import { appendAudit, createEmptyTrip, enrichTrip } from "../utils/adminTrips.js";
 import { adminNotify } from "../utils/adminNotify.js";
+
+function readAccessToken() {
+  try {
+    const raw = localStorage.getItem("sta-auth-v2");
+    const parsed = JSON.parse(raw ?? "{}");
+    return parsed?.state?.session?.accessToken ?? null;
+  } catch {
+    return null;
+  }
+}
 
 function mapInitial() {
   const statuses = ["active", "published", "draft", "pending_review", "fully_booked", "archived", "active", "published"];
@@ -19,6 +30,22 @@ export const useAdminTripsStore = create(
   persist(
     (set, get) => ({
       trips: mapInitial(),
+      loadedFromApi: false,
+
+      hydrateFromApi: async (accessToken) => {
+        const token = accessToken ?? readAccessToken();
+        if (!token) return;
+        try {
+          const trips = await fetchAdminTrips(token);
+          if (trips.length > 0) {
+            set({ trips, loadedFromApi: true });
+          } else {
+            set({ loadedFromApi: true });
+          }
+        } catch {
+          set({ loadedFromApi: true });
+        }
+      },
 
       getTripById: (id) => get().trips.find((t) => t.id === id && !t.deletedAt),
 

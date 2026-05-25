@@ -8,4 +8,5 @@ public sealed class CreateBookingRequest
     public string ReferenceCode { get; set; } = string.Empty;
     public decimal? Amount { get; set; }
     public string? Currency { get; set; }
+    public string? MetadataJson { get; set; }
 }

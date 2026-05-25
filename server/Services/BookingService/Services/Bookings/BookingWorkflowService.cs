@@ -25,6 +25,7 @@ public sealed class BookingWorkflowService : IBookingWorkflowService
             Currency = string.IsNullOrWhiteSpace(request.Currency) ? null : request.Currency.Trim().ToUpperInvariant(),
             BookingDate = today,
             Status = "Pending",
+            MetadataJson = string.IsNullOrWhiteSpace(request.MetadataJson) ? null : request.MetadataJson,
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow
         };
@@ -74,6 +75,7 @@ public sealed class BookingWorkflowService : IBookingWorkflowService
             Amount = b.Amount,
             Currency = b.Currency,
             BookingDate = b.BookingDate,
-            Status = b.Status
+            Status = b.Status,
+            MetadataJson = b.MetadataJson
         };
 }

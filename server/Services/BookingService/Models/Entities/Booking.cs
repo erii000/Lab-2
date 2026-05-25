@@ -11,4 +11,7 @@ public sealed class Booking : BaseEntity
     public string? Currency { get; set; }
     public DateOnly BookingDate { get; set; }
     public string Status { get; set; } = string.Empty;
+
+    /// <summary>Full UI booking payload (destination, dates, traveler, line items) as JSON.</summary>
+    public string? MetadataJson { get; set; }
 }

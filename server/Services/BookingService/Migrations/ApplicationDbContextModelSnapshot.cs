@@ -51,6 +51,9 @@ namespace BookingService.Migrations
                     b.Property<int?>("ItineraryId")
                         .HasColumnType("int");
 
+                    b.Property<string>("MetadataJson")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("Provider")
                         .IsRequired()
                         .HasMaxLength(100)
