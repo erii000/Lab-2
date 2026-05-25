@@ -145,6 +145,19 @@ function getAlternativeSuggestions(targetId, budget) {
 
 export function runExploreSearch(filters) {
   const query = filters.destination?.trim() || "";
+
+  if (!query) {
+    return {
+      mode: "validation",
+      validationError: "Please enter a destination to search (e.g. Paris, Rome, or Tokyo).",
+      exact: [],
+      alternatives: [],
+      results: [],
+      resolvedId: null,
+      aiInsight: null,
+    };
+  }
+
   const resolvedId = resolveDestinationId(query);
   const budget = filters.budget;
 
@@ -200,6 +213,9 @@ function buildAiInsight(resolvedId, query, budget, mode) {
   }
   if (mode === "exact" && dest) {
     return "Traveling one week later could save up to 18% on flights for this route.";
+  }
+  if (query && mode === "alternatives") {
+    return `We couldn't find an exact match for “${query}”. Try a city name from our catalog, or browse similar trips below.`;
   }
   if (query) {
     return `Showing the best matches for “${query}”. Adjust budget or dates in filters — results update instantly.`;

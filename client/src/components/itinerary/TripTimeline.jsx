@@ -3,21 +3,31 @@ import {
   AutoAwesomeRounded,
   DeleteOutlineRounded,
   DragIndicatorRounded,
-  EditRounded,
 } from "../../ui/icons.jsx";
 import {
   Box,
   Button,
+  Chip,
   IconButton,
   Stack,
-  TextField,
   Typography,
 } from "@mui/material";
 import { alpha } from "@mui/material/styles";
-import { useState } from "react";
+import { useMemo, useState } from "react";
+import {
+  computeNextActivityTime,
+  getActivitySuggestions,
+  sortActivitiesByTime,
+} from "../../utils/itineraryPlanner.js";
 import { designTokens } from "../../theme/theme.js";
 
-function ActivityRow({ activity, onDelete, onEdit, dragHandlers }) {
+function isCustomActivity(activity) {
+  if (activity.isCustom === true) return true;
+  if (activity.isCustom === false) return false;
+  return String(activity.id).startsWith("new-");
+}
+
+function ActivityRow({ activity, onDelete, canDelete, dragHandlers }) {
   return (
     <Box
       draggable
@@ -55,20 +65,67 @@ function ActivityRow({ activity, onDelete, onEdit, dragHandlers }) {
         <Typography variant="caption" fontWeight={700} sx={{ mr: 0.5, minWidth: 36, textAlign: "right" }}>
           {activity.cost ? `€${activity.cost}` : "—"}
         </Typography>
-        <IconButton size="small" onClick={() => onEdit(activity)} aria-label="Edit">
-          <EditRounded sx={{ fontSize: 16 }} />
-        </IconButton>
-        <IconButton size="small" onClick={() => onDelete(activity.id)} aria-label="Delete">
-          <DeleteOutlineRounded sx={{ fontSize: 16 }} />
-        </IconButton>
+        {canDelete ? (
+          <IconButton size="small" onClick={() => onDelete(activity.id)} aria-label="Remove">
+            <DeleteOutlineRounded sx={{ fontSize: 16 }} />
+          </IconButton>
+        ) : null}
       </Stack>
     </Box>
   );
 }
 
-export default function TripTimeline({ days, onDaysChange, onOpenAiAssist }) {
+function ActivitySuggestionPicker({ suggestions, onSelect, onCancel }) {
+  return (
+    <Box
+      sx={{
+        mt: 1.5,
+        p: 2,
+        borderRadius: 2,
+        border: `1px solid ${alpha(designTokens.brand.gold, 0.25)}`,
+        bgcolor: alpha(designTokens.brand.charcoal, 0.85),
+      }}
+    >
+      <Typography variant="subtitle2" fontWeight={700} sx={{ mb: 0.5 }}>
+        Choose an activity
+      </Typography>
+      <Typography variant="caption" color="text.secondary" sx={{ display: "block", mb: 1.5 }}>
+        Tap a suggestion — we&apos;ll schedule it at the next free time slot for this day.
+      </Typography>
+
+      {suggestions.length > 0 ? (
+        <Stack direction="row" flexWrap="wrap" gap={0.75} useFlexGap sx={{ mb: 1.5 }}>
+          {suggestions.map((s) => (
+            <Chip
+              key={s.title}
+              label={s.title}
+              size="small"
+              onClick={() => onSelect(s)}
+              sx={{
+                fontWeight: 600,
+                borderColor: alpha(designTokens.brand.gold, 0.35),
+                "&:hover": { bgcolor: alpha(designTokens.brand.gold, 0.12) },
+              }}
+              variant="outlined"
+            />
+          ))}
+        </Stack>
+      ) : (
+        <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5 }}>
+          No more suggestions for this day — try another day or remove an activity first.
+        </Typography>
+      )}
+
+      <Button size="small" onClick={onCancel}>
+        Cancel
+      </Button>
+    </Box>
+  );
+}
+
+export default function TripTimeline({ days, destination, travelers = 2, onDaysChange, onOpenAiAssist }) {
   const [dragSource, setDragSource] = useState(null);
-  const [editing, setEditing] = useState(null);
+  const [addingDayIndex, setAddingDayIndex] = useState(null);
 
   function updateDays(updater) {
     onDaysChange(typeof updater === "function" ? updater(days) : updater);
@@ -81,29 +138,32 @@ export default function TripTimeline({ days, onDaysChange, onOpenAiAssist }) {
       const next = current.map((d) => ({ ...d, activities: [...d.activities] }));
       const [moved] = next[fromDay].activities.splice(fromAct, 1);
       next[dayIndex].activities.splice(targetIndex, 0, moved);
+      next[dayIndex].activities = sortActivitiesByTime(next[dayIndex].activities);
       return next;
     });
     setDragSource(null);
   }
 
-  function addActivity(dayIndex) {
+  function addFromSuggestion(dayIndex, suggestion) {
     updateDays((current) => {
       const next = [...current];
-      next[dayIndex] = {
-        ...next[dayIndex],
-        activities: [
-          ...next[dayIndex].activities,
-          {
-            id: `new-${Date.now()}`,
-            time: "12:00",
-            title: "New activity",
-            subtitle: "Tap edit to customize",
-            cost: 0,
-          },
-        ],
-      };
+      const day = next[dayIndex];
+      const time = computeNextActivityTime(day.activities);
+      const activities = sortActivitiesByTime([
+        ...day.activities,
+        {
+          id: `new-${Date.now()}`,
+          time,
+          title: suggestion.title,
+          subtitle: suggestion.subtitle,
+          cost: suggestion.cost,
+          isCustom: true,
+        },
+      ]);
+      next[dayIndex] = { ...day, activities };
       return next;
     });
+    setAddingDayIndex(null);
   }
 
   function deleteActivity(dayIndex, activityId) {
@@ -114,20 +174,14 @@ export default function TripTimeline({ days, onDaysChange, onOpenAiAssist }) {
     );
   }
 
-  function saveEdit() {
-    if (!editing) return;
-    updateDays((current) =>
-      current.map((d, i) =>
-        i === editing.dayIndex
-          ? {
-              ...d,
-              activities: d.activities.map((a) => (a.id === editing.activity.id ? editing.activity : a)),
-            }
-          : d,
-      ),
-    );
-    setEditing(null);
-  }
+  const suggestionsByDay = useMemo(() => {
+    const map = new Map();
+    days.forEach((day, dayIndex) => {
+      const titles = day.activities.map((a) => a.title);
+      map.set(dayIndex, getActivitySuggestions(destination, { guests: travelers, excludeTitles: titles }));
+    });
+    return map;
+  }, [days, destination, travelers]);
 
   return (
     <Box>
@@ -156,7 +210,7 @@ export default function TripTimeline({ days, onDaysChange, onOpenAiAssist }) {
               {day.label}
             </Typography>
             <Stack spacing={1}>
-              {day.activities.map((activity, actIndex) => (
+              {sortActivitiesByTime(day.activities).map((activity, actIndex) => (
                 <Box
                   key={activity.id}
                   onDragOver={(e) => e.preventDefault()}
@@ -164,8 +218,8 @@ export default function TripTimeline({ days, onDaysChange, onOpenAiAssist }) {
                 >
                   <ActivityRow
                     activity={activity}
+                    canDelete={isCustomActivity(activity)}
                     onDelete={(id) => deleteActivity(dayIndex, id)}
-                    onEdit={(act) => setEditing({ dayIndex, activity: { ...act } })}
                     dragHandlers={{
                       onDragStart: () => setDragSource({ dayIndex, activityIndex: actIndex }),
                       onDragEnd: () => setDragSource(null),
@@ -174,79 +228,26 @@ export default function TripTimeline({ days, onDaysChange, onOpenAiAssist }) {
                 </Box>
               ))}
             </Stack>
+
             <Button
               size="small"
               startIcon={<AddRounded sx={{ fontSize: 16 }} />}
-              onClick={() => addActivity(dayIndex)}
+              onClick={() => setAddingDayIndex(dayIndex)}
               sx={{ mt: 1.5, fontWeight: 600, color: "text.secondary" }}
             >
               Add activity
             </Button>
+
+            {addingDayIndex === dayIndex ? (
+              <ActivitySuggestionPicker
+                suggestions={suggestionsByDay.get(dayIndex) ?? []}
+                onSelect={(s) => addFromSuggestion(dayIndex, s)}
+                onCancel={() => setAddingDayIndex(null)}
+              />
+            ) : null}
           </Box>
         ))}
       </Stack>
-
-      {editing ? (
-        <Box
-          sx={{
-            mt: 3,
-            p: 2,
-            borderRadius: 2,
-            border: `1px solid ${alpha(designTokens.brand.gold, 0.2)}`,
-            bgcolor: alpha(designTokens.brand.charcoal, 0.8),
-          }}
-        >
-          <Typography variant="subtitle2" fontWeight={700} sx={{ mb: 1.5 }}>
-            Edit activity
-          </Typography>
-          <Stack spacing={1.5}>
-            <TextField
-              size="small"
-              label="Time"
-              value={editing.activity.time}
-              onChange={(e) =>
-                setEditing({ ...editing, activity: { ...editing.activity, time: e.target.value } })
-              }
-            />
-            <TextField
-              size="small"
-              label="Title"
-              value={editing.activity.title}
-              onChange={(e) =>
-                setEditing({ ...editing, activity: { ...editing.activity, title: e.target.value } })
-              }
-            />
-            <TextField
-              size="small"
-              label="Subtitle"
-              value={editing.activity.subtitle}
-              onChange={(e) =>
-                setEditing({ ...editing, activity: { ...editing.activity, subtitle: e.target.value } })
-              }
-            />
-            <TextField
-              size="small"
-              label="Price (€)"
-              type="number"
-              value={editing.activity.cost}
-              onChange={(e) =>
-                setEditing({
-                  ...editing,
-                  activity: { ...editing.activity, cost: Number(e.target.value) || 0 },
-                })
-              }
-            />
-            <Stack direction="row" spacing={1}>
-              <Button size="small" variant="contained" onClick={saveEdit}>
-                Save
-              </Button>
-              <Button size="small" onClick={() => setEditing(null)}>
-                Cancel
-              </Button>
-            </Stack>
-          </Stack>
-        </Box>
-      ) : null}
     </Box>
   );
 }

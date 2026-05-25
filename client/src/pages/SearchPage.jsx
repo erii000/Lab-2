@@ -108,9 +108,13 @@ export default function SearchPage() {
   }
 
   const countLabel =
-    searchResult.mode === "exact"
-      ? `${displayResults.length} trip${displayResults.length !== 1 ? "s" : ""} found`
-      : "No exact matches found";
+    searchResult.mode === "validation"
+      ? "Enter a destination"
+      : searchResult.mode === "exact"
+        ? `${displayResults.length} trip${displayResults.length !== 1 ? "s" : ""} found`
+        : "No exact matches found";
+
+  const showValidationError = searchResult.mode === "validation" && searchResult.validationError;
 
   return (
     <Box sx={{ bgcolor: designTokens.brand.obsidian, minHeight: "100vh" }}>
@@ -155,6 +159,17 @@ export default function SearchPage() {
               resultCount={displayResults.length}
               placeholder="Full-text search destinations…"
             />
+            {showValidationError ? (
+              <Typography
+                variant="body2"
+                color="error"
+                sx={{ mb: 2, fontWeight: 600 }}
+                role="alert"
+              >
+                {searchResult.validationError}
+              </Typography>
+            ) : null}
+
             <Stack
               direction={{ xs: "column", sm: "row" }}
               justifyContent="space-between"
@@ -166,7 +181,12 @@ export default function SearchPage() {
                 <Typography variant="h6" fontWeight={800}>
                   {countLabel}
                 </Typography>
-                {searchResult.mode === "alternatives" ? (
+                {searchResult.mode === "alternatives" && filters.destination?.trim() ? (
+                  <Typography variant="body2" color="error" sx={{ mt: 0.5, maxWidth: 520, fontWeight: 600 }}>
+                    No exact match for &ldquo;{filters.destination.trim()}&rdquo;. Showing similar destinations
+                    you may like.
+                  </Typography>
+                ) : searchResult.mode === "alternatives" ? (
                   <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5, maxWidth: 520 }}>
                     No trips matched your exact criteria. Here are similar destinations you may like.
                   </Typography>

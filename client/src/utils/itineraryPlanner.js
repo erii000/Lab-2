@@ -63,7 +63,71 @@ function activityFromCatalog(act, time, guests) {
     title: act?.name ?? "Local experience",
     subtitle: act?.description?.slice(0, 72) ?? "Curated for your dates",
     cost: Math.round((act?.price ?? 0) * guests),
+    isCustom: false,
   };
+}
+
+export function parseActivityTime(timeStr) {
+  const match = /^(\d{1,2}):(\d{2})$/.exec(String(timeStr ?? "").trim());
+  if (!match) return null;
+  return Number(match[1]) * 60 + Number(match[2]);
+}
+
+export function formatActivityTime(minutes) {
+  const clamped = Math.max(8 * 60, Math.min(22 * 60, minutes));
+  const h = Math.floor(clamped / 60);
+  const m = clamped % 60;
+  return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
+}
+
+/** Pick a start time at least `minGapMinutes` away from every activity on the same day. */
+export function computeNextActivityTime(existingActivities, { minGapMinutes = 90 } = {}) {
+  const dayStart = 10 * 60;
+  const dayEnd = 21 * 60;
+  const step = 30;
+
+  const occupied = existingActivities
+    .map((a) => parseActivityTime(a.time))
+    .filter((t) => t != null);
+
+  for (let candidate = dayStart; candidate <= dayEnd; candidate += step) {
+    const hasConflict = occupied.some((t) => Math.abs(t - candidate) < minGapMinutes);
+    if (!hasConflict) return formatActivityTime(candidate);
+  }
+
+  if (occupied.length) {
+    return formatActivityTime(Math.min(Math.max(...occupied) + minGapMinutes, dayEnd));
+  }
+  return formatActivityTime(dayStart);
+}
+
+export function sortActivitiesByTime(activities) {
+  return [...activities].sort((a, b) => {
+    const ta = parseActivityTime(a.time) ?? 0;
+    const tb = parseActivityTime(b.time) ?? 0;
+    return ta - tb;
+  });
+}
+
+export function getActivitySuggestions(destination, { guests = 2, excludeTitles = [] } = {}) {
+  const taken = new Set(excludeTitles.map((t) => t.toLowerCase()));
+  const fromCatalog = (destination?.activities ?? [])
+    .filter((act) => !taken.has(act.name.toLowerCase()))
+    .map((act) => ({
+      title: act.name,
+      subtitle: act.description?.slice(0, 72) ?? "Popular local experience",
+      cost: Math.round((act.price ?? 0) * guests),
+    }));
+
+  const generic = [
+    { title: "Coffee & pastry stop", subtitle: "Neighborhood café break", cost: 12 * guests },
+    { title: "Museum visit", subtitle: "Skip-the-line entry · flexible duration", cost: 35 * guests },
+    { title: "Local market tour", subtitle: "Guided tasting and artisan stalls", cost: 28 * guests },
+    { title: "Sunset viewpoint", subtitle: "Photo stop with city panorama", cost: 0 },
+    { title: "Wine bar reservation", subtitle: "Sommelier-paired tasting flight", cost: 45 * guests },
+  ].filter((s) => !taken.has(s.title.toLowerCase()));
+
+  return [...fromCatalog, ...generic].slice(0, 8);
 }
 
 export function buildInitialTrip(params) {
@@ -80,6 +144,7 @@ export function buildInitialTrip(params) {
       title: "Airport transfer",
       subtitle: `Private pickup · ${dest.airportCode}`,
       cost: 35 * guests,
+      isCustom: false,
     },
     activityFromCatalog(acts[0], "16:30", 1),
     {
@@ -88,6 +153,7 @@ export function buildInitialTrip(params) {
       title: "Dinner reservation",
       subtitle: "Rooftop dining with skyline views",
       cost: 48 * guests,
+      isCustom: false,
     },
   ];
 
@@ -119,6 +185,7 @@ export function buildInitialTrip(params) {
               title: "Neighborhood discovery",
               subtitle: `Self-guided walk in ${dest.title}`,
               cost: 0,
+              isCustom: false,
             },
           ];
     days.push({
@@ -163,17 +230,20 @@ export function applyAiAssist(trip, optionId) {
   const dest = trip.destination;
   const extra = dest.activities?.[Math.floor(Math.random() * (dest.activities?.length || 1))];
   const guests = trip.params?.travelers ?? 2;
-  const newAct = {
-    id: extra?.id ? `${extra.id}-${uid("ai")}` : uid("ai"),
-    time: "15:00",
-    title: extra?.name ?? "AI-suggested experience",
-    subtitle: aiAssistOptions.find((o) => o.id === optionId)?.detail ?? "Added by AI Assist",
-    cost: Math.round((extra?.price ?? 25) * guests),
-  };
 
-  const days = trip.days.map((d, i) =>
-    i === 1 ? { ...d, activities: [...d.activities, newAct] } : d,
-  );
+  const days = trip.days.map((d, i) => {
+    if (i !== 1) return d;
+    const time = computeNextActivityTime(d.activities);
+    const newAct = {
+      id: extra?.id ? `${extra.id}-${uid("ai")}` : uid("ai"),
+      time,
+      title: extra?.name ?? "AI-suggested experience",
+      subtitle: aiAssistOptions.find((o) => o.id === optionId)?.detail ?? "Added by AI Assist",
+      cost: Math.round((extra?.price ?? 25) * guests),
+      isCustom: true,
+    };
+    return { ...d, activities: sortActivitiesByTime([...d.activities, newAct]) };
+  });
 
   return applyTripPricing({ ...trip, days });
 }

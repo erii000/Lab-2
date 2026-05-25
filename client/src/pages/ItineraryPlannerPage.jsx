@@ -57,6 +57,8 @@ export default function ItineraryPlannerPage() {
           <Grid size={{ xs: 12, lg: 8 }}>
             <TripTimeline
               days={trip.days}
+              destination={trip.destination}
+              travelers={trip.params.travelers}
               onDaysChange={setDays}
               onOpenAiAssist={() => setAiOpen(true)}
             />

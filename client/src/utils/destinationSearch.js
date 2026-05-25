@@ -60,6 +60,7 @@ export function resolveDestinationId(query) {
 
 export function searchDestinations({ query = "", budget, tripType, maxResults = 20 } = {}) {
   const q = normalizeQuery(query);
+  const destinations = getCatalogDestinations() ?? [];
 
   let results = destinations.filter((d) => {
     if (budget && d.priceFrom > Number(budget)) return false;
