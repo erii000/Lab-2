@@ -1,6 +1,7 @@
 import { BrandMonogramLogo, DashboardRounded, MenuIcon } from "../../ui/icons.jsx";
 import {
   AppBar,
+  Avatar,
   Badge,
   Box,
   Button,
@@ -11,6 +12,8 @@ import {
   List,
   ListItemButton,
   ListItemText,
+  Menu,
+  MenuItem,
   Stack,
   Toolbar,
   Tooltip,
@@ -19,7 +22,7 @@ import {
 } from "@mui/material";
 import { alpha, useTheme } from "@mui/material/styles";
 import { useMemo, useState } from "react";
-import { Link as RouterLink, useLocation } from "react-router-dom";
+import { Link as RouterLink, useLocation, useNavigate } from "react-router-dom";
 import { useAuthStore } from "../../store/authStore.js";
 import { useBookingStore } from "../../store/bookingStore.js";
 
@@ -56,6 +59,158 @@ const navLinks = [
   { label: "Contact", to: "/contact", description: "Support & inquiries" },
 ];
 
+function displayNameFromSession(session) {
+  if (!session) return "User";
+  const stored = session.name?.trim();
+  if (!stored) return session.email?.split("@")[0] || "User";
+  const words = stored.split(/\s+/).filter(Boolean);
+  return words.filter((word, i) => i === 0 || word.toLowerCase() !== words[i - 1].toLowerCase()).join(" ");
+}
+
+function initialsFromName(name) {
+  return (
+    name
+      ?.split(" ")
+      .map((n) => n[0])
+      .join("")
+      .slice(0, 2)
+      .toUpperCase() || "U"
+  );
+}
+
+function NavbarGuestButtons({ theme, onNavigate, fullWidth = false }) {
+  const buttonSx = fullWidth ? { width: "100%" } : undefined;
+
+  return (
+    <>
+      <Button
+        variant="outlined"
+        component={RouterLink}
+        to="/login"
+        onClick={onNavigate}
+        sx={{
+          ...buttonSx,
+          borderColor: alpha(theme.palette.primary.main, 0.45),
+          color: alpha("#fff", 0.92),
+          "&:hover": { borderColor: theme.palette.primary.main, bgcolor: alpha(theme.palette.primary.main, 0.12) },
+        }}
+      >
+        Log in
+      </Button>
+      <Button
+        variant="contained"
+        component={RouterLink}
+        to="/register"
+        onClick={onNavigate}
+        sx={{
+          ...buttonSx,
+          bgcolor: "primary.main",
+          color: "#111318",
+          fontWeight: 700,
+          "&:hover": { bgcolor: "primary.light" },
+        }}
+      >
+        Get started
+      </Button>
+    </>
+  );
+}
+
+function NavbarUserMenu({ theme, onNavigate, showWelcome = true, fullWidth = false }) {
+  const session = useAuthStore((s) => s.session);
+  const logout = useAuthStore((s) => s.logout);
+  const navigate = useNavigate();
+  const [anchor, setAnchor] = useState(null);
+
+  if (!session) return null;
+
+  const displayName = displayNameFromSession(session);
+  const initials = initialsFromName(displayName);
+
+  const handleLogout = () => {
+    logout();
+    setAnchor(null);
+    onNavigate?.();
+    navigate("/");
+  };
+
+  return (
+    <Stack
+      direction="row"
+      spacing={1}
+      alignItems="center"
+      sx={{ width: fullWidth ? "100%" : "auto", justifyContent: fullWidth ? "flex-start" : "flex-end" }}
+    >
+      {showWelcome && (
+        <Typography
+          variant="body2"
+          sx={{
+            display: fullWidth ? "block" : { xs: "none", sm: "block" },
+            color: alpha("#fff", 0.88),
+            fontWeight: 600,
+            whiteSpace: "nowrap",
+          }}
+        >
+          Welcome, {displayName}
+        </Typography>
+      )}
+      <Tooltip title="Account">
+        <IconButton
+          onClick={(e) => setAnchor(e.currentTarget)}
+          aria-label="Account menu"
+          sx={{
+            p: 0.25,
+            ml: fullWidth ? "auto" : 0,
+            border: `1px solid ${alpha(theme.palette.primary.main, 0.4)}`,
+          }}
+        >
+          <Avatar
+            sx={{
+              width: 36,
+              height: 36,
+              bgcolor: alpha(theme.palette.primary.main, 0.18),
+              color: theme.palette.primary.main,
+              fontSize: 13,
+              fontWeight: 800,
+            }}
+          >
+            {initials}
+          </Avatar>
+        </IconButton>
+      </Tooltip>
+      <Menu anchorEl={anchor} open={Boolean(anchor)} onClose={() => setAnchor(null)}>
+        <MenuItem disabled sx={{ opacity: "1 !important" }}>
+          <Box>
+            <Typography variant="body2" fontWeight={700}>
+              {displayName}
+            </Typography>
+            <Typography variant="caption" color="text.secondary">
+              {session.email}
+            </Typography>
+          </Box>
+        </MenuItem>
+        <MenuItem
+          onClick={() => {
+            handleLogout();
+          }}
+        >
+          Sign out
+        </MenuItem>
+      </Menu>
+    </Stack>
+  );
+}
+
+function NavbarAuthControls({ theme, onNavigate, showWelcome = true, fullWidth = false }) {
+  const session = useAuthStore((s) => s.session);
+
+  if (session) {
+    return <NavbarUserMenu theme={theme} onNavigate={onNavigate} showWelcome={showWelcome} fullWidth={fullWidth} />;
+  }
+
+  return <NavbarGuestButtons theme={theme} onNavigate={onNavigate} fullWidth={fullWidth} />;
+}
+
 export default function Navbar() {
   const theme = useTheme();
   const isMdUp = useMediaQuery(theme.breakpoints.up("md"));
@@ -88,37 +243,16 @@ export default function Navbar() {
           <Stack direction="row" spacing={1} alignItems="center" justifyContent="flex-end">
             <AdminDashboardIcon onNavigate={() => setMobileOpen(false)} />
           </Stack>
-          <Button
-            variant="outlined"
-            component={RouterLink}
-            to="/login"
-            onClick={() => setMobileOpen(false)}
-            sx={{
-              borderColor: alpha(theme.palette.primary.main, 0.45),
-              color: alpha("#fff", 0.92),
-              "&:hover": { borderColor: theme.palette.primary.main, bgcolor: alpha(theme.palette.primary.main, 0.12) },
-            }}
-          >
-            Log in
-          </Button>
-          <Button
-            variant="contained"
-            component={RouterLink}
-            to="/register"
-            onClick={() => setMobileOpen(false)}
-            sx={{
-              bgcolor: "primary.main",
-              color: "#111318",
-              fontWeight: 700,
-              "&:hover": { bgcolor: "primary.light" },
-            }}
-          >
-            Get started
-          </Button>
+          <NavbarAuthControls
+            theme={theme}
+            onNavigate={() => setMobileOpen(false)}
+            showWelcome
+            fullWidth
+          />
         </Stack>
       </Box>
     ),
-    [location.pathname, theme.palette.primary.main],
+    [location.pathname, theme],
   );
 
   return (
@@ -215,36 +349,7 @@ export default function Navbar() {
 
             <Stack direction="row" spacing={0.6} alignItems="center" sx={{ flexShrink: 0 }}>
               <AdminDashboardIcon sx={{ display: { xs: "none", md: "inline-flex" } }} />
-              {isMdUp && (
-                <>
-                  <Button
-                    variant="outlined"
-                    color="inherit"
-                    component={RouterLink}
-                    to="/login"
-                    sx={{
-                      borderColor: alpha(theme.palette.primary.main, 0.45),
-                      color: alpha("#fff", 0.92),
-                      "&:hover": { borderColor: theme.palette.primary.main, bgcolor: alpha(theme.palette.primary.main, 0.12) },
-                    }}
-                  >
-                    Log in
-                  </Button>
-                  <Button
-                    variant="contained"
-                    component={RouterLink}
-                    to="/register"
-                    sx={{
-                      bgcolor: "primary.main",
-                      color: "#111318",
-                      fontWeight: 700,
-                      "&:hover": { bgcolor: "primary.light" },
-                    }}
-                  >
-                    Get started
-                  </Button>
-                </>
-              )}
+              {isMdUp && <NavbarAuthControls theme={theme} showWelcome />}
               {!isMdUp && (
                 <>
                   <AdminDashboardIcon />

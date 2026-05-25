@@ -23,14 +23,29 @@ function mapRolesToSessionRole(roles) {
   return "user";
 }
 
+/** Avoid "eljesa eljesa" when first and last name are the same (common for single-name sign-ups). */
+export function formatDisplayName(firstName, lastName, email) {
+  const first = String(firstName ?? "").trim();
+  const last = String(lastName ?? "").trim();
+  if (!first && !last) {
+    const fromEmail = email?.split("@")[0]?.trim();
+    return fromEmail || "User";
+  }
+  if (!last || last === "." || first.localeCompare(last, undefined, { sensitivity: "accent" }) === 0) {
+    return first;
+  }
+  return `${first} ${last}`;
+}
+
 function profileToSession(profile, tokens) {
   const firstName = profile.firstName ?? profile.FirstName ?? "";
   const lastName = profile.lastName ?? profile.LastName ?? "";
-  const name = [firstName, lastName].filter(Boolean).join(" ").trim();
+  const email = profile.email ?? profile.Email ?? "";
+  const name = formatDisplayName(firstName, lastName, email);
   return {
     userId: profile.id ?? profile.Id,
     email: profile.email ?? profile.Email,
-    name: name || profile.email.split("@")[0],
+    name,
     role: mapRolesToSessionRole(profile.roles ?? profile.Roles),
     accessToken: tokens.accessToken,
     refreshToken: tokens.refreshToken,
@@ -70,7 +85,7 @@ export const useAuthStore = create(
       register: async ({ fullName, email, password }) => {
         const parts = fullName.trim().split(/\s+/);
         const name = parts[0] ?? "User";
-        const surname = parts.length > 1 ? parts.slice(1).join(" ") : name;
+        const surname = parts.length > 1 ? parts.slice(1).join(" ") : ".";
 
         try {
           const tokens = await authApi.register({
