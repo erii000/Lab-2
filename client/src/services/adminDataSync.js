@@ -4,7 +4,6 @@ import * as usersApi from "../api/usersApi.js";
 import { getCatalogDestinations } from "../data/destinations.js";
 import { apiBookingToAdmin } from "../utils/bookingMappers.js";
 import { enrichBooking } from "../utils/adminBookingActivity.js";
-import { enrichTrip } from "../utils/adminTrips.js";
 import { enrichUser } from "../utils/adminUsers.js";
 import { dedupeApiBookingRows } from "./bookingSync.js";
 import { buildCatalogAdminTrips, countBookingsByCatalogId } from "../utils/catalogAdminTrips.js";

@@ -14,7 +14,6 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
-import { alpha } from "@mui/material/styles";
 import { useEffect, useState } from "react";
 import SafeImage from "../../common/SafeImage.jsx";
 import { mediaUrlsFromTrip } from "../../../utils/destinationGallery.js";
