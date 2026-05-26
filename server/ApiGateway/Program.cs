@@ -39,6 +39,7 @@ builder.Services.AddReverseProxy()
 var app = builder.Build();
 
 app.UseMiddleware<GlobalExceptionMiddleware>();
+app.UseMiddleware<SecurityHeadersMiddleware>();
 app.UseWebSockets();
 
 if (app.Environment.IsDevelopment())

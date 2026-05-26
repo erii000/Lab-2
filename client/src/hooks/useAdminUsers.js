@@ -1,18 +1,6 @@
 import { useEffect, useState } from "react";
-import * as usersApi from "../api/usersApi.js";
+import { fetchAdminUsers } from "../services/adminDataSync.js";
 import { useAuthStore } from "../store/authStore.js";
-
-function mapApiUser(row) {
-  const roles = row.roles ?? row.Roles ?? [];
-  const primaryRole = roles[0] ?? "Traveler";
-  return {
-    id: row.id ?? row.Id,
-    name: [row.firstName ?? row.FirstName, row.lastName ?? row.LastName].filter(Boolean).join(" "),
-    email: row.email ?? row.Email,
-    role: primaryRole,
-    status: row.isActive === false || row.IsActive === false ? "Inactive" : "Active",
-  };
-}
 
 export function useAdminUsers() {
   const token = useAuthStore((s) => s.session?.accessToken);
@@ -31,12 +19,10 @@ export function useAdminUsers() {
     setLoading(true);
     setError(null);
 
-    usersApi
-      .listUsers(token, { pageNumber: 1, pageSize: 500 })
-      .then((data) => {
+    fetchAdminUsers(token)
+      .then((items) => {
         if (cancelled) return;
-        const items = data.items ?? data.Items ?? [];
-        setUsers(items.map(mapApiUser));
+        setUsers(items);
       })
       .catch((err) => {
         if (!cancelled) setError(err.message ?? "Failed to load users");

@@ -23,7 +23,11 @@ import {
   forecastNextWeek,
   generateSmartInsights,
 } from "../../utils/adminDashboard.js";
-import { selectRecentBookings, useAdminBookingsStore } from "../../store/adminBookingsStore.js";
+import {
+  filterAdminVisibleBookings,
+  selectRecentBookings,
+  useAdminBookingsStore,
+} from "../../store/adminBookingsStore.js";
 import { useAdminTripsStore } from "../../store/adminTripsStore.js";
 import { useAdminUsersStore } from "../../store/adminUsersStore.js";
 import { useToast } from "../../context/ToastContext.jsx";
@@ -38,6 +42,7 @@ export default function AdminDashboardPage() {
   const { showToast } = useToast();
 
   const bookings = useAdminBookingsStore((s) => s.bookings);
+  const visibleBookings = useMemo(() => filterAdminVisibleBookings(bookings), [bookings]);
   const updateBookingStatus = useAdminBookingsStore((s) => s.updateBookingStatus);
   const approveBooking = useAdminBookingsStore((s) => s.approveBooking);
   const cancelBooking = useAdminBookingsStore((s) => s.cancelBooking);
@@ -52,19 +57,31 @@ export default function AdminDashboardPage() {
   const [cancelTarget, setCancelTarget] = useState(null);
   const [refundTarget, setRefundTarget] = useState(null);
 
-  const recentBookings = useMemo(() => selectRecentBookings(bookings), [bookings]);
+  const recentBookings = useMemo(() => selectRecentBookings(visibleBookings), [visibleBookings]);
   const selectedBooking = useMemo(
-    () => bookings.find((b) => b.id === selectedBookingId) ?? null,
-    [bookings, selectedBookingId],
+    () => visibleBookings.find((b) => b.id === selectedBookingId) ?? null,
+    [visibleBookings, selectedBookingId],
   );
 
-  const kpis = useMemo(() => computeDashboardKpis(bookings, users, trips), [bookings, users, trips]);
+  const kpis = useMemo(
+    () => computeDashboardKpis(visibleBookings, users, trips),
+    [visibleBookings, users, trips],
+  );
   const chartData = useMemo(() => buildChartSeries(chartPeriod), [chartPeriod]);
-  const insights = useMemo(() => generateSmartInsights(bookings, trips, users), [bookings, trips, users]);
-  const destBreakdown = useMemo(() => computeDestinationBreakdown(bookings), [bookings]);
-  const statusBreakdown = useMemo(() => computeStatusBreakdown(bookings), [bookings]);
+  const insights = useMemo(
+    () => generateSmartInsights(visibleBookings, trips, users),
+    [visibleBookings, trips, users],
+  );
+  const destBreakdown = useMemo(
+    () => computeDestinationBreakdown(visibleBookings),
+    [visibleBookings],
+  );
+  const statusBreakdown = useMemo(
+    () => computeStatusBreakdown(visibleBookings),
+    [visibleBookings],
+  );
   const topTrips = useMemo(() => computeTopTrips(trips), [trips]);
-  const forecast = useMemo(() => forecastNextWeek(bookings), [bookings]);
+  const forecast = useMemo(() => forecastNextWeek(visibleBookings), [visibleBookings]);
 
   const recentUsers = useMemo(() => users.slice(0, 4), [users]);
   const flaggedUsers = useMemo(
@@ -165,8 +182,8 @@ export default function AdminDashboardPage() {
           onStatusChange={handleStatusChange}
           onView={(row) => setSelectedBookingId(row.id)}
           onEdit={(row) => setSelectedBookingId(row.id)}
-          onDelete={(row) => {
-            removeBooking(row.id);
+          onDelete={async (row) => {
+            await removeBooking(row.id);
             showToast({ message: "Booking removed.", severity: "info" });
           }}
         />

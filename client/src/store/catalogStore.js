@@ -16,6 +16,8 @@ export function normalizeDestination(raw) {
     rating: raw.rating ?? raw.Rating,
     reviewCount: raw.reviewCount ?? raw.ReviewCount,
     tag: raw.tag ?? raw.Tag,
+    gallery: raw.gallery ?? raw.Gallery ?? [],
+    adminMeta: raw.adminMeta ?? raw.AdminMeta,
   };
 }
 
@@ -31,8 +33,8 @@ export const useCatalogStore = create((set, get) => ({
   loaded: false,
   loading: false,
 
-  hydrate: async () => {
-    if (get().loading || get().loaded) return;
+  hydrate: async (force = false) => {
+    if (!force && (get().loading || get().loaded)) return;
     set({ loading: true });
     try {
       const list = await destinationsApi.listDestinations();

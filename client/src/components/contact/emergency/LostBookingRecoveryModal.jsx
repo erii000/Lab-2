@@ -14,7 +14,9 @@ import {
 import { alpha, keyframes } from "@mui/material/styles";
 import { useState } from "react";
 import AppModal from "../../common/AppModal.jsx";
+import { createContactTicket } from "../../../api/supportApi.js";
 import { useToast } from "../../../context/ToastContext.jsx";
+import { useAuthStore } from "../../../store/authStore.js";
 import { designTokens } from "../../../theme/theme.js";
 
 const successPop = keyframes`
@@ -32,6 +34,7 @@ const initialForm = {
 
 export default function LostBookingRecoveryModal({ open, onClose }) {
   const { showToast } = useToast();
+  const session = useAuthStore((s) => s.session);
   const [form, setForm] = useState(initialForm);
   const [file, setFile] = useState(null);
   const [submitting, setSubmitting] = useState(false);
@@ -55,9 +58,28 @@ export default function LostBookingRecoveryModal({ open, onClose }) {
       return;
     }
     setSubmitting(true);
-    await new Promise((r) => setTimeout(r, 1400));
-    setSubmitting(false);
-    setSuccess(true);
+    try {
+      await createContactTicket(session?.accessToken, {
+        subject: "Lost booking recovery",
+        message: [
+          `Destination: ${form.destination.trim()}`,
+          `Travel date: ${form.travelDate}`,
+          form.bookingId ? `Booking ref: ${form.bookingId}` : "",
+          file ? `Attachment noted: ${file.name}` : "",
+        ]
+          .filter(Boolean)
+          .join("\n"),
+        fullName: form.fullName.trim(),
+        email: form.email.trim(),
+        priority: "high",
+        tripType: "leisure",
+      });
+      setSuccess(true);
+    } catch (err) {
+      showToast({ message: err?.message ?? "Could not submit recovery request.", severity: "error" });
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   function handleContactSupport() {

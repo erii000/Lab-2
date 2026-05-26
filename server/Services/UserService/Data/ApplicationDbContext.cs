@@ -51,6 +51,8 @@ namespace TravelAssistant.Services.UserService.Data
             {
                 entity.ToTable("Roles");
                 entity.HasKey(x => x.RolesId);
+                // Shared Azure lab2DB uses Id; EF migrations use RolesId.
+                entity.Property(x => x.RolesId).HasColumnName("Id");
                 entity.Property(x => x.Name).HasMaxLength(50).IsRequired();
                 entity.Property(x => x.Description).HasMaxLength(255).IsRequired();
                 entity.Property(x => x.CreatedAt).HasColumnType("datetime2").IsRequired();
@@ -60,6 +62,7 @@ namespace TravelAssistant.Services.UserService.Data
             {
                 entity.ToTable("UserRoles");
                 entity.HasKey(x => x.UserRoleId);
+                entity.Property(x => x.UserRoleId).HasColumnName("Id");
                 entity.Property(x => x.AssignedAt).HasColumnType("datetime2").IsRequired();
 
                 entity.HasOne(x => x.User)

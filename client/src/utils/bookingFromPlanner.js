@@ -68,6 +68,7 @@ export function createBookingFromPlanner(trip, existingBooking = null) {
       phone: "",
     },
     itinerary: plannerDaysToBookingItinerary(trip.days),
+    itineraryId: trip.itineraryId ?? existingBooking?.itineraryId ?? null,
     bookingReference: existingBooking?.bookingReference ?? null,
   };
 

@@ -36,9 +36,16 @@ export default function TripAdminCard({
         <CardMedia
           component="img"
           height={200}
-          image={trip.image}
+          image={
+            trip.image ||
+            "https://images.unsplash.com/photo-1488646953014-85cb44e25828?auto=format&fit=crop&w=800&q=80"
+          }
           alt={trip.title}
-          sx={{ objectFit: "cover" }}
+          sx={{ objectFit: "cover", bgcolor: "rgba(255,255,255,0.04)" }}
+          onError={(e) => {
+            e.currentTarget.src =
+              "https://images.unsplash.com/photo-1488646953014-85cb44e25828?auto=format&fit=crop&w=800&q=80";
+          }}
         />
         <Box
           sx={{

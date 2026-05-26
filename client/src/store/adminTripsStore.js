@@ -37,11 +37,7 @@ export const useAdminTripsStore = create(
         if (!token) return;
         try {
           const trips = await fetchAdminTrips(token);
-          if (trips.length > 0) {
-            set({ trips, loadedFromApi: true });
-          } else {
-            set({ loadedFromApi: true });
-          }
+          set({ trips, loadedFromApi: true });
         } catch {
           set({ loadedFromApi: true });
         }
@@ -69,7 +65,7 @@ export const useAdminTripsStore = create(
         return next;
       },
 
-      updateTrip: (trip, auditAction = "Trip updated") => {
+      updateTrip: async (trip, auditAction = "Trip updated") => {
         const next = enrichTrip({
           ...trip,
           ...appendAudit(trip, auditAction),
@@ -77,6 +73,31 @@ export const useAdminTripsStore = create(
         set((s) => ({
           trips: s.trips.map((t) => (t.id === trip.id ? next : t)),
         }));
+        const token = readAccessToken();
+        if (token && next.id) {
+          try {
+            const { patchDestinationAdminMeta } = await import("../api/destinationsApi.js");
+            const { mediaUrlsFromTrip } = await import("../utils/destinationGallery.js");
+            const urls = mediaUrlsFromTrip(next);
+            await patchDestinationAdminMeta(token, next.id, {
+              status: next.status,
+              featured: next.featured,
+              homepageVisible: next.homepageVisible,
+              title: next.title,
+              subtitle: next.subtitle,
+              country: next.country,
+              description: next.description,
+              priceFrom: next.priceFrom,
+              days: next.days,
+              style: next.style,
+              capacity: next.capacity,
+              imageUrl: urls[0] ?? next.image,
+              gallery: urls,
+            });
+          } catch {
+            /* local cache kept */
+          }
+        }
         return next;
       },
 

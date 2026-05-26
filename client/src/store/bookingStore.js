@@ -1,7 +1,17 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import { fetchMergedBookings, pushBookingToApi } from "../services/bookingSync.js";
-import { BOOKING_STATUS, calculateBookingProgress, isDraftStatus } from "../utils/bookingConstants.js";
+import {
+  discardBookingOnApi,
+  fetchMergedBookings,
+  pushBookingToApi,
+  pushLocalBookingsToApi,
+} from "../services/bookingSync.js";
+import {
+  BOOKING_STATUS,
+  calculateBookingProgress,
+  isDraftStatus,
+  shouldSyncBookingToApi,
+} from "../utils/bookingConstants.js";
 import { createBookingFromConfigurator } from "../utils/bookingFactory.js";
 import { createBookingFromPlanner } from "../utils/bookingFromPlanner.js";
 import { sessionToAuthUser } from "./sessionUser.js";
@@ -17,15 +27,27 @@ function readAccessToken() {
   }
 }
 
+const pushInFlight = new Map();
+
 async function persistBookingToApi(booking) {
   const token = readAccessToken();
-  if (!token || !booking) return booking;
-  try {
-    const serverId = await pushBookingToApi(token, booking);
-    return { ...booking, serverId };
-  } catch {
-    return booking;
+  if (!token || !booking || !shouldSyncBookingToApi(booking)) return booking;
+
+  const key = booking.id;
+  if (pushInFlight.has(key)) {
+    const serverId = await pushInFlight.get(key);
+    return serverId ? { ...booking, serverId } : booking;
   }
+
+  const task = pushBookingToApi(token, booking)
+    .then((serverId) => serverId)
+    .finally(() => {
+      pushInFlight.delete(key);
+    });
+  pushInFlight.set(key, task);
+
+  const serverId = await task;
+  return { ...booking, serverId };
 }
 
 const defaultUser = sessionToAuthUser(null);
@@ -38,6 +60,8 @@ export const useBookingStore = create(
       currentBookingId: null,
       bookingDrafts: [],
       savedDestinations: [],
+      /** Local ids and server ids the user removed (survives re-sync). */
+      deletedBookingKeys: [],
 
       setAuthFromSession: (session) => set({ authUser: sessionToAuthUser(session) }),
 
@@ -52,7 +76,9 @@ export const useBookingStore = create(
         const token = accessToken ?? readAccessToken();
         if (!token) return;
         try {
-          const merged = await fetchMergedBookings(token, get().bookingDrafts);
+          const hidden = get().deletedBookingKeys;
+          const pushed = await pushLocalBookingsToApi(token, get().bookingDrafts, hidden);
+          const merged = await fetchMergedBookings(token, pushed, hidden);
           set({ bookingDrafts: merged });
         } catch {
           /* offline */
@@ -62,13 +88,30 @@ export const useBookingStore = create(
       getDraftCount: () =>
         get().bookingDrafts.filter((b) => isDraftStatus(b.status)).length,
 
-      deleteBooking: (bookingId) =>
-        set((state) => {
-          const bookingDrafts = state.bookingDrafts.filter((b) => b.id !== bookingId);
-          const currentBookingId =
-            state.currentBookingId === bookingId ? null : state.currentBookingId;
-          return { bookingDrafts, currentBookingId };
-        }),
+      deleteBooking: async (bookingId) => {
+        const booking = get().getBookingById(bookingId);
+        const token = readAccessToken();
+        if (token && booking?.serverId) {
+          try {
+            await discardBookingOnApi(token, booking);
+          } catch {
+            /* tombstone still applied */
+          }
+        }
+
+        const tombstone = new Set(get().deletedBookingKeys.map(String));
+        tombstone.add(String(bookingId));
+        if (booking?.serverId != null) tombstone.add(String(booking.serverId));
+
+        set((state) => ({
+          deletedBookingKeys: [...tombstone],
+          bookingDrafts: state.bookingDrafts.filter(
+            (b) => b.id !== bookingId && String(b.serverId) !== String(booking?.serverId),
+          ),
+          currentBookingId:
+            state.currentBookingId === bookingId ? null : state.currentBookingId,
+        }));
+      },
 
       upsertBooking: (booking, options = {}) => {
         const idx = get().bookingDrafts.findIndex((b) => b.id === booking.id);
@@ -109,6 +152,7 @@ export const useBookingStore = create(
           booking.createdAt = existing.createdAt;
           booking.traveler = existing.traveler;
           booking.bookingReference = existing.bookingReference;
+          booking.serverId = existing.serverId;
           booking.progress = calculateBookingProgress(booking);
         }
         get().upsertBooking(booking);
@@ -126,6 +170,7 @@ export const useBookingStore = create(
           booking.createdAt = existing.createdAt;
           booking.traveler = existing.traveler;
           booking.bookingReference = existing.bookingReference;
+          booking.serverId = existing.serverId;
           booking.progress = calculateBookingProgress(booking);
         }
         get().upsertBooking(booking);
@@ -174,7 +219,10 @@ export const useBookingStore = create(
               ? {
                   ...b,
                   status: BOOKING_STATUS.PENDING_PAYMENT,
-                  progress: calculateBookingProgress({ ...b, status: BOOKING_STATUS.PENDING_PAYMENT }),
+                  progress: calculateBookingProgress({
+                    ...b,
+                    status: BOOKING_STATUS.PENDING_PAYMENT,
+                  }),
                   updatedAt: new Date().toISOString(),
                 }
               : b,
@@ -188,24 +236,38 @@ export const useBookingStore = create(
           get().upsertBooking({
             ...booking,
             status: BOOKING_STATUS.CONFIRMED,
+            serverId: paymentMeta.serverId ?? booking.serverId,
             bookingReference: ref,
             paymentMethod: paymentMeta.paymentMethod ?? booking.paymentMethod,
             paymentCardDisplay: paymentMeta.paymentCardDisplay ?? booking.paymentCardDisplay,
             paymentTransactionId: paymentMeta.transactionId ?? booking.paymentTransactionId,
           });
         }
+        const token = readAccessToken();
+        if (token) {
+          void import("./adminBookingsStore.js").then(({ useAdminBookingsStore }) => {
+            useAdminBookingsStore.getState().hydrateFromApi(token);
+          });
+        }
         return ref;
       },
 
-      toggleSavedDestination: (destinationId) =>
-        set((state) => {
-          const exists = state.savedDestinations.includes(destinationId);
-          return {
-            savedDestinations: exists
-              ? state.savedDestinations.filter((id) => id !== destinationId)
-              : [...state.savedDestinations, destinationId],
-          };
-        }),
+      toggleSavedDestination: async (destinationId) => {
+        const normalized = String(destinationId).toLowerCase();
+        const exists = get().savedDestinations.includes(normalized);
+        const next = exists
+          ? get().savedDestinations.filter((id) => id !== normalized)
+          : [...get().savedDestinations, normalized];
+        set({ savedDestinations: next });
+        const token = readAccessToken();
+        if (!token) return;
+        try {
+          const { syncSavedDestinationToggle } = await import("../services/wishlistSync.js");
+          await syncSavedDestinationToggle(token, normalized, !exists);
+        } catch {
+          /* local state kept */
+        }
+      },
 
       markCompleted: (bookingId) =>
         set((state) => ({
@@ -216,13 +278,21 @@ export const useBookingStore = create(
     }),
     {
       name: "sta-bookings-v1",
-      version: 1,
+      version: 2,
       partialize: (state) => ({
         authUser: state.authUser,
         bookingDrafts: state.bookingDrafts,
         savedDestinations: state.savedDestinations,
         currentBookingId: state.currentBookingId,
+        deletedBookingKeys: state.deletedBookingKeys,
       }),
+      migrate: (persisted, version) => {
+        if (!persisted || typeof persisted !== "object") return persisted;
+        if (version < 2) {
+          return { ...persisted, deletedBookingKeys: [] };
+        }
+        return persisted;
+      },
     },
   ),
 );

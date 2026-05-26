@@ -10,7 +10,10 @@ using TravelAssistant.Services.PaymentService.Configuration;
 using TravelAssistant.Services.PaymentService.Data;
 using TravelAssistant.Services.PaymentService.Repositories;
 using TravelAssistant.Services.PaymentService.Services.Payments;
+using TravelAssistant.Common.Audit;
+using TravelAssistant.Common.Notifications;
 using TravelAssistant.Services.PaymentService.Validation;
+using TravelAssistant.Common.Database;
 using TravelAssistant.Common.Middleware;
 
 var rootEnvPath = Path.GetFullPath(Path.Combine(Directory.GetCurrentDirectory(), "..", "..", "global-settings.env"));
@@ -83,6 +86,7 @@ builder.Services.AddDbContext<ApplicationDbContext>(options => options.UseSqlSer
 builder.Services.AddHealthChecks();
 builder.Services.AddScoped<IPaymentRepository, EfPaymentRepository>();
 builder.Services.AddScoped<StripePaymentCheckoutService>();
+builder.Services.AddScoped<LabPaymentCheckoutService>();
 builder.Services.AddHttpClient<PayPalCheckoutService>((sp, client) =>
 {
     var options = sp.GetRequiredService<Microsoft.Extensions.Options.IOptions<PayPalOptions>>().Value;
@@ -103,14 +107,27 @@ builder.Services.AddHttpClient<PayPalPaymentWebhookService>((sp, client) =>
 }).AddStandardResilienceHandler();
 builder.Services.AddScoped<IPaymentCheckoutService, PaymentCheckoutOrchestrator>();
 builder.Services.AddScoped<IPaymentWebhookService, StripePaymentWebhookService>();
+builder.Services.AddAuditWriter(builder.Configuration);
+builder.Services.AddTravelUpdatePublisher(builder.Configuration);
 
 var app = builder.Build();
 
-if (app.Environment.IsDevelopment())
+using (var scope = app.Services.CreateScope())
 {
-    using var scope = app.Services.CreateScope();
     var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-    db.Database.Migrate();
+    var logger = scope.ServiceProvider.GetRequiredService<ILoggerFactory>().CreateLogger("PaymentService");
+    await Lab2DbSchemaBootstrap.EnsureMemberBSchemaAsync(db, logger);
+    if (app.Environment.IsDevelopment())
+    {
+        try
+        {
+            db.Database.Migrate();
+        }
+        catch (Exception ex)
+        {
+            app.Logger.LogWarning(ex, "Payment database migrate skipped.");
+        }
+    }
 }
 
 app.UseMiddleware<GlobalExceptionMiddleware>();

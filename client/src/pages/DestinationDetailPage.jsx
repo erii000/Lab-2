@@ -8,6 +8,7 @@ import AiTripChatFab from "../components/destination/explore/AiTripChatFab.jsx";
 import AiSummaryBar from "../components/destination/explore/AiSummaryBar.jsx";
 import CuratedDeparturesRow from "../components/destination/explore/CuratedDeparturesRow.jsx";
 import DestinationExploreHero from "../components/destination/explore/DestinationExploreHero.jsx";
+import DestinationGalleryStrip from "../components/destination/explore/DestinationGalleryStrip.jsx";
 import ItineraryGeneratorDialog from "../components/destination/explore/ItineraryGeneratorDialog.jsx";
 import SmartTripDrawer from "../components/destination/explore/SmartTripDrawer.jsx";
 import StickyExploreFilters from "../components/destination/explore/StickyExploreFilters.jsx";
@@ -314,6 +315,8 @@ export default function DestinationDetailPage() {
       <Container maxWidth="lg" sx={{ mt: 3 }}>
         <Stack spacing={3}>
           <AiSummaryBar summary={summary} />
+
+          <DestinationGalleryStrip destination={dest} />
 
           <StickyExploreFilters filters={filters} onChange={handleFiltersChange} />
 

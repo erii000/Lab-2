@@ -12,7 +12,14 @@ using TravelAssistant.Services.UserService.Repositories.Interfaces;
 using TravelAssistant.Services.UserService.Services;
 using TravelAssistant.Services.UserService.Services.Auth;
 using TravelAssistant.Services.UserService.Services.Interfaces;
+using System.Threading.RateLimiting;
+using FluentValidation;
+using FluentValidation.AspNetCore;
+using Microsoft.AspNetCore.RateLimiting;
+using TravelAssistant.Common.Audit;
+using TravelAssistant.Common.Database;
 using TravelAssistant.Common.Middleware;
+using TravelAssistant.Services.UserService.Validation;
 
 var envPath = Path.Combine(Directory.GetCurrentDirectory(), ".env");
 var rootEnvPath = Path.GetFullPath(Path.Combine(Directory.GetCurrentDirectory(), "..", "..", "global-settings.env"));
@@ -25,6 +32,18 @@ if (envFiles.Length > 0)
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers();
+builder.Services.AddFluentValidationAutoValidation();
+builder.Services.AddValidatorsFromAssemblyContaining<RegisterRequestValidator>();
+builder.Services.AddRateLimiter(options =>
+{
+    options.AddFixedWindowLimiter("auth", limiter =>
+    {
+        limiter.Window = TimeSpan.FromMinutes(1);
+        limiter.PermitLimit = 30;
+        limiter.QueueLimit = 0;
+    });
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+});
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
 {
@@ -101,12 +120,16 @@ builder.Services.AddScoped<IUserRepository, SqlUserRepository>();
 builder.Services.AddScoped<IRefreshTokenRepository, SqlRefreshTokenRepository>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IUserSearchService, UserSearchService>();
+builder.Services.AddAuditWriter(builder.Configuration);
 
 var app = builder.Build();
 
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+    var logger = scope.ServiceProvider.GetRequiredService<ILoggerFactory>().CreateLogger("UserService");
+    await Lab2DbSchemaBootstrap.EnsureMemberBSchemaAsync(db, logger);
+
     if (app.Environment.IsDevelopment())
     {
         try
@@ -138,6 +161,7 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+app.UseRateLimiter();
 app.UseAuthentication();
 app.UseAuthorization();
 

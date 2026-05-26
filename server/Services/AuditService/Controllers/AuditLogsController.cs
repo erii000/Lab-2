@@ -13,10 +13,12 @@ namespace TravelAssistant.Services.AuditService.Controllers;
 public sealed class AuditLogsController : ControllerBase
 {
     private readonly IAuditLogService _auditLogService;
+    private readonly IConfiguration _configuration;
 
-    public AuditLogsController(IAuditLogService auditLogService)
+    public AuditLogsController(IAuditLogService auditLogService, IConfiguration configuration)
     {
         _auditLogService = auditLogService;
+        _configuration = configuration;
     }
 
     [HttpGet]
@@ -33,9 +35,15 @@ public sealed class AuditLogsController : ControllerBase
         return Ok(data);
     }
 
+    /// <summary>Admin JWT or trusted internal key (X-Audit-Key) from other microservices.</summary>
+    [AllowAnonymous]
     [HttpPost]
     public async Task<IActionResult> Create([FromBody] CreateAuditLogRequest request, CancellationToken cancellationToken)
     {
+        var isAdmin = User.Identity?.IsAuthenticated == true && User.IsInRole("Admin");
+        if (!IsInternalAuditCaller() && !isAdmin)
+            return Unauthorized();
+
         var auditLog = new AuditLog
         {
             UserId = request.UserId,
@@ -47,5 +55,17 @@ public sealed class AuditLogsController : ControllerBase
 
         var created = await _auditLogService.CreateAsync(auditLog, cancellationToken);
         return Created(string.Empty, created);
+    }
+
+    private bool IsInternalAuditCaller()
+    {
+        var expected = _configuration["Audit:InternalKey"];
+        if (string.IsNullOrWhiteSpace(expected))
+            return false;
+
+        return string.Equals(
+            Request.Headers["X-Audit-Key"].FirstOrDefault(),
+            expected,
+            StringComparison.Ordinal);
     }
 }

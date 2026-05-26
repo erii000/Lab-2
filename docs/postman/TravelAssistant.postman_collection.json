@@ -1,0 +1,375 @@
+{
+  "info": {
+    "name": "Smart Travel Assistant",
+    "description": "API Gateway collection (base: http://localhost:5161). Run **Auth → Login** first to set {{accessToken}}.\n\n**SignalR (real-time):** Connect to `{{baseUrl}}/hubs/notifications?access_token={{accessToken}}` (notifications) or `/hubs/chat?access_token={{accessToken}}` (chat). Use Postman WebSocket request or the React app notification bell.\n\n**Export formats:** `json`, `csv`, `xlsx` on admin export routes.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:5161" },
+    { "key": "accessToken", "value": "" },
+    { "key": "refreshToken", "value": "" },
+    { "key": "auditInternalKey", "value": "dev-audit-internal-key" },
+    { "key": "notificationInternalKey", "value": "dev-notification-internal-key" }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [{ "key": "token", "value": "{{accessToken}}", "type": "string" }]
+  },
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Register",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Test\",\n  \"surname\": \"User\",\n  \"email\": \"test@example.com\",\n  \"password\": \"Test1234!\"\n}"
+            },
+            "url": "{{baseUrl}}/api/v1/auth/register"
+          }
+        },
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const j = pm.response.json();",
+                  "if (j.accessToken) pm.collectionVariables.set('accessToken', j.accessToken);",
+                  "if (j.refreshToken) pm.collectionVariables.set('refreshToken', j.refreshToken);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@smarttravel.app\",\n  \"password\": \"admin12345\"\n}"
+            },
+            "url": "{{baseUrl}}/api/v1/auth/login"
+          }
+        },
+        {
+          "name": "Refresh",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}" },
+            "url": "{{baseUrl}}/api/v1/auth/refresh"
+          }
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}" },
+            "url": "{{baseUrl}}/api/v1/auth/logout"
+          }
+        },
+        {
+          "name": "Me",
+          "request": { "method": "GET", "url": "{{baseUrl}}/api/v1/users/me" }
+        }
+      ]
+    },
+    {
+      "name": "Users",
+      "item": [
+        {
+          "name": "List (Admin)",
+          "request": { "method": "GET", "url": "{{baseUrl}}/api/v1/users?pageNumber=1&pageSize=20" }
+        },
+        {
+          "name": "Search (Admin)",
+          "request": { "method": "GET", "url": "{{baseUrl}}/api/v1/users/search?q=test&page=1&pageSize=20" }
+        },
+        {
+          "name": "Export JSON",
+          "request": { "method": "GET", "url": "{{baseUrl}}/api/v1/users/export?format=json" }
+        },
+        {
+          "name": "Export CSV",
+          "request": { "method": "GET", "url": "{{baseUrl}}/api/v1/users/export?format=csv" }
+        },
+        {
+          "name": "Export Excel",
+          "request": { "method": "GET", "url": "{{baseUrl}}/api/v1/users/export?format=xlsx" }
+        },
+        {
+          "name": "Import JSON",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "[\n  {\n    \"firstName\": \"Postman\",\n    \"lastName\": \"Import\",\n    \"email\": \"postman.import@example.com\",\n    \"password\": \"Import123!\"\n  }\n]"
+            },
+            "url": "{{baseUrl}}/api/v1/users/import"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Bookings",
+      "item": [
+        {
+          "name": "List mine",
+          "request": { "method": "GET", "url": "{{baseUrl}}/api/v1/bookings" }
+        },
+        {
+          "name": "Search (Admin)",
+          "request": { "method": "GET", "url": "{{baseUrl}}/api/v1/bookings/search?status=Confirmed&page=1" }
+        },
+        {
+          "name": "Export CSV",
+          "request": { "method": "GET", "url": "{{baseUrl}}/api/v1/bookings/export?format=csv" }
+        },
+        {
+          "name": "Import JSON",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "[\n  {\n    \"userId\": 1,\n    \"itineraryId\": 1,\n    \"bookingType\": \"package\",\n    \"provider\": \"SmartTravel\",\n    \"referenceCode\": \"PM-IMP-001\",\n    \"amount\": 299.99,\n    \"currency\": \"EUR\"\n  }\n]"
+            },
+            "url": "{{baseUrl}}/api/v1/bookings/import"
+          }
+        },
+        {
+          "name": "Reports — bookings (Admin)",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/v1/reports/bookings?format=csv&from=2025-01-01&to=2026-12-31"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Itineraries",
+      "item": [
+        {
+          "name": "Search",
+          "request": { "method": "GET", "url": "{{baseUrl}}/api/v1/itineraries/search?page=1&pageSize=20" }
+        },
+        {
+          "name": "Export Excel",
+          "request": { "method": "GET", "url": "{{baseUrl}}/api/v1/itineraries/export?format=xlsx" }
+        },
+        {
+          "name": "Import JSON",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "[\n  {\n    \"userId\": 1,\n    \"plan\": {\n      \"destination\": \"Rome\",\n      \"startDate\": \"2026-10-01\",\n      \"endDate\": \"2026-10-07\",\n      \"guests\": 2,\n      \"budget\": 1500\n    }\n  }\n]"
+            },
+            "url": "{{baseUrl}}/api/v1/itineraries/import"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Payments",
+      "item": [
+        {
+          "name": "Checkout",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"bookingId\": 1,\n  \"amount\": 299.99,\n  \"currency\": \"EUR\",\n  \"provider\": \"lab\"\n}"
+            },
+            "url": "{{baseUrl}}/api/v1/payments/checkout"
+          }
+        },
+        {
+          "name": "Search (Admin)",
+          "request": { "method": "GET", "url": "{{baseUrl}}/api/v1/payments/search?page=1&pageSize=20" }
+        },
+        {
+          "name": "Export JSON",
+          "request": { "method": "GET", "url": "{{baseUrl}}/api/v1/payments/export?format=json" }
+        },
+        {
+          "name": "Import JSON",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "[\n  {\n    \"userId\": 1,\n    \"bookingId\": 1,\n    \"amount\": 99.99,\n    \"currency\": \"EUR\",\n    \"paymentMethod\": \"card\",\n    \"paymentStatus\": \"Completed\",\n    \"externalReference\": \"pm-import-1\"\n  }\n]"
+            },
+            "url": "{{baseUrl}}/api/v1/payments/import"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Notifications",
+      "item": [
+        {
+          "name": "List all (Admin)",
+          "request": { "method": "GET", "url": "{{baseUrl}}/api/v1/notifications" }
+        },
+        {
+          "name": "Search (Admin)",
+          "request": { "method": "GET", "url": "{{baseUrl}}/api/v1/notifications/search?page=1&pageSize=20" }
+        },
+        {
+          "name": "Broadcast (Admin)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"System\",\n  \"message\": \"Test broadcast\",\n  \"type\": \"alert\"\n}"
+            },
+            "url": "{{baseUrl}}/api/v1/notifications/broadcast"
+          }
+        },
+        {
+          "name": "Export CSV",
+          "request": { "method": "GET", "url": "{{baseUrl}}/api/v1/notifications/export?format=csv" }
+        },
+        {
+          "name": "Import JSON",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "[\n  {\n    \"userId\": 1,\n    \"title\": \"Postman import\",\n    \"message\": \"Hello from import\",\n    \"type\": \"system\"\n  }\n]"
+            },
+            "url": "{{baseUrl}}/api/v1/notifications/import"
+          }
+        },
+        {
+          "name": "Internal publish (service key)",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "X-Notification-Key", "value": "{{notificationInternalKey}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": 1,\n  \"title\": \"Travel update\",\n  \"message\": \"Booking confirmed\",\n  \"type\": \"booking\"\n}"
+            },
+            "url": "{{baseUrl}}/api/v1/notifications/internal/publish"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Chat (real-time API)",
+      "item": [
+        {
+          "name": "My messages",
+          "request": { "method": "GET", "url": "{{baseUrl}}/api/v1/chat/mine" }
+        },
+        {
+          "name": "Send message",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"message\": \"Hello from Postman\"\n}"
+            },
+            "url": "{{baseUrl}}/api/v1/chat"
+          }
+        },
+        {
+          "name": "List all (Admin)",
+          "request": { "method": "GET", "url": "{{baseUrl}}/api/v1/chat" }
+        }
+      ]
+    },
+    {
+      "name": "Audit",
+      "item": [
+        {
+          "name": "Search logs (Admin)",
+          "request": { "method": "GET", "url": "{{baseUrl}}/api/v1/auditlogs/search?page=1&pageSize=20" }
+        },
+        {
+          "name": "Create log (internal key)",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "X-Audit-Key", "value": "{{auditInternalKey}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": 1,\n  \"action\": \"TEST\",\n  \"entityName\": \"Postman\",\n  \"details\": \"Smoke test\"\n}"
+            },
+            "url": "{{baseUrl}}/api/v1/auditlogs"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Destinations",
+      "item": [
+        {
+          "name": "List (public)",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "url": "{{baseUrl}}/api/v1/destinations"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Health",
+      "item": [
+        {
+          "name": "Gateway health",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "url": "{{baseUrl}}/health"
+          }
+        },
+        {
+          "name": "Upstreams",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "url": "{{baseUrl}}/api/health/upstreams"
+          }
+        }
+      ]
+    },
+    {
+      "name": "SignalR (manual)",
+      "description": "Postman v10+ supports WebSockets. Connect with query `access_token={{accessToken}}` after login.\n\n- Notifications hub: `ws://localhost:5161/hubs/notifications?access_token=...`\n- Chat hub: `ws://localhost:5161/hubs/chat?access_token=...`\n\nServer events: `travelUpdate`, `chatMessage`.",
+      "item": [
+        {
+          "name": "README — use app or ws client",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/health"
+          }
+        }
+      ]
+    }
+  ]
+}

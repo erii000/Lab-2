@@ -8,6 +8,7 @@ import {
   TableRow,
 } from "@mui/material";
 import { useMemo, useState } from "react";
+import AdminDataExchangeBar from "../../components/admin/AdminDataExchangeBar.jsx";
 import AdvancedListToolbar from "../../components/search/AdvancedListToolbar.jsx";
 import AdminTopBar from "../../components/admin/AdminTopBar.jsx";
 import BookingDetailDrawer from "../../components/admin/BookingDetailDrawer.jsx";
@@ -20,8 +21,13 @@ import {
   adminTableRowSx,
   adminColors,
 } from "../../components/admin/adminStyles.js";
-import { normalizeStatusKey, useAdminBookingsStore } from "../../store/adminBookingsStore.js";
+import {
+  filterAdminVisibleBookings,
+  normalizeStatusKey,
+  useAdminBookingsStore,
+} from "../../store/adminBookingsStore.js";
 import { useToast } from "../../context/ToastContext.jsx";
+import { useAuthStore } from "../../store/authStore.js";
 import {
   ADMIN_BOOKING_SORT_OPTIONS,
   applyAdvancedListQuery,
@@ -30,10 +36,13 @@ import {
 export default function AdminBookingsPage() {
   const { showToast } = useToast();
   const bookings = useAdminBookingsStore((s) => s.bookings);
+  const visibleBookings = useMemo(() => filterAdminVisibleBookings(bookings), [bookings]);
   const updateBookingStatus = useAdminBookingsStore((s) => s.updateBookingStatus);
   const approveBooking = useAdminBookingsStore((s) => s.approveBooking);
   const cancelBooking = useAdminBookingsStore((s) => s.cancelBooking);
   const refundBooking = useAdminBookingsStore((s) => s.refundBooking);
+  const hydrateFromApi = useAdminBookingsStore((s) => s.hydrateFromApi);
+  const ensureAccessToken = useAuthStore((s) => s.ensureAccessToken);
 
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
@@ -43,12 +52,12 @@ export default function AdminBookingsPage() {
   const [refundTarget, setRefundTarget] = useState(null);
 
   const selected = useMemo(
-    () => (selectedId ? bookings.find((b) => b.id === selectedId) : null),
-    [bookings, selectedId],
+    () => (selectedId ? visibleBookings.find((b) => b.id === selectedId) : null),
+    [visibleBookings, selectedId],
   );
 
   const filtered = useMemo(() => {
-    const base = bookings.filter((b) => {
+    const base = visibleBookings.filter((b) => {
       const statusKey = normalizeStatusKey(b.status);
       return statusFilter === "all" || statusKey === statusFilter;
     });
@@ -66,11 +75,15 @@ export default function AdminBookingsPage() {
         return b.id;
       },
     });
-  }, [bookings, query, statusFilter, sortKey]);
+  }, [visibleBookings, query, statusFilter, sortKey]);
+
+  function findBooking(bookingId) {
+    return visibleBookings.find((b) => b.id === bookingId);
+  }
 
   function handleStatusChange(bookingId, statusKey) {
     if (statusKey === "cancelled" || statusKey === "refunded") {
-      const booking = bookings.find((b) => b.id === bookingId);
+      const booking = findBooking(bookingId);
       if (statusKey === "cancelled") setCancelTarget(booking);
       else setRefundTarget(booking);
       return;
@@ -112,6 +125,15 @@ export default function AdminBookingsPage() {
   return (
     <Box>
       <AdminTopBar title="Bookings" />
+
+      <AdminDataExchangeBar
+        resource="bookings"
+        compact
+        onImported={async () => {
+          const token = await ensureAccessToken();
+          if (token) await hydrateFromApi(token);
+        }}
+      />
 
       <AdvancedListToolbar
         accent="admin"

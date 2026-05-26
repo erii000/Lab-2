@@ -1,33 +1,35 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
+import { fetchAdminNotifications } from "../services/notificationsSync.js";
 
 const MAX_ITEMS = 50;
 
-const seedNotifications = [
-  {
-    id: "seed-welcome",
-    type: "system",
-    title: "Admin workspace active",
-    message: "Bookings, trips, and users sync across the dashboard in real time.",
-    link: "/admin",
-    createdAt: Date.now() - 2 * 3_600_000,
-    read: true,
-  },
-  {
-    id: "seed-pending",
-    type: "booking",
-    title: "Pending bookings need review",
-    message: "Check recent reservations and approve or update status.",
-    link: "/admin/bookings",
-    createdAt: Date.now() - 45 * 60_000,
-    read: false,
-  },
-];
+function readAccessToken() {
+  try {
+    const raw = localStorage.getItem("sta-auth-v2");
+    const parsed = JSON.parse(raw ?? "{}");
+    return parsed?.state?.session?.accessToken ?? null;
+  } catch {
+    return null;
+  }
+}
 
 export const useAdminNotificationsStore = create(
   persist(
     (set, get) => ({
-      items: seedNotifications,
+      items: [],
+      loadedFromApi: false,
+
+      hydrateFromApi: async (accessToken) => {
+        const token = accessToken ?? readAccessToken();
+        if (!token) return;
+        try {
+          const items = await fetchAdminNotifications(token);
+          set({ items: items.slice(0, MAX_ITEMS), loadedFromApi: true });
+        } catch {
+          set({ loadedFromApi: true });
+        }
+      },
 
       push: ({ type, title, message, link, entityId }) => {
         const item = {
@@ -65,6 +67,6 @@ export const useAdminNotificationsStore = create(
 
       unreadCount: () => get().items.filter((n) => !n.read).length,
     }),
-    { name: "sta-admin-notifications-v1", partialize: (s) => ({ items: s.items }) },
+    { name: "sta-admin-notifications-v2", partialize: (s) => ({ items: s.items }) },
   ),
 );

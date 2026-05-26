@@ -117,7 +117,8 @@ export default function SecureCheckoutForm({
         </Stack>
       ) : (
         <Alert severity="info" sx={{ borderRadius: 2 }}>
-          You will be redirected to PayPal to complete €{amount?.toLocaleString()} {currency}.
+          PayPal is processed through our secure checkout (demo mode completes here without leaving this page). Total: €
+          {amount?.toLocaleString()} {currency}.
         </Alert>
       )}
 
@@ -131,8 +132,8 @@ export default function SecureCheckoutForm({
         }}
       >
         <Typography variant="caption" color="text.secondary">
-          Demo: use any valid Luhn card number. Ending <strong>0002</strong> simulates decline. Transactions are logged
-          locally.
+          Demo test card: <strong>4242 4242 4242 4242</strong> (any future expiry, any CVC). Sequential numbers like{" "}
+          <strong>1234…</strong> fail the checksum and are rejected. Card ending <strong>0002</strong> simulates decline.
         </Typography>
         {card.cardNumber ? (
           <Typography variant="body2" fontWeight={700} sx={{ mt: 0.5 }}>

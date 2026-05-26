@@ -78,6 +78,7 @@ web_modules/
 
 # dotenv environment variable files
 .env
+server/global-settings.env
 .env.development.local
 .env.test.local
 .env.production.local
@@ -562,3 +563,12 @@ FodyWeavers.xsd
 # Additional files built by Visual Studio
 
 # End of https://www.toptal.com/developers/gitignore/api/visualstudio,node,windows
+
+# --- Project-specific (Lab-2) ---
+# .NET build output (all projects)
+**/bin/
+**/obj/
+# Vite production bundle
+client/dist/
+# Ad-hoc publish output
+server/tmp-notification-publish/

@@ -20,6 +20,7 @@ import {
 } from "@mui/material";
 import { alpha } from "@mui/material/styles";
 import AssessmentRoundedIcon from "@mui/icons-material/AssessmentRounded";
+import ImportExportRoundedIcon from "@mui/icons-material/ImportExportRounded";
 import PeopleOutlineRoundedIcon from "@mui/icons-material/PeopleOutlineRounded";
 import SettingsOutlinedIcon from "@mui/icons-material/SettingsOutlined";
 import { Navigate, Outlet, useLocation, useNavigate } from "react-router-dom";
@@ -32,6 +33,8 @@ import { useAdminBookingsStore } from "../store/adminBookingsStore.js";
 import { useAdminTripsStore } from "../store/adminTripsStore.js";
 import { useAdminUsersStore } from "../store/adminUsersStore.js";
 import { useCatalogStore } from "../store/catalogStore.js";
+import { useAdminRealtimeRefresh } from "../hooks/useAdminRealtimeRefresh.js";
+import { useNotifications } from "../context/NotificationsContext.jsx";
 
 const drawerWidth = 248;
 
@@ -41,6 +44,7 @@ const menuItems = [
   { label: "Bookings", icon: ViewListRounded, path: "/admin/bookings" },
   { label: "Users", icon: PeopleOutlineRoundedIcon, path: "/admin/users" },
   { label: "Reports", icon: AssessmentRoundedIcon, path: "/admin/reports" },
+  { label: "Data exchange", icon: ImportExportRoundedIcon, path: "/admin/data" },
   { label: "Settings", icon: SettingsOutlinedIcon, path: "/admin/settings" },
 ];
 
@@ -95,13 +99,18 @@ export default function AdminLayout() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const session = useAuthStore((s) => s.session);
   const isAdmin = session?.role === "admin";
+  const { connected: liveConnected } = useNotifications();
+  useAdminRealtimeRefresh();
 
   useEffect(() => {
     if (!session?.accessToken || !isAdmin) return;
-    useCatalogStore.getState().hydrate();
-    useAdminBookingsStore.getState().hydrateFromApi(session.accessToken);
-    useAdminTripsStore.getState().hydrateFromApi(session.accessToken);
-    useAdminUsersStore.getState().hydrateFromApi(session.accessToken);
+    (async () => {
+      await useCatalogStore.getState().hydrate();
+      const token = session.accessToken;
+      useAdminBookingsStore.getState().hydrateFromApi(token);
+      useAdminTripsStore.getState().hydrateFromApi(token);
+      useAdminUsersStore.getState().hydrateFromApi(token);
+    })();
   }, [session?.accessToken, isAdmin]);
 
   if (!isAdmin) {
@@ -127,6 +136,22 @@ export default function AdminLayout() {
           <Typography variant="subtitle1" fontWeight={800} sx={{ letterSpacing: "-0.02em" }}>
             Smart Travel
           </Typography>
+          {liveConnected ? (
+            <Typography
+              variant="caption"
+              sx={{
+                ml: "auto",
+                px: 1,
+                py: 0.25,
+                borderRadius: 1,
+                bgcolor: alpha("#4caf50", 0.2),
+                color: "#81c784",
+                fontWeight: 700,
+              }}
+            >
+              LIVE
+            </Typography>
+          ) : null}
         </Stack>
       </Box>
       <NavList onNavigate={() => setMobileOpen(false)} />

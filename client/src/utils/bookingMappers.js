@@ -1,4 +1,5 @@
 import { BOOKING_STATUS } from "./bookingConstants.js";
+import { getDestinationById } from "../data/destinations.js";
 
 const API_TO_CLIENT_STATUS = {
   Pending: BOOKING_STATUS.PENDING_PAYMENT,
@@ -94,12 +95,21 @@ export function apiBookingToLocal(api) {
   };
 }
 
+function truncateField(value, maxLen, fallback = "") {
+  const text = String(value ?? fallback).trim() || fallback;
+  return text.length <= maxLen ? text : text.slice(0, maxLen);
+}
+
 /** @param {object} booking local draft */
 export function localBookingToCreatePayload(booking) {
   return {
-    bookingType: booking.destinationTitle ?? booking.packageTitle ?? "package",
+    bookingType: truncateField(
+      booking.destinationTitle ?? booking.packageTitle ?? "package",
+      50,
+      "package",
+    ),
     provider: "SmartTravel",
-    referenceCode: booking.bookingReference ?? booking.id,
+    referenceCode: truncateField(booking.bookingReference ?? booking.id, 100, "ref"),
     amount: booking.total ?? 0,
     currency: "EUR",
     itineraryId: booking.itineraryId ?? null,
@@ -137,23 +147,44 @@ export function apiBookingToAdmin(api, usersById = new Map()) {
   };
 }
 
+function catalogImageForDestination(label) {
+  const hay = String(label ?? "").toLowerCase();
+  const catalog = [
+    getDestinationById("paris"),
+    getDestinationById("tokyo"),
+    getDestinationById("barcelona"),
+    getDestinationById("rome"),
+    getDestinationById("sydney"),
+    getDestinationById("dubai"),
+    getDestinationById("london"),
+    getDestinationById("istanbul"),
+    getDestinationById("new-york"),
+  ].filter(Boolean);
+  const match = catalog.find(
+    (d) => hay.includes(d.id) || hay.includes(String(d.title).toLowerCase()),
+  );
+  return match?.image ?? "";
+}
+
 /** @param {object[]} items from itineraries search */
 export function apiTripToAdmin(item) {
   const destLabel = (item.destinations ?? item.Destinations ?? []).join(", ") || "—";
+  const destKey = destLabel.split(",")[0]?.trim() ?? "";
   const start = item.startDate ?? item.StartDate;
   const end = item.endDate ?? item.EndDate;
+  const image = catalogImageForDestination(destKey || item.title);
   return {
     id: `trip-${item.id ?? item.Id}`,
     serverId: item.id ?? item.Id,
     title: item.title ?? item.Title,
     subtitle: destLabel,
-    destination: destLabel.split(",")[0]?.trim() ?? "",
+    destination: destKey,
     country: destLabel,
     days: start && end ? Math.max(1, Math.round((new Date(end) - new Date(start)) / 86400000)) : 4,
     priceFrom: Number(item.budget ?? item.Budget ?? 0),
     bookings: 0,
-    image: "",
-    gallery: [],
+    image,
+    gallery: image ? [image] : [],
     description: "",
     status: (item.status ?? item.Status ?? "draft").toLowerCase().replace(/\s+/g, "_"),
     budget: item.budget ?? item.Budget,

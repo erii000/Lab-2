@@ -19,6 +19,7 @@ import {
 import { alpha } from "@mui/material/styles";
 import { useEffect, useMemo, useState } from "react";
 import { useLocation } from "react-router-dom";
+import AdminDataExchangeBar from "../../components/admin/AdminDataExchangeBar.jsx";
 import AdvancedListToolbar from "../../components/search/AdvancedListToolbar.jsx";
 import AdminNotificationsMenu from "../../components/admin/AdminNotificationsMenu.jsx";
 import ConfirmUserActionModal from "../../components/admin/users/ConfirmUserActionModal.jsx";
@@ -32,6 +33,7 @@ import {
   adminTableRowSx,
 } from "../../components/admin/adminStyles.js";
 import { useToast } from "../../context/ToastContext.jsx";
+import { useAuthStore } from "../../store/authStore.js";
 import { useAdminUsersStore } from "../../store/adminUsersStore.js";
 import {
   filterUsers,
@@ -54,6 +56,8 @@ export default function AdminUsersPage() {
   const bulkSetStatus = useAdminUsersStore((s) => s.bulkSetStatus);
   const bulkDeactivate = useAdminUsersStore((s) => s.bulkDeactivate);
   const bulkDelete = useAdminUsersStore((s) => s.bulkDelete);
+  const hydrateFromApi = useAdminUsersStore((s) => s.hydrateFromApi);
+  const ensureAccessToken = useAuthStore((s) => s.ensureAccessToken);
 
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
@@ -111,9 +115,16 @@ export default function AdminUsersPage() {
     setMenuUser(user);
   }
 
-  function handleInvite(data) {
-    inviteUser(data);
-    showToast({ message: `Invite sent to ${data.email}`, severity: "success" });
+  async function handleInvite(data) {
+    try {
+      await inviteUser(data);
+      showToast({ message: `Account created for ${data.email}`, severity: "success" });
+    } catch (err) {
+      showToast({
+        message: err?.message ?? "Could not invite user.",
+        severity: "error",
+      });
+    }
   }
 
   function handleQuickAction(type, user) {
@@ -140,6 +151,15 @@ export default function AdminUsersPage() {
         </Button>
         </Stack>
       </Stack>
+
+      <AdminDataExchangeBar
+        resource="users"
+        compact
+        onImported={async () => {
+          const token = await ensureAccessToken();
+          if (token) await hydrateFromApi(token);
+        }}
+      />
 
       <AdvancedListToolbar
         accent="admin"

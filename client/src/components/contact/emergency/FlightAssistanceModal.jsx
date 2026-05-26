@@ -17,7 +17,9 @@ import { alpha } from "@mui/material/styles";
 import { useState } from "react";
 import { Link as RouterLink } from "react-router-dom";
 import AppModal from "../../common/AppModal.jsx";
+import { createContactTicket } from "../../../api/supportApi.js";
 import { useToast } from "../../../context/ToastContext.jsx";
+import { useAuthStore } from "../../../store/authStore.js";
 import { designTokens } from "../../../theme/theme.js";
 
 const ISSUE_TYPES = ["Delay", "Cancellation", "Missed Connection", "Rebooking", "Other"];
@@ -32,6 +34,7 @@ const initialForm = {
 
 export default function FlightAssistanceModal({ open, onClose }) {
   const { showToast } = useToast();
+  const session = useAuthStore((s) => s.session);
   const [form, setForm] = useState(initialForm);
   const [submitting, setSubmitting] = useState(false);
 
@@ -46,9 +49,27 @@ export default function FlightAssistanceModal({ open, onClose }) {
       return;
     }
     setSubmitting(true);
-    await new Promise((r) => setTimeout(r, 1200));
+    try {
+      await createContactTicket(session?.accessToken, {
+        subject: `Flight assistance — ${form.issueType}`,
+        message: [
+          `Airline: ${form.airlineName || "—"}`,
+          `Flight: ${form.flightNumber || "—"}`,
+          `Issue: ${form.issueType}`,
+          "",
+          form.description.trim(),
+        ].join("\n"),
+        bookingId: form.bookingReference.trim(),
+        priority: "urgent",
+        tripType: "business",
+      });
+      showToast({ message: "Flight assistance request submitted. An agent will follow up shortly.", severity: "success" });
+    } catch (err) {
+      showToast({ message: err?.message ?? "Could not submit request.", severity: "error" });
+      setSubmitting(false);
+      return;
+    }
     setSubmitting(false);
-    showToast({ message: "Flight assistance request submitted. An agent will follow up shortly.", severity: "success" });
     setForm(initialForm);
     onClose();
   }

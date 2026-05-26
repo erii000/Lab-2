@@ -205,5 +205,33 @@ public class UserController : ControllerBase
 
         return NoContent();
     }
+
+    [Authorize(Roles = "Admin")]
+    [HttpPatch("{id:int}")]
+    public async Task<IActionResult> AdminPatch(int id, [FromBody] AdminPatchUserRequest request, CancellationToken ct)
+    {
+        var user = await _userRepository.GetByIdAsync(id, ct);
+        if (user is null)
+            return NotFound();
+
+        if (request.IsActive.HasValue)
+            user.IsActive = request.IsActive.Value;
+        if (!string.IsNullOrWhiteSpace(request.FirstName))
+            user.FirstName = request.FirstName.Trim();
+        if (!string.IsNullOrWhiteSpace(request.LastName))
+            user.LastName = request.LastName.Trim();
+
+        user.UpdatedAt = DateTime.UtcNow;
+        await _userRepository.UpdateAsync(user, ct);
+
+        return Ok(new
+        {
+            user.Id,
+            user.FirstName,
+            user.LastName,
+            user.Email,
+            user.IsActive
+        });
+    }
 }
 

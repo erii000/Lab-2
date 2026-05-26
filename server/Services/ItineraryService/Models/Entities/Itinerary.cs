@@ -9,5 +9,7 @@ public sealed class Itinerary : BaseEntity
     public string? Description { get; set; }
     public DateOnly StartDate { get; set; }
     public DateOnly EndDate { get; set; }
+    /// <summary>Planner timeline JSON (days, activities, times) from the client.</summary>
+    public string? TimelineJson { get; set; }
     public ICollection<ItineraryDay> Days { get; set; } = new List<ItineraryDay>();
 }

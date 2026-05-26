@@ -17,13 +17,16 @@ public sealed class NotificationsController : ControllerBase
 {
     private readonly INotificationService _notificationService;
     private readonly IRealtimeNotificationService _realtimeNotificationService;
+    private readonly IConfiguration _configuration;
 
     public NotificationsController(
         INotificationService notificationService,
-        IRealtimeNotificationService realtimeNotificationService)
+        IRealtimeNotificationService realtimeNotificationService,
+        IConfiguration configuration)
     {
         _notificationService = notificationService;
         _realtimeNotificationService = realtimeNotificationService;
+        _configuration = configuration;
     }
 
     [HttpGet]
@@ -180,6 +183,58 @@ public sealed class NotificationsController : ControllerBase
         return CreatedAtAction(nameof(GetByUserId), new { userId = created.UserId }, created);
     }
 
+    /// <summary>Trusted microservices (X-Notification-Key) — persist + SignalR.</summary>
+    [AllowAnonymous]
+    [HttpPost("internal/publish")]
+    public async Task<IActionResult> InternalPublish(
+        [FromBody] InternalPublishRequest request,
+        CancellationToken cancellationToken)
+    {
+        if (!IsInternalNotificationCaller())
+            return Unauthorized();
+
+        if (request.Broadcast)
+        {
+            await _realtimeNotificationService.BroadcastTravelUpdateAsync(
+                request.Title,
+                request.Message,
+                request.Type,
+                cancellationToken);
+        }
+        else if (request.UserId is > 0)
+        {
+            if (request.Persist)
+            {
+                var created = await _notificationService.CreateAsync(new Notification
+                {
+                    UserId = request.UserId.Value,
+                    Title = request.Title.Trim(),
+                    Message = request.Message?.Trim() ?? "",
+                    Type = string.IsNullOrWhiteSpace(request.Type) ? "system" : request.Type.Trim(),
+                    IsRead = false
+                }, cancellationToken);
+
+                await _realtimeNotificationService.SendUserTravelUpdateAsync(
+                    created.UserId,
+                    created.Title,
+                    created.Message,
+                    created.Type,
+                    cancellationToken);
+            }
+            else
+            {
+                await _realtimeNotificationService.SendUserTravelUpdateAsync(
+                    request.UserId.Value,
+                    request.Title,
+                    request.Message,
+                    request.Type,
+                    cancellationToken);
+            }
+        }
+
+        return Accepted(new { request.Title, request.Message, sentAtUtc = DateTime.UtcNow });
+    }
+
     [HttpPost("broadcast")]
     [Authorize(Roles = "Admin")]
     public async Task<IActionResult> Broadcast([FromBody] SendNotificationRequest request, CancellationToken cancellationToken)
@@ -208,5 +263,17 @@ public sealed class NotificationsController : ControllerBase
 
         var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
         return int.TryParse(currentUserId, out var parsedUserId) && parsedUserId == userId;
+    }
+
+    private bool IsInternalNotificationCaller()
+    {
+        var expected = _configuration["Notification:InternalKey"];
+        if (string.IsNullOrWhiteSpace(expected))
+            return false;
+
+        return string.Equals(
+            Request.Headers["X-Notification-Key"].FirstOrDefault(),
+            expected,
+            StringComparison.Ordinal);
     }
 }

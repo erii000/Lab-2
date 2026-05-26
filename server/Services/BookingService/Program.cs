@@ -11,6 +11,8 @@ using TravelAssistant.Services.BookingService.Data;
 using TravelAssistant.Services.BookingService.Repositories;
 using TravelAssistant.Services.BookingService.Services.Bookings;
 using TravelAssistant.Services.BookingService.Validation;
+using TravelAssistant.Common.Audit;
+using TravelAssistant.Common.Notifications;
 using TravelAssistant.Common.Middleware;
 using TravelAssistant.Common.Database;
 
@@ -81,6 +83,9 @@ builder.Services.AddDbContext<ApplicationDbContext>(options => options.UseSqlSer
 builder.Services.AddHealthChecks();
 builder.Services.AddScoped<IBookingRepository, EfBookingRepository>();
 builder.Services.AddScoped<IBookingWorkflowService, BookingWorkflowService>();
+builder.Services.AddScoped<IBookingImportService, BookingImportService>();
+builder.Services.AddAuditWriter(builder.Configuration);
+builder.Services.AddTravelUpdatePublisher(builder.Configuration);
 
 var app = builder.Build();
 
@@ -103,6 +108,7 @@ using (var scope = app.Services.CreateScope())
 }
 
 app.UseMiddleware<GlobalExceptionMiddleware>();
+app.UseMiddleware<TravelAssistant.Common.Middleware.SecurityHeadersMiddleware>();
 
 if (app.Environment.IsDevelopment())
 {

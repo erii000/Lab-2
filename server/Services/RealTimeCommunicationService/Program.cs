@@ -7,8 +7,10 @@ using Microsoft.OpenApi.Models;
 using TravelAssistant.Services.RealTimeCommunicationService.Data;
 using TravelAssistant.Services.RealTimeCommunicationService.Hubs;
 using TravelAssistant.Services.RealTimeCommunicationService.Interfaces;
+using TravelAssistant.Services.RealTimeCommunicationService.Repositories;
 using TravelAssistant.Services.RealTimeCommunicationService.Services;
 using TravelAssistant.Common.Middleware;
+using TravelAssistant.Common.SignalR;
 
 var rootEnvPath = Path.GetFullPath(Path.Combine(Directory.GetCurrentDirectory(), "..", "..", "global-settings.env"));
 var envPath = Path.Combine(Directory.GetCurrentDirectory(), ".env");
@@ -65,7 +67,7 @@ builder.Services
                 var path = context.HttpContext.Request.Path;
 
                 if (!string.IsNullOrWhiteSpace(accessToken) &&
-                    path.StartsWithSegments("/hubs/notifications"))
+                    (path.StartsWithSegments("/hubs/notifications") || path.StartsWithSegments("/hubs/chat")))
                 {
                     context.Token = accessToken;
                 }
@@ -77,6 +79,8 @@ builder.Services
 
 builder.Services.AddAuthorization();
 builder.Services.AddSignalR();
+builder.Services.AddSingleton<Microsoft.AspNetCore.SignalR.IUserIdProvider, JwtUserIdProvider>();
+builder.Services.AddScoped<IChatRepository, EfChatRepository>();
 builder.Services.AddHealthChecks();
 
 builder.Services.AddControllers();
@@ -107,6 +111,7 @@ app.UseAuthorization();
 app.MapControllers();
 app.MapHealthChecks("/health");
 app.MapHub<NotificationsHub>("/hubs/notifications");
+app.MapHub<ChatHub>("/hubs/chat");
 app.MapGet("/api/ping", () => Results.Ok(new { status = "ok", service = "RealTimeCommunicationService" }));
 
 app.Run();

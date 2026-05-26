@@ -1,113 +1,40 @@
-﻿using Microsoft.EntityFrameworkCore;
-using TravelAssistant.Services.AuditService.Contracts.AuditLogs;
-using TravelAssistant.Services.AuditService.Data;
+﻿using TravelAssistant.Services.AuditService.Contracts.AuditLogs;
 using TravelAssistant.Services.AuditService.Interfaces;
 using TravelAssistant.Services.AuditService.Models;
+using TravelAssistant.Services.AuditService.Repositories;
 
-namespace TravelAssistant.Services.AuditService.Services
+namespace TravelAssistant.Services.AuditService.Services;
+
+public sealed class AuditLogService : IAuditLogService
 {
-    public sealed class AuditLogService : IAuditLogService
+    private readonly IAuditLogRepository _repository;
+
+    public AuditLogService(IAuditLogRepository repository) => _repository = repository;
+
+    public async Task<IEnumerable<AuditLog>> GetAllAsync(CancellationToken cancellationToken = default) =>
+        await _repository.GetAllAsync(cancellationToken);
+
+    public async Task<PagedResult<AuditLog>> SearchAsync(AuditLogSearchRequest request, CancellationToken cancellationToken = default)
     {
-        private readonly ApplicationDbContext _context;
-
-        public AuditLogService(ApplicationDbContext context)
+        var (items, total) = await _repository.SearchAsync(request, cancellationToken);
+        var page = request.Page < 1 ? 1 : request.Page;
+        var pageSize = request.PageSize switch
         {
-            _context = context;
-        }
+            < 1 => 20,
+            > 100 => 100,
+            _ => request.PageSize
+        };
 
-        public async Task<IEnumerable<AuditLog>> GetAllAsync(CancellationToken cancellationToken = default)
+        return new PagedResult<AuditLog>
         {
-            return await _context.AuditLogs
-                .AsNoTracking()
-                .OrderByDescending(x => x.CreatedAt)
-                .ToListAsync(cancellationToken);
-        }
-
-        public async Task<PagedResult<AuditLog>> SearchAsync(AuditLogSearchRequest request, CancellationToken cancellationToken = default)
-        {
-            var page = request.Page < 1 ? 1 : request.Page;
-            var pageSize = request.PageSize switch
-            {
-                < 1 => 20,
-                > 100 => 100,
-                _ => request.PageSize
-            };
-
-            IQueryable<AuditLog> query = _context.AuditLogs.AsNoTracking();
-
-            if (!string.IsNullOrWhiteSpace(request.Q))
-            {
-                var search = request.Q.Trim();
-                query = query.Where(x =>
-                    x.Action.Contains(search) ||
-                    x.EntityName.Contains(search) ||
-                    x.Details.Contains(search));
-            }
-
-            if (request.UserId.HasValue)
-            {
-                query = query.Where(x => x.UserId == request.UserId.Value);
-            }
-
-            if (!string.IsNullOrWhiteSpace(request.EntityName))
-            {
-                var entityName = request.EntityName.Trim();
-                query = query.Where(x => x.EntityName == entityName);
-            }
-
-            if (!string.IsNullOrWhiteSpace(request.Action))
-            {
-                var action = request.Action.Trim();
-                query = query.Where(x => x.Action == action);
-            }
-
-            if (request.CreatedFromUtc.HasValue)
-            {
-                query = query.Where(x => x.CreatedAt >= request.CreatedFromUtc.Value);
-            }
-
-            if (request.CreatedToUtc.HasValue)
-            {
-                query = query.Where(x => x.CreatedAt <= request.CreatedToUtc.Value);
-            }
-
-            var sortBy = request.SortBy?.Trim().ToLowerInvariant() ?? "createdat";
-            var descending = !string.Equals(request.SortOrder, "asc", StringComparison.OrdinalIgnoreCase);
-
-            query = sortBy switch
-            {
-                "action" => descending ? query.OrderByDescending(x => x.Action) : query.OrderBy(x => x.Action),
-                "entityname" => descending ? query.OrderByDescending(x => x.EntityName) : query.OrderBy(x => x.EntityName),
-                "userid" => descending ? query.OrderByDescending(x => x.UserId) : query.OrderBy(x => x.UserId),
-                _ => descending ? query.OrderByDescending(x => x.CreatedAt) : query.OrderBy(x => x.CreatedAt)
-            };
-
-            var totalCount = await query.CountAsync(cancellationToken);
-            var items = await query
-                .Skip((page - 1) * pageSize)
-                .Take(pageSize)
-                .ToListAsync(cancellationToken);
-
-            return new PagedResult<AuditLog>
-            {
-                Items = items,
-                Page = page,
-                PageSize = pageSize,
-                TotalCount = totalCount,
-                TotalPages = totalCount == 0 ? 0 : (int)Math.Ceiling(totalCount / (double)pageSize)
-            };
-        }
-
-        public async Task<AuditLog> CreateAsync(AuditLog auditLog, CancellationToken cancellationToken = default)
-        {
-            if (auditLog.CreatedAt == default)
-            {
-                auditLog.CreatedAt = DateTime.UtcNow;
-            }
-
-            _context.AuditLogs.Add(auditLog);
-            await _context.SaveChangesAsync(cancellationToken);
-            return auditLog;
-        }
+            Items = items,
+            Page = page,
+            PageSize = pageSize,
+            TotalCount = total,
+            TotalPages = total == 0 ? 0 : (int)Math.Ceiling(total / (double)pageSize)
+        };
     }
+
+    public Task<AuditLog> CreateAsync(AuditLog auditLog, CancellationToken cancellationToken = default) =>
+        _repository.AddAsync(auditLog, cancellationToken);
 }

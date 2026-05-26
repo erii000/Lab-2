@@ -16,6 +16,8 @@ import {
 } from "@mui/material";
 import { alpha } from "@mui/material/styles";
 import { useEffect, useState } from "react";
+import { loadUserPreferences } from "../../../services/travelPreferencesSync.js";
+import { useAuthStore } from "../../../store/authStore.js";
 import { getTravelerStatusMeta, TRAVELER_STATUS_OPTIONS } from "../../../utils/adminUsers.js";
 import { adminColors, adminPanelSx } from "../adminStyles.js";
 
@@ -40,18 +42,29 @@ export default function UserDetailDrawer({
 }) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(null);
+  const session = useAuthStore((s) => s.session);
 
   useEffect(() => {
-    if (user) setDraft({ ...user, preferencesText: (user.preferences ?? []).join(", ") });
+    if (!user) return;
+    setDraft({ ...user, preferencesText: (user.preferences ?? []).join(", ") });
     setEditing(false);
-  }, [user]);
+    const numericId = Number(String(user.id).replace(/\D/g, ""));
+    if (!session?.accessToken || !Number.isFinite(numericId)) return;
+    loadUserPreferences(session.accessToken, numericId, { asAdmin: true })
+      .then((tags) => {
+        if (tags?.length) {
+          setDraft((d) => (d ? { ...d, preferencesText: tags.join(", ") } : d));
+        }
+      })
+      .catch(() => null);
+  }, [user, session?.accessToken]);
 
   if (!user || !draft) return null;
 
   const statusMeta = getTravelerStatusMeta(draft.travelerStatus);
 
   function saveEdit() {
-    onUpdate?.(user.id, {
+    void onUpdate?.(user.id, {
       name: draft.name,
       email: draft.email,
       travelerStatus: draft.travelerStatus,

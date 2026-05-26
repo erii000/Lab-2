@@ -1,6 +1,7 @@
 import { Box, Container, Grid } from "@mui/material";
 import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
+import { useAuthStore } from "../store/authStore.js";
 import AiAssistDrawer from "../components/itinerary/AiAssistDrawer.jsx";
 import PlannerToolbar from "../components/itinerary/PlannerToolbar.jsx";
 import TripHeader from "../components/itinerary/TripHeader.jsx";
@@ -14,6 +15,8 @@ export default function ItineraryPlannerPage() {
   const [searchParams] = useSearchParams();
   const trip = usePlannerStore((s) => s.trip);
   const initFromSearchParams = usePlannerStore((s) => s.initFromSearchParams);
+  const syncItineraryToApi = usePlannerStore((s) => s.syncItineraryToApi);
+  const session = useAuthStore((s) => s.session);
   const setDays = usePlannerStore((s) => s.setDays);
   const applyAiSuggestion = usePlannerStore((s) => s.applyAiSuggestion);
   const continueToBooking = usePlannerStore((s) => s.continueToBooking);
@@ -22,7 +25,10 @@ export default function ItineraryPlannerPage() {
 
   useEffect(() => {
     initFromSearchParams(searchParams);
-  }, [searchParams, initFromSearchParams]);
+    if (session?.accessToken) {
+      syncItineraryToApi();
+    }
+  }, [searchParams, initFromSearchParams, session?.accessToken, syncItineraryToApi]);
 
   if (!trip) {
     return null;

@@ -19,3 +19,17 @@ export function generateItinerary(accessToken, body) {
     json: body,
   });
 }
+
+/** @param {string} accessToken @param {number} id */
+export function getItinerary(accessToken, id) {
+  return apiRequest(`/api/v1/itineraries/${id}`, { token: accessToken });
+}
+
+/** @param {string} accessToken @param {number} id @param {{ days: object[] }} body */
+export function saveItineraryTimeline(accessToken, id, body) {
+  return apiRequest(`/api/v1/itineraries/${id}/timeline`, {
+    method: "PUT",
+    token: accessToken,
+    json: body,
+  });
+}

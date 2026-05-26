@@ -3,6 +3,7 @@ import { Box, Button, Chip, Grid, Stack, Typography } from "@mui/material";
 import { alpha } from "@mui/material/styles";
 import { useEffect, useMemo, useState } from "react";
 import { useLocation } from "react-router-dom";
+import AdminDataExchangeBar from "../../components/admin/AdminDataExchangeBar.jsx";
 import AdvancedListToolbar from "../../components/search/AdvancedListToolbar.jsx";
 import AdminNotificationsMenu from "../../components/admin/AdminNotificationsMenu.jsx";
 import ConfirmTripDeleteModal from "../../components/admin/trips/ConfirmTripDeleteModal.jsx";
@@ -12,7 +13,9 @@ import TripWorkspaceDrawer from "../../components/admin/trips/TripWorkspaceDrawe
 import TripsBulkActionsBar from "../../components/admin/trips/TripsBulkActionsBar.jsx";
 import { adminColors } from "../../components/admin/adminStyles.js";
 import { useToast } from "../../context/ToastContext.jsx";
+import { useAuthStore } from "../../store/authStore.js";
 import { useAdminTripsStore } from "../../store/adminTripsStore.js";
+import { useCatalogStore } from "../../store/catalogStore.js";
 import { filterTripsWorkspace, TRIP_FILTER_PILLS } from "../../utils/adminTrips.js";
 import { ADMIN_TRIP_SORT_OPTIONS, applyAdvancedListQuery } from "../../utils/advancedSearch.js";
 
@@ -28,6 +31,8 @@ export default function AdminTripsPage() {
   const softDeleteTrip = useAdminTripsStore((s) => s.softDeleteTrip);
   const bulkAction = useAdminTripsStore((s) => s.bulkAction);
   const aiGenerateTrip = useAdminTripsStore((s) => s.aiGenerateTrip);
+  const hydrateFromApi = useAdminTripsStore((s) => s.hydrateFromApi);
+  const ensureAccessToken = useAuthStore((s) => s.ensureAccessToken);
 
   const [query, setQuery] = useState("");
   const [pill, setPill] = useState("all");
@@ -114,6 +119,16 @@ export default function AdminTripsPage() {
         </Stack>
       </Stack>
 
+      <AdminDataExchangeBar
+        resource="itineraries"
+        title="Itineraries"
+        compact
+        onImported={async () => {
+          const token = await ensureAccessToken();
+          if (token) await hydrateFromApi(token);
+        }}
+      />
+
       <AdvancedListToolbar
         accent="admin"
         query={query}
@@ -191,18 +206,16 @@ export default function AdminTripsPage() {
         trip={workspaceTrip}
         open={Boolean(workspaceTrip)}
         onClose={() => setWorkspaceId(null)}
-        onUpdate={(draft) => {
-          updateTrip(draft);
-          showToast({ message: "Trip saved.", severity: "success" });
+        onUpdate={async (draft) => {
+          await updateTrip(draft);
+          await useCatalogStore.getState().hydrate(true);
+          showToast({ message: "Trip saved — destination page updated.", severity: "success" });
         }}
         onPublish={(t) => {
           publishTrip(t.id);
           showToast({ message: "Trip published.", severity: "success" });
         }}
         onMenuAction={handleMenuAction}
-        onAiAction={(t, action) => {
-          showToast({ message: `AI: ${action} applied to ${t.title}`, severity: "success" });
-        }}
       />
 
       <ConfirmTripDeleteModal

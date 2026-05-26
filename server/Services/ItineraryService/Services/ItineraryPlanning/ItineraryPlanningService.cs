@@ -120,6 +120,26 @@ public sealed class ItineraryPlanningService : IItineraryPlanningService
             .ToList();
     }
 
+    public async Task<ItineraryDetailResponse?> SaveTimelineAsync(
+        int itineraryId,
+        int requestingUserId,
+        bool isAdmin,
+        SaveItineraryTimelineRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        var entity = await _itineraryRepository.GetWithDaysAsync(itineraryId, cancellationToken);
+        if (entity is null)
+            return null;
+
+        if (!isAdmin && entity.UserId != requestingUserId)
+            return null;
+
+        entity.TimelineJson = JsonSerializer.Serialize(request.Days, JsonOptions);
+        entity.UpdatedAt = DateTime.UtcNow;
+        await _itineraryRepository.SaveChangesAsync(cancellationToken);
+        return MapDetail(entity);
+    }
+
     private static ItineraryDetailResponse MapDetail(Itinerary entity)
     {
         TravelPreferenceSnapshotDto? prefs = null;
@@ -158,6 +178,7 @@ public sealed class ItineraryPlanningService : IItineraryPlanningService
             StartDate = entity.StartDate,
             EndDate = entity.EndDate,
             Days = MapDayDtos(entity.Days.OrderBy(d => d.DayNumber).ToList()),
+            TimelineJson = entity.TimelineJson,
             PreferencesUsed = prefs
         };
     }

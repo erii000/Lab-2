@@ -5,6 +5,7 @@ using TravelAssistant.Services.BookingService.DTOs.Bookings;
 using TravelAssistant.Services.BookingService.Repositories;
 using TravelAssistant.Services.BookingService.Security;
 using TravelAssistant.Services.BookingService.Services.Bookings;
+using BookingImportRow = TravelAssistant.Services.BookingService.Services.Bookings.BookingImportRow;
 
 namespace TravelAssistant.Services.BookingService.Controllers;
 
@@ -15,11 +16,16 @@ public sealed class BookingsController : ControllerBase
 {
     private readonly IBookingWorkflowService _bookingWorkflowService;
     private readonly IBookingRepository _bookingRepository;
+    private readonly IBookingImportService _bookingImportService;
 
-    public BookingsController(IBookingWorkflowService bookingWorkflowService, IBookingRepository bookingRepository)
+    public BookingsController(
+        IBookingWorkflowService bookingWorkflowService,
+        IBookingRepository bookingRepository,
+        IBookingImportService bookingImportService)
     {
         _bookingWorkflowService = bookingWorkflowService;
         _bookingRepository = bookingRepository;
+        _bookingImportService = bookingImportService;
     }
 
     /// <summary>Bookings for the signed-in user.</summary>
@@ -150,6 +156,49 @@ public sealed class BookingsController : ControllerBase
         return dto is null ? NotFound() : Ok(dto);
     }
 
+    /// <summary>Discard a pending booking draft (owner only).</summary>
+    [HttpPost("{id:int}/discard")]
+    [ProducesResponseType(typeof(BookingDetailResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<BookingDetailResponse>> Discard(int id, CancellationToken cancellationToken)
+    {
+        var userId = User.GetUserId();
+        if (userId is null)
+            return Unauthorized();
+
+        var dto = await _bookingWorkflowService.DiscardAsync(id, userId.Value, cancellationToken);
+        return dto is null ? NotFound() : Ok(dto);
+    }
+
+    [HttpPost("{id:int}/confirm-payment")]
+    [ProducesResponseType(typeof(BookingDetailResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<BookingDetailResponse>> ConfirmPayment(int id, CancellationToken cancellationToken)
+    {
+        var userId = User.GetUserId();
+        if (userId is null)
+            return Unauthorized();
+
+        var dto = await _bookingWorkflowService.ConfirmPaymentAsync(id, userId.Value, cancellationToken);
+        return dto is null ? NotFound() : Ok(dto);
+    }
+
+    [HttpPatch("{id:int}")]
+    [ProducesResponseType(typeof(BookingDetailResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<BookingDetailResponse>> Patch(
+        int id,
+        [FromBody] UpdateBookingRequest request,
+        CancellationToken cancellationToken)
+    {
+        var userId = User.GetUserId();
+        if (userId is null)
+            return Unauthorized();
+
+        var dto = await _bookingWorkflowService.UpdateAsync(id, userId.Value, User.IsAdmin(), request, cancellationToken);
+        return dto is null ? NotFound() : Ok(dto);
+    }
+
     [HttpPatch("{id:int}/status")]
     [ProducesResponseType(typeof(BookingDetailResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -180,17 +229,6 @@ public sealed class BookingsController : ControllerBase
         return Ok(result.Data);
     }
 
-    public sealed class BookingImportRow
-    {
-        public int UserId { get; set; }
-        public int ItineraryId { get; set; }
-        public string BookingType { get; set; } = "";
-        public string Provider { get; set; } = "";
-        public string ReferenceCode { get; set; } = "";
-        public decimal Amount { get; set; }
-        public string? Currency { get; set; }
-    }
-
     /// <summary>Admin batch create. All rows validated first; nothing persisted if any row fails.</summary>
     [HttpPost("import")]
     [Authorize(Roles = "Admin")]
@@ -199,31 +237,10 @@ public sealed class BookingsController : ControllerBase
         if (rows is null || rows.Count == 0)
             return BadRequest(new { error = "Empty payload." });
 
-        var errors = new List<object>();
-        for (var i = 0; i < rows.Count; i++)
-        {
-            var r = rows[i];
-            if (r.UserId <= 0 || r.ItineraryId <= 0 || string.IsNullOrWhiteSpace(r.BookingType) ||
-                string.IsNullOrWhiteSpace(r.Provider) || string.IsNullOrWhiteSpace(r.ReferenceCode))
-                errors.Add(new { row = i + 1, message = "Invalid required fields." });
-        }
-
+        var (inserted, errors) = await _bookingImportService.ImportAsync(rows, cancellationToken);
         if (errors.Count > 0)
             return BadRequest(new { errors });
 
-        foreach (var r in rows)
-        {
-            await _bookingWorkflowService.CreateAsync(r.UserId, new CreateBookingRequest
-            {
-                ItineraryId = r.ItineraryId,
-                BookingType = r.BookingType,
-                Provider = r.Provider,
-                ReferenceCode = r.ReferenceCode,
-                Amount = r.Amount,
-                Currency = r.Currency
-            }, cancellationToken);
-        }
-
-        return Ok(new { inserted = rows.Count });
+        return Ok(new { inserted });
     }
 }

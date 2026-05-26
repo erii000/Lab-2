@@ -24,7 +24,11 @@ public static class Lab2DbSchemaBootstrap
         {
             // ExecuteSqlRaw treats { } as format placeholders; escape literals (e.g. DEFAULT (N'{}')).
             var escaped = sql.Replace("{", "{{").Replace("}", "}}");
-            await dbContext.Database.ExecuteSqlRawAsync(escaped, cancellationToken);
+            foreach (var batch in SplitSqlBatches(escaped))
+            {
+                if (!string.IsNullOrWhiteSpace(batch))
+                    await dbContext.Database.ExecuteSqlRawAsync(batch, cancellationToken);
+            }
             logger.LogInformation("Member B schema bootstrap completed.");
         }
         catch (Exception ex)
@@ -53,5 +57,30 @@ public static class Lab2DbSchemaBootstrap
         }
 
         return null;
+    }
+
+    /// <summary>Splits scripts on GO batch separators (SSMS/sqlcmd style).</summary>
+    private static IEnumerable<string> SplitSqlBatches(string sql)
+    {
+        var batch = new System.Text.StringBuilder();
+        using var reader = new StringReader(sql);
+        string? line;
+        while ((line = reader.ReadLine()) is not null)
+        {
+            if (line.Trim().Equals("GO", StringComparison.OrdinalIgnoreCase))
+            {
+                if (batch.Length > 0)
+                {
+                    yield return batch.ToString();
+                    batch.Clear();
+                }
+                continue;
+            }
+
+            batch.AppendLine(line);
+        }
+
+        if (batch.Length > 0)
+            yield return batch.ToString();
     }
 }

@@ -24,27 +24,30 @@ BEGIN
         CreatedAt DATETIME NOT NULL CONSTRAINT DF_Destinations_CreatedAt DEFAULT (SYSUTCDATETIME()),
         UpdatedAt DATETIME NULL
     );
-END;
-
-IF COL_LENGTH(N'dbo.Destinations', N'Slug') IS NULL
-    ALTER TABLE dbo.Destinations ADD Slug NVARCHAR(64) NOT NULL CONSTRAINT DF_Destinations_Slug2 DEFAULT (N'');
-IF COL_LENGTH(N'dbo.Destinations', N'CatalogJson') IS NULL
-    ALTER TABLE dbo.Destinations ADD CatalogJson NVARCHAR(MAX) NOT NULL CONSTRAINT DF_Destinations_CatalogJson2 DEFAULT (N'{}');
-IF COL_LENGTH(N'dbo.Destinations', N'ImageUrl') IS NULL
-    ALTER TABLE dbo.Destinations ADD ImageUrl NVARCHAR(500) NULL;
-IF COL_LENGTH(N'dbo.Destinations', N'PriceFrom') IS NULL
-    ALTER TABLE dbo.Destinations ADD PriceFrom DECIMAL(10, 2) NULL;
-IF COL_LENGTH(N'dbo.Destinations', N'Rating') IS NULL
-    ALTER TABLE dbo.Destinations ADD Rating DECIMAL(3, 1) NULL;
-IF COL_LENGTH(N'dbo.Destinations', N'ReviewCount') IS NULL
-    ALTER TABLE dbo.Destinations ADD ReviewCount INT NOT NULL CONSTRAINT DF_Destinations_ReviewCount2 DEFAULT (0);
-IF COL_LENGTH(N'dbo.Destinations', N'Tag') IS NULL
-    ALTER TABLE dbo.Destinations ADD Tag NVARCHAR(80) NULL;
-
-IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_Destinations_Slug' AND object_id = OBJECT_ID(N'dbo.Destinations'))
-BEGIN
-    UPDATE dbo.Destinations SET Slug = CONCAT(N'legacy-', Id) WHERE Slug = N'' OR Slug IS NULL;
     CREATE UNIQUE INDEX IX_Destinations_Slug ON dbo.Destinations (Slug);
+END
+ELSE
+BEGIN
+    IF COL_LENGTH(N'dbo.Destinations', N'Slug') IS NULL
+        ALTER TABLE dbo.Destinations ADD Slug NVARCHAR(64) NOT NULL CONSTRAINT DF_Destinations_Slug2 DEFAULT (N'');
+    IF COL_LENGTH(N'dbo.Destinations', N'CatalogJson') IS NULL
+        ALTER TABLE dbo.Destinations ADD CatalogJson NVARCHAR(MAX) NOT NULL CONSTRAINT DF_Destinations_CatalogJson2 DEFAULT (N'{}');
+    IF COL_LENGTH(N'dbo.Destinations', N'ImageUrl') IS NULL
+        ALTER TABLE dbo.Destinations ADD ImageUrl NVARCHAR(500) NULL;
+    IF COL_LENGTH(N'dbo.Destinations', N'PriceFrom') IS NULL
+        ALTER TABLE dbo.Destinations ADD PriceFrom DECIMAL(10, 2) NULL;
+    IF COL_LENGTH(N'dbo.Destinations', N'Rating') IS NULL
+        ALTER TABLE dbo.Destinations ADD Rating DECIMAL(3, 1) NULL;
+    IF COL_LENGTH(N'dbo.Destinations', N'ReviewCount') IS NULL
+        ALTER TABLE dbo.Destinations ADD ReviewCount INT NOT NULL CONSTRAINT DF_Destinations_ReviewCount2 DEFAULT (0);
+    IF COL_LENGTH(N'dbo.Destinations', N'Tag') IS NULL
+        ALTER TABLE dbo.Destinations ADD Tag NVARCHAR(80) NULL;
+
+    IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_Destinations_Slug' AND object_id = OBJECT_ID(N'dbo.Destinations'))
+    BEGIN
+        EXEC(N'UPDATE dbo.Destinations SET Slug = CONCAT(N''legacy-'', Id) WHERE Slug = N'''' OR Slug IS NULL');
+        EXEC(N'CREATE UNIQUE INDEX IX_Destinations_Slug ON dbo.Destinations (Slug)');
+    END;
 END;
 
 /* ---- Itinerary: Itineraries ---- */
@@ -72,6 +75,9 @@ BEGIN
     EXEC(N'UPDATE dbo.Itineraries SET Destination = LEFT(Title, 120) WHERE Destination IS NULL');
     ALTER TABLE dbo.Itineraries ALTER COLUMN Destination NVARCHAR(120) NOT NULL;
 END;
+
+IF COL_LENGTH(N'dbo.Itineraries', N'TimelineJson') IS NULL
+    ALTER TABLE dbo.Itineraries ADD TimelineJson NVARCHAR(MAX) NULL;
 
 IF OBJECT_ID(N'dbo.ItineraryDays', N'U') IS NULL
 BEGIN
@@ -251,6 +257,19 @@ BEGIN
     CREATE INDEX IX_SavedTrips_TripId ON dbo.SavedTrips (TripId);
 END;
 
+IF OBJECT_ID(N'dbo.UserSavedDestinations', N'U') IS NULL
+BEGIN
+    CREATE TABLE dbo.UserSavedDestinations
+    (
+        Id INT IDENTITY(1, 1) NOT NULL PRIMARY KEY,
+        UserId INT NOT NULL,
+        DestinationSlug NVARCHAR(64) NOT NULL,
+        SavedAt DATETIME2 NOT NULL CONSTRAINT DF_UserSavedDestinations_SavedAt DEFAULT (SYSUTCDATETIME())
+    );
+    CREATE UNIQUE INDEX UX_UserSavedDestinations_User_Slug ON dbo.UserSavedDestinations (UserId, DestinationSlug);
+    CREATE INDEX IX_UserSavedDestinations_UserId ON dbo.UserSavedDestinations (UserId);
+END;
+
 IF OBJECT_ID(N'dbo.TransportOptions', N'U') IS NULL
 BEGIN
     CREATE TABLE dbo.TransportOptions
@@ -264,4 +283,121 @@ BEGIN
         UpdatedAt DATETIME NULL
     );
     CREATE INDEX IX_TransportOptions_DestinationId ON dbo.TransportOptions (DestinationId);
+END;
+
+/* ---- Payment: Payments ---- */
+IF OBJECT_ID(N'dbo.Payments', N'U') IS NULL
+BEGIN
+    CREATE TABLE dbo.Payments
+    (
+        Id INT IDENTITY(1, 1) NOT NULL PRIMARY KEY,
+        UserId INT NOT NULL,
+        BookingId INT NOT NULL,
+        Amount DECIMAL(10, 2) NOT NULL,
+        Currency NVARCHAR(10) NULL,
+        PaymentMethod NVARCHAR(50) NOT NULL,
+        PaymentStatus NVARCHAR(50) NOT NULL,
+        ExternalReference NVARCHAR(255) NULL,
+        PaidAt DATETIME NULL,
+        CreatedAt DATETIME NOT NULL CONSTRAINT DF_Payments_CreatedAt DEFAULT (SYSUTCDATETIME())
+    );
+    CREATE INDEX IX_Payments_UserId ON dbo.Payments (UserId);
+    CREATE INDEX IX_Payments_BookingId ON dbo.Payments (BookingId);
+    CREATE INDEX IX_Payments_ExternalReference ON dbo.Payments (ExternalReference);
+END;
+
+IF COL_LENGTH(N'dbo.Payments', N'Currency') IS NULL
+    ALTER TABLE dbo.Payments ADD Currency NVARCHAR(10) NULL;
+IF COL_LENGTH(N'dbo.Payments', N'ExternalReference') IS NULL
+    ALTER TABLE dbo.Payments ADD ExternalReference NVARCHAR(255) NULL;
+IF COL_LENGTH(N'dbo.Payments', N'PaidAt') IS NULL
+    ALTER TABLE dbo.Payments ADD PaidAt DATETIME NULL;
+
+IF NOT EXISTS (
+    SELECT 1 FROM sys.indexes WHERE name = N'IX_Payments_ExternalReference' AND object_id = OBJECT_ID(N'dbo.Payments')
+)
+    CREATE INDEX IX_Payments_ExternalReference ON dbo.Payments (ExternalReference);
+
+/* ---- Payment: Expenses ---- */
+IF OBJECT_ID(N'dbo.Expenses', N'U') IS NULL
+BEGIN
+    CREATE TABLE dbo.Expenses
+    (
+        Id INT IDENTITY(1, 1) NOT NULL PRIMARY KEY,
+        UserId INT NOT NULL,
+        TripId INT NOT NULL,
+        Category NVARCHAR(50) NOT NULL,
+        Amount DECIMAL(10, 2) NOT NULL,
+        Description NVARCHAR(255) NULL,
+        ExpenseDate DATE NOT NULL,
+        CreatedAt DATETIME NOT NULL CONSTRAINT DF_Expenses_CreatedAt DEFAULT (SYSUTCDATETIME())
+    );
+    CREATE INDEX IX_Expenses_UserId ON dbo.Expenses (UserId);
+    CREATE INDEX IX_Expenses_TripId ON dbo.Expenses (TripId);
+END;
+
+/* ---- Real-time: chat messages ---- */
+IF OBJECT_ID(N'dbo.ChatMessages', N'U') IS NULL
+BEGIN
+    CREATE TABLE dbo.ChatMessages
+    (
+        Id INT IDENTITY(1, 1) NOT NULL PRIMARY KEY,
+        SenderUserId INT NOT NULL,
+        ReceiverUserId INT NOT NULL,
+        Message NVARCHAR(2000) NOT NULL,
+        SentAt DATETIME2 NOT NULL CONSTRAINT DF_ChatMessages_SentAt DEFAULT (SYSUTCDATETIME())
+    );
+    CREATE INDEX IX_ChatMessages_SenderUserId ON dbo.ChatMessages (SenderUserId);
+    CREATE INDEX IX_ChatMessages_ReceiverUserId ON dbo.ChatMessages (ReceiverUserId);
+END;
+
+/* ---- Support: tickets (contact form) ---- */
+IF OBJECT_ID(N'dbo.SupportTickets', N'U') IS NULL
+BEGIN
+    CREATE TABLE dbo.SupportTickets
+    (
+        Id INT IDENTITY(1, 1) NOT NULL PRIMARY KEY,
+        UserId INT NOT NULL,
+        Subject NVARCHAR(200) NOT NULL,
+        Description NVARCHAR(MAX) NOT NULL,
+        Status NVARCHAR(50) NOT NULL CONSTRAINT DF_SupportTickets_Status DEFAULT (N'Open'),
+        CreatedAt DATETIME2 NOT NULL CONSTRAINT DF_SupportTickets_CreatedAt DEFAULT (SYSUTCDATETIME())
+    );
+    CREATE INDEX IX_SupportTickets_UserId ON dbo.SupportTickets (UserId);
+END;
+
+/* ---- Notifications (in-app alerts) ---- */
+IF OBJECT_ID(N'dbo.Notifications', N'U') IS NULL
+BEGIN
+    CREATE TABLE dbo.Notifications
+    (
+        Id INT IDENTITY(1, 1) NOT NULL PRIMARY KEY,
+        UserId INT NOT NULL,
+        Title NVARCHAR(200) NOT NULL,
+        Message NVARCHAR(2000) NOT NULL,
+        Type NVARCHAR(50) NOT NULL,
+        IsRead BIT NOT NULL CONSTRAINT DF_Notifications_IsRead DEFAULT (0),
+        CreatedAt DATETIME2 NOT NULL CONSTRAINT DF_Notifications_CreatedAt DEFAULT (SYSUTCDATETIME())
+    );
+    CREATE INDEX IX_Notifications_UserId ON dbo.Notifications (UserId);
+END;
+
+/* ---- Payment: webhook / audit log ---- */
+IF OBJECT_ID(N'dbo.PaymentTransactionLogs', N'U') IS NULL
+BEGIN
+    CREATE TABLE dbo.PaymentTransactionLogs
+    (
+        Id BIGINT IDENTITY(1, 1) NOT NULL PRIMARY KEY,
+        PaymentId INT NULL,
+        Provider NVARCHAR(50) NOT NULL,
+        ExternalEventId NVARCHAR(100) NOT NULL,
+        EventType NVARCHAR(120) NOT NULL,
+        Payload NVARCHAR(MAX) NULL,
+        ProcessedOk BIT NOT NULL,
+        ErrorMessage NVARCHAR(2000) NULL,
+        CreatedAt DATETIME2 NOT NULL CONSTRAINT DF_PaymentTransactionLogs_CreatedAt DEFAULT (SYSUTCDATETIME()),
+        CONSTRAINT FK_PaymentTransactionLogs_Payments FOREIGN KEY (PaymentId)
+            REFERENCES dbo.Payments (Id) ON DELETE SET NULL
+    );
+    CREATE UNIQUE INDEX UX_PaymentTransactionLogs_ExternalEventId ON dbo.PaymentTransactionLogs (ExternalEventId);
 END;

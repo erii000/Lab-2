@@ -7,9 +7,11 @@ using Microsoft.OpenApi.Models;
 using TravelAssistant.Services.NotificationService.Data;
 using TravelAssistant.Services.NotificationService.Interfaces;
 using TravelAssistant.Services.NotificationService.Services;
+using TravelAssistant.Services.NotificationService.Repositories;
 using TravelAssistant.Services.NotificationService.Services.Interfaces;
 using TravelAssistant.Services.RealTimeCommunicationService.Hubs;
 using TravelAssistant.Common.Middleware;
+using TravelAssistant.Common.SignalR;
 
 var rootEnvPath = Path.GetFullPath(Path.Combine(Directory.GetCurrentDirectory(), "..", "..", "global-settings.env"));
 var envPath = Path.Combine(Directory.GetCurrentDirectory(), ".env");
@@ -76,10 +78,22 @@ builder.Services
 
 builder.Services.AddAuthorization();
 builder.Services.AddSignalR();
+builder.Services.AddSingleton<Microsoft.AspNetCore.SignalR.IUserIdProvider, JwtUserIdProvider>();
+builder.Services.AddScoped<INotificationRepository, EfNotificationRepository>();
 builder.Services.AddScoped<INotificationService, TravelAssistant.Services.NotificationService.Services.NotificationService>();
 builder.Services.AddScoped<IRealtimeNotificationService, RealtimeNotificationService>();
 
 builder.Services.AddHealthChecks();
+
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("FrontendPolicy", policy =>
+    {
+        var origins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>()
+            ?? new[] { "http://localhost:5173" };
+        policy.WithOrigins(origins).AllowAnyHeader().AllowAnyMethod().AllowCredentials();
+    });
+});
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
@@ -116,6 +130,7 @@ builder.Services.AddSwaggerGen(options =>
 var app = builder.Build();
 
 app.UseMiddleware<GlobalExceptionMiddleware>();
+app.UseMiddleware<SecurityHeadersMiddleware>();
 
 if (app.Environment.IsDevelopment())
 {
@@ -124,6 +139,7 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+app.UseCors("FrontendPolicy");
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();

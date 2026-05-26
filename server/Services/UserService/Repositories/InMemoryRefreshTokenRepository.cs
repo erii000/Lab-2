@@ -31,5 +31,13 @@ public sealed class InMemoryRefreshTokenRepository : IRefreshTokenRepository
 
         return Task.CompletedTask;
     }
+
+    public Task RevokeAllForUserAsync(int userId, CancellationToken cancellationToken = default)
+    {
+        foreach (var token in _tokens.Values.Where(x => x.UserId == userId && x.RevokedAt is null))
+            token.RevokedAt = DateTime.UtcNow;
+
+        return Task.CompletedTask;
+    }
 }
 

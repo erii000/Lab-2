@@ -40,6 +40,27 @@ public sealed class ItinerariesController : ControllerBase
         return CreatedAtAction(nameof(GetById), new { id = created.Id }, created);
     }
 
+    [HttpPut("{id:int}/timeline")]
+    [ProducesResponseType(typeof(ItineraryDetailResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<ItineraryDetailResponse>> SaveTimeline(
+        int id,
+        [FromBody] SaveItineraryTimelineRequest request,
+        CancellationToken cancellationToken)
+    {
+        var userId = User.GetUserId();
+        if (userId is null)
+            return Unauthorized();
+
+        var dto = await _itineraryPlanningService.SaveTimelineAsync(
+            id,
+            userId.Value,
+            User.IsAdmin(),
+            request,
+            cancellationToken);
+        return dto is null ? NotFound() : Ok(dto);
+    }
+
     [HttpGet("{id:int}")]
     [ProducesResponseType(typeof(ItineraryDetailResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]

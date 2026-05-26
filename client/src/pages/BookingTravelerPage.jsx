@@ -24,7 +24,9 @@ import { useBookingStore } from "../store/bookingStore.js";
 import { usePaymentLogStore } from "../store/paymentLogStore.js";
 import { formatBookingDates } from "../utils/bookingFactory.js";
 import { buildItineraryPlannerUrl } from "../utils/itineraryPlanner.js";
-import { getCheckoutCardPayload, maskCardNumber, processPayment } from "../utils/paymentGateway.js";
+import { useAuthStore } from "../store/authStore.js";
+import { checkoutBookingPayment } from "../services/paymentCheckout.js";
+import { getCheckoutCardPayload, maskCardNumber } from "../utils/paymentGateway.js";
 import { designTokens } from "../theme/theme.js";
 
 export default function BookingTravelerPage() {
@@ -37,8 +39,10 @@ export default function BookingTravelerPage() {
   const updateTraveler = useBookingStore((s) => s.updateTraveler);
   const setPendingPayment = useBookingStore((s) => s.setPendingPayment);
   const confirmPayment = useBookingStore((s) => s.confirmPayment);
+  const upsertBooking = useBookingStore((s) => s.upsertBooking);
   const setCurrentBooking = useBookingStore((s) => s.setCurrentBooking);
   const logTransaction = usePaymentLogStore((s) => s.logTransaction);
+  const session = useAuthStore((s) => s.session);
 
   const booking = getBookingById(bookingId);
   const [traveler, setTraveler] = useState(booking?.traveler ?? {});
@@ -114,14 +118,17 @@ export default function BookingTravelerPage() {
 
     try {
       const result = await runWithLoader(() =>
-        processPayment({
+        checkoutBookingPayment({
+          accessToken: session?.accessToken ?? null,
+          booking,
           method: paymentMethod,
-          amount: booking.total,
-          currency: "EUR",
           cardNumber: cardPayload?.cardNumber,
-          bookingId: booking.id,
+          successUrl: `${window.location.origin}/bookings/${booking.id}/success`,
+          cancelUrl: `${window.location.origin}/bookings/${booking.id}/traveler`,
         }),
       );
+
+      if (result.redirect) return;
 
       if (!result.ok) {
         setPayError(result.message);
@@ -152,14 +159,41 @@ export default function BookingTravelerPage() {
         cardDisplay,
       });
 
+      if (result.syncedBooking?.serverId) {
+        upsertBooking(
+          { ...booking, ...result.syncedBooking, serverId: result.syncedBooking.serverId },
+          { skipSync: true },
+        );
+      }
+
       const ref = confirmPayment(booking.id, {
         paymentMethod,
         paymentCardDisplay: cardDisplay,
         transactionId: result.transactionId,
+        paymentId: result.paymentId,
+        serverId: result.serverBookingId ?? result.syncedBooking?.serverId,
       });
 
-      showToast({ message: "Payment successful. Confirmation sent to your email.", severity: "success" });
+      if (result.authFallback) {
+        showToast({
+          message: result.message ?? "Payment saved locally. Sign in again to sync with the server.",
+          severity: "warning",
+        });
+      } else {
+        showToast({ message: "Payment successful. Confirmation sent to your email.", severity: "success" });
+      }
       navigate(`/bookings/${booking.id}/success`, { state: { reference: ref } });
+    } catch (err) {
+      const message = err?.message ?? "Payment could not be completed. Please try again.";
+      setPayError(message);
+      logTransaction({
+        status: "failed",
+        bookingId: booking.id,
+        amount: booking.total,
+        message,
+        method: paymentMethod,
+      });
+      showToast({ message, severity: "error" });
     } finally {
       setPaying(false);
     }
@@ -293,7 +327,7 @@ export default function BookingTravelerPage() {
               {booking.packageTitle}
             </Typography>
             <Typography variant="caption" color="text.secondary" display="block" sx={{ mb: 2 }}>
-              {formatBookingDates(booking.start, booking.end)} · {flightLabel} · {hotelLabel}
+              {formatBookingDates(booking)} · {flightLabel} · {hotelLabel}
             </Typography>
             <Divider sx={{ my: 1.5 }} />
             {(booking.lineItems ?? []).map((line) => (

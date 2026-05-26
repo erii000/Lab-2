@@ -3,6 +3,8 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Options;
 using Stripe;
 using Stripe.Checkout;
+using TravelAssistant.Common.Audit;
+using TravelAssistant.Common.Notifications;
 using TravelAssistant.Services.PaymentService.Configuration;
 using TravelAssistant.Services.PaymentService.Models.Entities;
 using TravelAssistant.Services.PaymentService.Repositories;
@@ -12,15 +14,21 @@ namespace TravelAssistant.Services.PaymentService.Services.Payments;
 public sealed class StripePaymentWebhookService : IPaymentWebhookService
 {
     private readonly IPaymentRepository _paymentRepository;
+    private readonly IAuditWriter _auditWriter;
+    private readonly ITravelUpdatePublisher _travelUpdatePublisher;
     private readonly StripeOptions _stripeOptions;
     private readonly PayPalPaymentWebhookService _payPalPaymentWebhookService;
 
     public StripePaymentWebhookService(
         IPaymentRepository paymentRepository,
+        IAuditWriter auditWriter,
+        ITravelUpdatePublisher travelUpdatePublisher,
         IOptions<StripeOptions> stripeOptions,
         PayPalPaymentWebhookService payPalPaymentWebhookService)
     {
         _paymentRepository = paymentRepository;
+        _auditWriter = auditWriter;
+        _travelUpdatePublisher = travelUpdatePublisher;
         _stripeOptions = stripeOptions.Value;
         _payPalPaymentWebhookService = payPalPaymentWebhookService;
     }
@@ -122,5 +130,17 @@ public sealed class StripePaymentWebhookService : IPaymentWebhookService
         payment.PaidAt = DateTime.UtcNow;
         payment.ExternalReference = session.Id;
         await _paymentRepository.SaveChangesAsync(cancellationToken);
+        await _auditWriter.WriteAsync(payment.UserId, "WebhookPaid", "Payment", $"Stripe session {session.Id} payment {payment.Id}", cancellationToken);
+        await _travelUpdatePublisher.NotifyUserAsync(
+            payment.UserId,
+            "Payment received",
+            "Your card payment was successful.",
+            "payment",
+            cancellationToken);
+        await _travelUpdatePublisher.BroadcastAsync(
+            "Payment received",
+            $"Stripe payment {payment.Id} completed.",
+            "payment",
+            cancellationToken);
     }
 }

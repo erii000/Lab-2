@@ -8,6 +8,7 @@ using TravelAssistant.Services.UserService.Configuration;
 using TravelAssistant.Services.UserService.Contracts.Auth;
 using TravelAssistant.Services.UserService.Models.Entities;
 using TravelAssistant.Services.UserService.Repositories.Interfaces;
+using TravelAssistant.Common.Audit;
 using TravelAssistant.Services.UserService.Services.Interfaces;
 using UserService.Models;
 
@@ -19,15 +20,18 @@ public sealed class AuthService : IAuthService
 
     private readonly IUserRepository _userRepository;
     private readonly IRefreshTokenRepository _refreshTokenRepository;
+    private readonly IAuditWriter _auditWriter;
     private readonly JwtOptions _jwtOptions;
 
     public AuthService(
         IUserRepository userRepository,
         IRefreshTokenRepository refreshTokenRepository,
+        IAuditWriter auditWriter,
         IOptions<JwtOptions> jwtOptions)
     {
         _userRepository = userRepository;
         _refreshTokenRepository = refreshTokenRepository;
+        _auditWriter = auditWriter;
         _jwtOptions = jwtOptions.Value;
     }
 
@@ -42,13 +46,14 @@ public sealed class AuthService : IAuthService
         var user = new User
         {
             FirstName = request.Name.Trim(),
-            LastName = request.Surname.Trim(),
+            LastName = string.IsNullOrWhiteSpace(request.Surname) ? string.Empty : request.Surname.Trim(),
             Email = request.Email.Trim().ToLowerInvariant(),
             PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password),
             IsActive = true
         };
 
         user = await _userRepository.AddAsync(user, cancellationToken);
+        await _auditWriter.WriteAsync(user.Id, "Register", "User", $"Registered {user.Email}", cancellationToken);
         return await CreateAuthResponseAsync(user, cancellationToken);
     }
 
@@ -62,7 +67,17 @@ public sealed class AuthService : IAuthService
             throw new UnauthorizedAccessException("Invalid credentials.");
         }
 
+        await _auditWriter.WriteAsync(user.Id, "Login", "User", user.Email, cancellationToken);
         return await CreateAuthResponseAsync(user, cancellationToken);
+    }
+
+    public async Task LogoutAsync(int userId, string? refreshToken, CancellationToken cancellationToken = default)
+    {
+        if (!string.IsNullOrWhiteSpace(refreshToken))
+            await _refreshTokenRepository.RevokeAsync(refreshToken, cancellationToken);
+
+        await _refreshTokenRepository.RevokeAllForUserAsync(userId, cancellationToken);
+        await _auditWriter.WriteAsync(userId, "Logout", "User", null, cancellationToken);
     }
 
     public async Task<AuthResponse> RefreshAsync(RefreshTokenRequest request, CancellationToken cancellationToken = default)

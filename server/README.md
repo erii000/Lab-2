@@ -52,7 +52,7 @@ docker compose up --build
 
 | Area | Through gateway (examples) | Direct service |
 |------|-----------------------------|----------------|
-| Auth | `POST /api/v1/auth/register`, `login`, `refresh` | UserService |
+| Auth | `POST /api/v1/auth/register`, `login`, `refresh`, `logout` | UserService |
 | Users | `GET /api/v1/users` (Admin), `GET /api/v1/users/me`, `GET /api/v1/users/search`, `GET /api/v1/users/export?format=json|csv|xlsx`, `POST /api/v1/users/import` | UserService |
 | Itineraries | `POST /api/v1/itineraries/generate`, `GET …/search`, `GET …/export`, `POST …/import` | ItineraryService |
 | Bookings | `POST /api/v1/bookings`, `PATCH …/status`, `GET …/search`, `GET …/export`, `POST …/import` | BookingService |
@@ -60,7 +60,7 @@ docker compose up --build
 | Notifications | `GET …`, `PATCH …/read`, `POST …/broadcast`, `GET …/export`, `POST …/import` | NotificationService |
 | Audit | `GET /api/v1/auditlogs`, `GET /api/v1/auditlogs/search` | AuditService |
 | Weather / flights / transport | `GET /api/v1/weather/*`, `GET /api/v1/flights/*`, `GET /api/v1/transport/*` | WeatherExternalDataService |
-| Realtime | `GET /hubs/notifications` (WebSocket + `?access_token=` for JWT) | RealTimeCommunicationService |
+| Realtime | `GET /hubs/notifications` (SignalR + `?access_token=` JWT) via **NotificationService**; `GET /hubs/chat` via **RealTimeCommunicationService** | Notification + RTC |
 
 ## Gateway readiness
 
@@ -86,4 +86,6 @@ Every microservice in this solution uses **`TravelAssistant.Common`** `GlobalExc
 
 ## Backlog coverage (`TEAM_BACKLOG_SPLIT.md`)
 
-The team backlog is **functionally covered** in this repo: JWT auth and refresh, user admin list and advanced search, YARP gateway routes, CORS, global error JSON (gateway + user service), itinerary/booking/payment flows, webhooks, weather/flight/transport clients, SignalR hub, notification broadcast, search and import/export (JSON/CSV/XLSX) for the five list domains, audit log API, Docker stack with Redis/Mongo, and this README. Remaining “nice-to-haves” (e.g. full OpenAPI/Postman for every route, ERD diagram file, writing audit events from every service over HTTP) can be added incrementally without blocking frontend integration.
+See also: root [README.md](../README.md), [docs/DATABASE-ERD.md](../docs/DATABASE-ERD.md), [docs/postman/TravelAssistant.postman_collection.json](../docs/postman/TravelAssistant.postman_collection.json).
+
+Configuration: copy `global-settings.env.example` → `global-settings.env` (gitignored). Set `AuditService__BaseUrl` and matching `Audit__InternalKey` for cross-service audit writes.

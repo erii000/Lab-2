@@ -13,7 +13,8 @@ import {
   useTheme,
 } from "@mui/material";
 import { alpha } from "@mui/material/styles";
-import { Link as RouterLink, useLocation } from "react-router-dom";
+import { Link as RouterLink, useLocation, useNavigate } from "react-router-dom";
+import { useAuthStore } from "../../store/authStore.js";
 import {
   footerAccountLinks,
   footerContact,
@@ -171,9 +172,18 @@ function FooterColumn({ title, links }) {
 function FooterAccountSection() {
   const theme = useTheme();
   const { pathname } = useLocation();
+  const navigate = useNavigate();
+  const session = useAuthStore((s) => s.session);
+  const logout = useAuthStore((s) => s.logout);
 
   function handleNavClick() {
     window.scrollTo({ top: 0, left: 0, behavior: "smooth" });
+  }
+
+  function handleLogout() {
+    logout();
+    handleNavClick();
+    navigate("/");
   }
 
   return (
@@ -188,52 +198,77 @@ function FooterAccountSection() {
         aria-label="Account"
         sx={{ alignItems: "center" }}
       >
-        {footerAccountLinks.map((item) => {
-          const isActive = pathname === item.to;
-          const isContained = item.variant === "contained";
-
-          return (
+        {session ? (
+          <>
+            <Typography variant="body2" sx={{ color: theme.palette.text.secondary, width: "100%", mb: 0.5 }}>
+              Signed in as {session.name || session.email}
+            </Typography>
             <Button
-              key={item.to}
-              component={RouterLink}
-              to={item.to}
-              onClick={handleNavClick}
               size="small"
-              variant={item.variant}
-              startIcon={<item.Icon sx={{ fontSize: 17 }} />}
+              variant="outlined"
+              onClick={handleLogout}
               sx={{
                 textTransform: "none",
                 fontWeight: 600,
-                fontSize: "0.8125rem",
-                px: 1.75,
-                py: 0.85,
-                borderRadius: 2,
-                whiteSpace: "nowrap",
-                ...(isContained
-                  ? {
-                      bgcolor: theme.palette.primary.main,
-                      color: "#111318",
-                      boxShadow: `0 4px 14px ${alpha(theme.palette.primary.main, 0.28)}`,
-                      "&:hover": {
-                        bgcolor: theme.palette.primary.light,
-                        boxShadow: `0 6px 18px ${alpha(theme.palette.primary.main, 0.38)}`,
-                      },
-                    }
-                  : {
-                      borderColor: alpha(theme.palette.primary.main, isActive ? 0.85 : 0.45),
-                      color: isActive ? theme.palette.primary.main : alpha("#fff", 0.92),
-                      bgcolor: isActive ? alpha(theme.palette.primary.main, 0.1) : "transparent",
-                      "&:hover": {
-                        borderColor: theme.palette.primary.main,
-                        bgcolor: alpha(theme.palette.primary.main, 0.12),
-                      },
-                    }),
+                borderColor: alpha(theme.palette.primary.main, 0.45),
+                color: alpha("#fff", 0.92),
+                "&:hover": {
+                  borderColor: theme.palette.primary.main,
+                  bgcolor: alpha(theme.palette.primary.main, 0.12),
+                },
               }}
             >
-              {item.label}
+              Log out
             </Button>
-          );
-        })}
+          </>
+        ) : (
+          footerAccountLinks.map((item) => {
+            const isActive = pathname === item.to;
+            const isContained = item.variant === "contained";
+
+            return (
+              <Button
+                key={item.to}
+                component={RouterLink}
+                to={item.to}
+                onClick={handleNavClick}
+                size="small"
+                variant={item.variant}
+                startIcon={<item.Icon sx={{ fontSize: 17 }} />}
+                sx={{
+                  textTransform: "none",
+                  fontWeight: 600,
+                  fontSize: "0.8125rem",
+                  px: 1.75,
+                  py: 0.85,
+                  borderRadius: 2,
+                  whiteSpace: "nowrap",
+                  ...(isContained
+                    ? {
+                        bgcolor: theme.palette.primary.main,
+                        color: "#111318",
+                        boxShadow: `0 4px 14px ${alpha(theme.palette.primary.main, 0.28)}`,
+                        "&:hover": {
+                          bgcolor: theme.palette.primary.light,
+                          boxShadow: `0 6px 18px ${alpha(theme.palette.primary.main, 0.38)}`,
+                        },
+                      }
+                    : {
+                        borderColor: alpha(theme.palette.primary.main, isActive ? 0.85 : 0.45),
+                        color: isActive ? theme.palette.primary.main : alpha("#fff", 0.92),
+                        bgcolor: isActive ? alpha(theme.palette.primary.main, 0.1) : "transparent",
+                        "&:hover": {
+                          borderColor: theme.palette.primary.main,
+                          bgcolor: alpha(theme.palette.primary.main, 0.12),
+                        },
+                      }),
+                }}
+              >
+                {item.label}
+              </Button>
+            );
+          })
+        )}
       </Stack>
     </Box>
   );

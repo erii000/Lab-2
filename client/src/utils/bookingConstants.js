@@ -53,6 +53,16 @@ export function isDraftStatus(status) {
   );
 }
 
+/** Paid / finalized on server — safe to show in admin and sync to API. */
+export function isPaidBookingStatus(status) {
+  return status === BOOKING_STATUS.CONFIRMED || status === BOOKING_STATUS.COMPLETED;
+}
+
+/** Only confirmed/completed bookings are persisted server-side (drafts stay local). */
+export function shouldSyncBookingToApi(booking) {
+  return Boolean(booking && isPaidBookingStatus(booking.status));
+}
+
 export function isUpcomingBooking(booking) {
   if (booking.status !== BOOKING_STATUS.CONFIRMED) return false;
   const end = new Date(booking.end);

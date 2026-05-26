@@ -22,6 +22,9 @@ import {
 import { alpha, keyframes } from "@mui/material/styles";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useLoading } from "../../context/LoadingContext.jsx";
+import { useToast } from "../../context/ToastContext.jsx";
+import { createContactTicket } from "../../api/supportApi.js";
+import { useAuthStore } from "../../store/authStore.js";
 import { useContactDraftStore } from "../../store/contactDraftStore.js";
 import { designTokens } from "../../theme/theme.js";
 import { glassCard } from "./contactStyles.js";
@@ -55,6 +58,8 @@ export default function ContactForm({ formRef, lightSurface }) {
   const setDraft = useContactDraftStore((s) => s.setDraft);
   const resetDraft = useContactDraftStore((s) => s.resetDraft);
   const { runWithLoader } = useLoading();
+  const { showToast } = useToast();
+  const session = useAuthStore((s) => s.session);
   const [touched, setTouched] = useState({});
   const [errors, setErrors] = useState({});
   const [files, setFiles] = useState([]);
@@ -119,7 +124,17 @@ export default function ContactForm({ formRef, lightSurface }) {
 
     setSubmitting(true);
     try {
-      await runWithLoader(() => new Promise((r) => setTimeout(r, 1400)));
+      await runWithLoader(async () => {
+        await createContactTicket(session?.accessToken, {
+          subject: form.subject,
+          message: form.message,
+          fullName: form.fullName,
+          email: form.email,
+          bookingId: form.bookingId,
+          tripType: form.tripType,
+          priority: form.priority,
+        });
+      });
       setSuccess(true);
       resetDraft();
       setTimeout(() => {
@@ -128,6 +143,11 @@ export default function ContactForm({ formRef, lightSurface }) {
         setErrors({});
         setFiles([]);
       }, 2800);
+    } catch (err) {
+      showToast({
+        message: err?.message ?? "Could not send your message. Try again shortly.",
+        severity: "error",
+      });
     } finally {
       setSubmitting(false);
     }

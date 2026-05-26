@@ -26,8 +26,8 @@ export default function BookingsDashboardPage() {
   const savedDestinations = useBookingStore((s) => s.savedDestinations);
   const deleteBooking = useBookingStore((s) => s.deleteBooking);
 
-  function handleDeleteDraft(bookingId) {
-    deleteBooking(bookingId);
+  async function handleDeleteDraft(bookingId) {
+    await deleteBooking(bookingId);
     showToast({ message: "Draft removed.", severity: "success" });
   }
 

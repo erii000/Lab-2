@@ -43,4 +43,17 @@ public sealed class SqlRefreshTokenRepository : IRefreshTokenRepository
         existing.RevokedAt = DateTime.UtcNow;
         await _dbContext.SaveChangesAsync(cancellationToken);
     }
+
+    public async Task RevokeAllForUserAsync(int userId, CancellationToken cancellationToken = default)
+    {
+        var tokens = await _dbContext.RefreshTokens
+            .Where(x => x.UserId == userId && x.RevokedAt == null)
+            .ToListAsync(cancellationToken);
+
+        foreach (var token in tokens)
+            token.RevokedAt = DateTime.UtcNow;
+
+        if (tokens.Count > 0)
+            await _dbContext.SaveChangesAsync(cancellationToken);
+    }
 }

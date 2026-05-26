@@ -10,30 +10,71 @@ import {
   Zoom,
 } from "@mui/material";
 import { alpha } from "@mui/material/styles";
-import { useState } from "react";
-
-const REPLIES = [
-  "For nightlife, I recommend stays near Le Marais or the Latin Quarter — Hotel 5★ option scores highest.",
-  "June 4 has the best sunset window for a Seine cruise based on your dates.",
-  "Switching to the Premium Air flight adds lounge access with only +€120 per person.",
-];
+import { useEffect, useState } from "react";
+import { loadChatHistory, pickAiReply, sendChatTurn } from "../../../services/chatSync.js";
+import { connectChatHub } from "../../../services/realtimeChatHub.js";
+import { useAuthStore } from "../../../store/authStore.js";
 
 export default function AiTripChatFab() {
+  const session = useAuthStore((s) => s.session);
   const [open, setOpen] = useState(false);
   const [input, setInput] = useState("");
   const [messages, setMessages] = useState([
     { role: "ai", text: "Ask me anything about your trip — hotels, weather, or experiences." },
   ]);
+  const [sending, setSending] = useState(false);
 
-  function send() {
+  useEffect(() => {
+    if (!open || !session?.accessToken) return undefined;
+    let cancelled = false;
+    let hub;
+
+    loadChatHistory(session.accessToken)
+      .then((history) => {
+        if (!cancelled) setMessages(history);
+      })
+      .catch(() => null);
+
+    (async () => {
+      const token = await useAuthStore.getState().ensureAccessToken();
+      if (!token || cancelled) return;
+      hub = connectChatHub(token, (msg) => {
+        const text = msg.text ?? msg.Text ?? "";
+        if (!text) return;
+        setMessages((m) => [...m, { role: "ai", text }]);
+      });
+      try {
+        await hub.start();
+      } catch {
+        /* REST fallback still works */
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+      hub?.stop();
+    };
+  }, [open, session?.accessToken]);
+
+  async function send() {
     const q = input.trim();
-    if (!q) return;
-    setMessages((m) => [
-      ...m,
-      { role: "user", text: q },
-      { role: "ai", text: REPLIES[messages.length % REPLIES.length] },
-    ]);
+    if (!q || sending) return;
     setInput("");
+    setSending(true);
+    try {
+      if (session?.accessToken) {
+        const turn = await sendChatTurn(session.accessToken, q, messages.length);
+        setMessages((m) => [...m, { role: "user", text: turn.userText }, { role: "ai", text: turn.aiText }]);
+      } else {
+        setMessages((m) => [
+          ...m,
+          { role: "user", text: q },
+          { role: "ai", text: pickAiReply(m.length) },
+        ]);
+      }
+    } finally {
+      setSending(false);
+    }
   }
 
   return (
@@ -75,6 +116,11 @@ export default function AiTripChatFab() {
             <Typography variant="subtitle2" fontWeight={700}>
               Ask AI about your trip…
             </Typography>
+            {!session ? (
+              <Typography variant="caption" color="text.secondary">
+                Log in to save chat history
+              </Typography>
+            ) : null}
           </Box>
           <Stack spacing={1} sx={{ p: 1.5, maxHeight: 220, overflow: "auto" }}>
             {messages.map((msg, i) => (
@@ -99,9 +145,10 @@ export default function AiTripChatFab() {
               placeholder="Which hotel has the best nightlife nearby?"
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && send()}
+              onKeyDown={(e) => e.key === "Enter" && !sending && send()}
+              disabled={sending}
             />
-            <IconButton color="primary" onClick={send}>
+            <IconButton color="primary" onClick={send} disabled={sending}>
               <SendRounded />
             </IconButton>
           </Stack>

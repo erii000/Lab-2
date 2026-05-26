@@ -1,6 +1,5 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import { adminBookings as initialBookings } from "../data/adminData.js";
 import * as bookingsApi from "../api/bookingsApi.js";
 import { fetchAdminBookings } from "../services/adminDataSync.js";
 import { adminStatusToApi } from "../utils/bookingMappers.js";
@@ -30,8 +29,9 @@ async function patchServerStatus(booking, statusKey) {
 const RECENT_IDS = ["BK-92841", "BK-92838", "BK-92835", "BK-92831", "BK-92828"];
 
 export function selectRecentBookings(bookings) {
-  const ordered = RECENT_IDS.map((id) => bookings.find((b) => b.id === id)).filter(Boolean);
-  const base = ordered.length >= 3 ? ordered : bookings;
+  const visible = filterAdminVisibleBookings(bookings);
+  const ordered = RECENT_IDS.map((id) => visible.find((b) => b.id === id)).filter(Boolean);
+  const base = ordered.length >= 3 ? ordered : visible;
   return base.slice(0, 5);
 }
 
@@ -46,6 +46,15 @@ export const BOOKING_STATUS_OPTIONS = [
 export function normalizeStatusKey(status) {
   if (status === "confirmed") return "paid";
   return status;
+}
+
+/** Unpaid drafts belong on the user app only, not admin. */
+export function isAdminVisibleBooking(booking) {
+  return normalizeStatusKey(booking?.status) !== "pending";
+}
+
+export function filterAdminVisibleBookings(bookings) {
+  return bookings.filter(isAdminVisibleBooking);
 }
 
 export function statusToStoreValue(key) {
@@ -86,21 +95,18 @@ function appendAdminAction(booking, title, detail) {
 export const useAdminBookingsStore = create(
   persist(
     (set, get) => ({
-  bookings: initialBookings.map((b) => enrichBooking({ ...b })),
+  bookings: [],
   loadedFromApi: false,
+  hiddenBookingIds: [],
 
   hydrateFromApi: async (accessToken) => {
     const token = accessToken ?? readAccessToken();
     if (!token) return;
     try {
-      const bookings = await fetchAdminBookings(token);
-      if (bookings.length > 0) {
-        set({ bookings, loadedFromApi: true });
-      } else {
-        set({ loadedFromApi: true });
-      }
+      const bookings = await fetchAdminBookings(token, get().hiddenBookingIds);
+      set({ bookings: filterAdminVisibleBookings(bookings), loadedFromApi: true });
     } catch {
-      set({ loadedFromApi: true });
+      set({ bookings: [], loadedFromApi: true });
     }
   },
 
@@ -228,9 +234,16 @@ export const useAdminBookingsStore = create(
 
   getBookingById: (id) => get().bookings.find((b) => b.id === id),
 
-  removeBooking: (bookingId) => {
+  removeBooking: async (bookingId) => {
     const booking = get().bookings.find((b) => b.id === bookingId);
+    if (booking?.serverId) {
+      await patchServerStatus(booking, "cancelled");
+    }
+    const hidden = new Set(get().hiddenBookingIds.map(String));
+    hidden.add(String(bookingId));
+    if (booking?.serverId != null) hidden.add(String(booking.serverId));
     set((state) => ({
+      hiddenBookingIds: [...hidden],
       bookings: state.bookings.filter((b) => b.id !== bookingId),
     }));
     if (booking) {
@@ -244,6 +257,17 @@ export const useAdminBookingsStore = create(
     }
   },
     }),
-    { name: "sta-admin-bookings-v1", partialize: (s) => ({ bookings: s.bookings }) },
+    {
+      name: "sta-admin-bookings-v1",
+      version: 2,
+      partialize: (s) => ({ bookings: s.bookings, hiddenBookingIds: s.hiddenBookingIds }),
+      migrate: (persisted, version) => {
+        if (!persisted || typeof persisted !== "object") return persisted;
+        if (version < 2) {
+          return { ...persisted, bookings: [], loadedFromApi: false };
+        }
+        return persisted;
+      },
+    },
   ),
 );

@@ -6,6 +6,7 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using TravelAssistant.Services.AuditService.Data;
 using TravelAssistant.Services.AuditService.Interfaces;
+using TravelAssistant.Services.AuditService.Repositories;
 using TravelAssistant.Services.AuditService.Services;
 using TravelAssistant.Common.Middleware;
 
@@ -56,6 +57,7 @@ builder.Services
     });
 
 builder.Services.AddAuthorization();
+builder.Services.AddScoped<IAuditLogRepository, EfAuditLogRepository>();
 builder.Services.AddScoped<IAuditLogService, AuditLogService>();
 builder.Services.AddHealthChecks();
 builder.Services.AddControllers();

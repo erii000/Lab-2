@@ -28,6 +28,31 @@ export function patchBookingStatus(accessToken, id, status) {
   });
 }
 
+/** @param {string} accessToken @param {number} id @param {object} body */
+export function patchBooking(accessToken, id, body) {
+  return apiRequest(`/api/v1/bookings/${id}`, {
+    method: "PATCH",
+    token: accessToken,
+    json: body,
+  });
+}
+
+/** @param {string} accessToken @param {number} id */
+export function confirmBookingPayment(accessToken, id) {
+  return apiRequest(`/api/v1/bookings/${id}/confirm-payment`, {
+    method: "POST",
+    token: accessToken,
+  });
+}
+
+/** @param {string} accessToken @param {number} id — owner discards a pending draft */
+export function discardBooking(accessToken, id) {
+  return apiRequest(`/api/v1/bookings/${id}/discard`, {
+    method: "POST",
+    token: accessToken,
+  });
+}
+
 /** @param {string} accessToken @param {object} [query] */
 export function searchBookings(accessToken, query = {}) {
   const params = new URLSearchParams();

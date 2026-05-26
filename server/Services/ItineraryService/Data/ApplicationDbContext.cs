@@ -18,6 +18,7 @@ public sealed class ApplicationDbContext : DbContext
     public DbSet<Destination> Destinations => Set<Destination>();
     public DbSet<TripDestination> TripDestinations => Set<TripDestination>();
     public DbSet<TripParticipant> TripParticipants => Set<TripParticipant>();
+    public DbSet<UserSavedDestination> UserSavedDestinations => Set<UserSavedDestination>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -29,6 +30,7 @@ public sealed class ApplicationDbContext : DbContext
             entity.Property(x => x.Destination).HasMaxLength(120).IsRequired();
             entity.Property(x => x.Country).HasMaxLength(100);
             entity.Property(x => x.Description).HasMaxLength(2000);
+            entity.Property(x => x.TimelineJson).HasColumnType("nvarchar(max)");
             entity.Property(x => x.StartDate).HasColumnType("date").IsRequired();
             entity.Property(x => x.EndDate).HasColumnType("date").IsRequired();
             entity.Property(x => x.CreatedAt).HasColumnType("datetime").IsRequired();
@@ -143,6 +145,18 @@ public sealed class ApplicationDbContext : DbContext
                 .WithMany(x => x.TripParticipants)
                 .HasForeignKey(x => x.TripId)
                 .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<UserSavedDestination>(entity =>
+        {
+            entity.ToTable("UserSavedDestinations");
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.DestinationSlug).HasMaxLength(64).IsRequired();
+            entity.Property(x => x.SavedAt).HasColumnType("datetime2").IsRequired();
+            entity.HasIndex(x => x.UserId).HasDatabaseName("IX_UserSavedDestinations_UserId");
+            entity.HasIndex(x => new { x.UserId, x.DestinationSlug })
+                .IsUnique()
+                .HasDatabaseName("UX_UserSavedDestinations_User_Slug");
         });
     }
 }

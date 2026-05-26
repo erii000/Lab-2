@@ -250,7 +250,7 @@ export const FALLBACK_DESTINATIONS = [
       "Gaudí architecture, beach mornings, and tapas bars that stay lively until midnight.",
     gallery: [
       "https://images.unsplash.com/photo-1583422409516-2895a77efded?auto=format&fit=crop&w=1600&q=80",
-      "https://images.unsplash.com/photo-1562883676-8c7feb83f7b9?auto=format&fit=crop&w=1600&q=80",
+      "https://images.unsplash.com/photo-1539037116277-4db20889f2d0?auto=format&fit=crop&w=1600&q=80",
       "https://images.unsplash.com/photo-1558642452-9d2a7deb7f62?auto=format&fit=crop&w=1600&q=80",
     ],
     weather: { tempC: 24, condition: "Sunny", seasonTip: "Sagrada Família timed entry is essential." },

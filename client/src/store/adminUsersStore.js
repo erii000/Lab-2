@@ -1,9 +1,16 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import { adminUsers as seedUsers } from "../data/adminData.js";
+import { register } from "../api/authApi.js";
+import * as usersApi from "../api/usersApi.js";
 import { fetchAdminUsers } from "../services/adminDataSync.js";
+import { saveUserPreferences } from "../services/travelPreferencesSync.js";
 import { enrichUser } from "../utils/adminUsers.js";
 import { adminNotify } from "../utils/adminNotify.js";
+
+function parseNumericUserId(id) {
+  const n = Number(String(id).replace(/\D/g, ""));
+  return Number.isFinite(n) && n > 0 ? n : null;
+}
 
 function readAccessToken() {
   try {
@@ -18,7 +25,7 @@ function readAccessToken() {
 export const useAdminUsersStore = create(
   persist(
     (set, get) => ({
-      users: seedUsers.map(enrichUser),
+      users: [],
       loadedFromApi: false,
 
       hydrateFromApi: async (accessToken) => {
@@ -26,58 +33,73 @@ export const useAdminUsersStore = create(
         if (!token) return;
         try {
           const users = await fetchAdminUsers(token);
-          if (users.length > 0) {
-            set({ users, loadedFromApi: true });
-          } else {
-            set({ loadedFromApi: true });
-          }
+          set({ users, loadedFromApi: true });
         } catch {
-          set({ loadedFromApi: true });
+          set({ users: [], loadedFromApi: true });
         }
       },
 
-      updateUser: (id, patch) => {
+      updateUser: async (id, patch) => {
         set((s) => ({
           users: s.users.map((u) => (u.id === id ? enrichUser({ ...u, ...patch }) : u)),
         }));
+        const token = readAccessToken();
+        const numericId = parseNumericUserId(id);
+        if (!token || !numericId) return;
+
+        try {
+          if (patch.accountStatus === "deactivated" || patch.travelerStatus === "inactive") {
+            await usersApi.patchUser(token, numericId, { isActive: false });
+          } else if (patch.accountStatus === "active") {
+            await usersApi.patchUser(token, numericId, { isActive: true });
+          }
+          if (patch.name) {
+            const parts = String(patch.name).trim().split(/\s+/);
+            await usersApi.patchUser(token, numericId, {
+              firstName: parts[0] ?? "",
+              lastName: parts.slice(1).join(" ") || parts[0] || "",
+            });
+          }
+          if (patch.preferences) {
+            await saveUserPreferences(token, numericId, patch.preferences, { asAdmin: true });
+          }
+        } catch {
+          /* local state kept */
+        }
       },
 
-      inviteUser: ({ email, role, status }) => {
+      inviteUser: async ({ email, role, status }) => {
         const name = email.split("@")[0].replace(/[._]/g, " ");
         const cap = name.charAt(0).toUpperCase() + name.slice(1);
-        const user = enrichUser({
-          id: `u-${Date.now().toString(36)}`,
-          name: cap,
-          email,
-          role: role ?? "Traveler",
-          travelerStatus: status ?? "new",
-          trips: 0,
-          bookings: 0,
-          totalSpent: 0,
-          lastActive: "Invited",
-          favoriteDestination: "—",
-          averageBudget: 0,
-          preferences: [],
-          savedTrips: [],
-          bookingHistory: [],
-          accountStatus: "active",
-        });
-        set((s) => ({ users: [user, ...s.users] }));
+        const tempPassword = `Invite${Date.now().toString(36)}!9Z`;
+        try {
+          await register({
+            name: cap,
+            surname: "Traveler",
+            email: email.trim(),
+            password: tempPassword,
+          });
+        } catch {
+          /* may already exist — refresh list */
+        }
+        const token = readAccessToken();
+        if (token) {
+          await get().hydrateFromApi(token);
+        }
         adminNotify({
           type: "user",
           title: "Traveler invited",
-          message: `${cap} · ${email}`,
+          message: `${cap} · ${email} (${role ?? "Traveler"})`,
           link: "/admin/users",
-          entityId: user.id,
         });
-        return user;
+        return { email, role: role ?? "Traveler", status: status ?? "new" };
       },
 
       setTravelerStatus: (id, travelerStatus) => get().updateUser(id, { travelerStatus }),
 
-      deactivateUser: (id) => {
+      deactivateUser: async (id) => {
         const user = get().users.find((u) => u.id === id);
-        get().updateUser(id, { accountStatus: "deactivated", travelerStatus: "inactive" });
+        await get().updateUser(id, { accountStatus: "deactivated", travelerStatus: "inactive" });
         if (user) {
           adminNotify({
             type: "user",
@@ -89,9 +111,9 @@ export const useAdminUsersStore = create(
         }
       },
 
-      suspendUser: (id) => {
+      suspendUser: async (id) => {
         const user = get().users.find((u) => u.id === id);
-        get().updateUser(id, { accountStatus: "suspended" });
+        await get().updateUser(id, { accountStatus: "suspended", travelerStatus: "inactive" });
         if (user) {
           adminNotify({
             type: "user",
@@ -129,8 +151,12 @@ export const useAdminUsersStore = create(
         }
       },
 
-      bulkDeactivate: (ids) => {
-        ids.forEach((id) => get().updateUser(id, { accountStatus: "deactivated", travelerStatus: "inactive" }));
+      bulkDeactivate: async (ids) => {
+        await Promise.all(
+          ids.map((id) =>
+            get().updateUser(id, { accountStatus: "deactivated", travelerStatus: "inactive" }),
+          ),
+        );
         if (ids.length) {
           adminNotify({
             type: "user",
@@ -153,6 +179,15 @@ export const useAdminUsersStore = create(
         }
       },
     }),
-    { name: "sta-admin-users-v1", partialize: (s) => ({ users: s.users }) },
+    {
+      name: "sta-admin-users-v1",
+      version: 2,
+      partialize: (s) => ({ users: s.users }),
+      migrate: (persisted, version) => {
+        if (!persisted || typeof persisted !== "object") return persisted;
+        if (version < 2) return { ...persisted, users: [], loadedFromApi: false };
+        return persisted;
+      },
+    },
   ),
 );

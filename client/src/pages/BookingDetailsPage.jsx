@@ -79,8 +79,8 @@ export default function BookingDetailsPage() {
   const isFinalized = booking.status === BOOKING_STATUS.CONFIRMED || booking.status === BOOKING_STATUS.COMPLETED;
   const isDraft = isDraftStatus(booking.status);
 
-  function handleDeleteDraft() {
-    deleteBooking(booking.id);
+  async function handleDeleteDraft() {
+    await deleteBooking(booking.id);
     showToast({ message: "Draft removed.", severity: "success" });
     navigate("/bookings");
   }

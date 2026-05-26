@@ -8,9 +8,8 @@ public sealed class RegisterRequest
     [MaxLength(50)]
     public string Name { get; set; } = string.Empty;
 
-    [Required]
     [MaxLength(50)]
-    public string Surname { get; set; } = string.Empty;
+    public string? Surname { get; set; }
 
     [Required]
     [EmailAddress]

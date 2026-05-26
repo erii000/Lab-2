@@ -1,31 +1,21 @@
-using Microsoft.EntityFrameworkCore;
-using TravelAssistant.Services.RealTimeCommunicationService.Data;
 using TravelAssistant.Services.RealTimeCommunicationService.Interfaces;
 using TravelAssistant.Services.RealTimeCommunicationService.Models;
+using TravelAssistant.Services.RealTimeCommunicationService.Repositories;
 
-namespace TravelAssistant.Services.RealTimeCommunicationService.Services
+namespace TravelAssistant.Services.RealTimeCommunicationService.Services;
+
+public sealed class ChatService : IChatService
 {
-    public sealed class ChatService : IChatService
-    {
-        private readonly ApplicationDbContext _context;
+    private readonly IChatRepository _repository;
 
-        public ChatService(ApplicationDbContext context)
-        {
-            _context = context;
-        }
+    public ChatService(IChatRepository repository) => _repository = repository;
 
-        public async Task<IEnumerable<ChatMessage>> GetAllAsync(CancellationToken cancellationToken = default)
-        {
-            return await _context.ChatMessages
-                .OrderByDescending(x => x.SentAt)
-                .ToListAsync(cancellationToken);
-        }
+    public async Task<IEnumerable<ChatMessage>> GetAllAsync(CancellationToken cancellationToken = default) =>
+        await _repository.GetAllAsync(cancellationToken);
 
-        public async Task<ChatMessage> CreateAsync(ChatMessage chatMessage, CancellationToken cancellationToken = default)
-        {
-            _context.ChatMessages.Add(chatMessage);
-            await _context.SaveChangesAsync(cancellationToken);
-            return chatMessage;
-        }
-    }
+    public async Task<IEnumerable<ChatMessage>> GetForUserAsync(int userId, CancellationToken cancellationToken = default) =>
+        await _repository.GetForUserAsync(userId, cancellationToken);
+
+    public Task<ChatMessage> CreateAsync(ChatMessage chatMessage, CancellationToken cancellationToken = default) =>
+        _repository.AddAsync(chatMessage, cancellationToken);
 }

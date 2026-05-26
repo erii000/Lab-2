@@ -1,4 +1,7 @@
+using System.Security.Claims;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using TravelAssistant.Services.UserService.Contracts.Auth;
 using TravelAssistant.Services.UserService.Services.Interfaces;
 
@@ -7,6 +10,7 @@ namespace TravelAssistant.Services.UserService.Controllers;
 [ApiController]
 [Route("api/auth")]
 [Route("api/v1/auth")]
+[EnableRateLimiting("auth")]
 public sealed class AuthController : ControllerBase
 {
     private readonly IAuthService _authService;
@@ -62,6 +66,19 @@ public sealed class AuthController : ControllerBase
         {
             return Unauthorized(new { error = ex.Message });
         }
+    }
+
+    [Authorize]
+    [HttpPost("logout")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    public async Task<IActionResult> Logout([FromBody] LogoutRequest? request, CancellationToken cancellationToken)
+    {
+        var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (!int.TryParse(userIdClaim, out var userId))
+            return Unauthorized();
+
+        await _authService.LogoutAsync(userId, request?.RefreshToken, cancellationToken);
+        return NoContent();
     }
 }
 

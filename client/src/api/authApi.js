@@ -43,3 +43,15 @@ export function refresh(refreshToken) {
 export function getMe(accessToken) {
   return apiRequest("/api/v1/users/me", { token: accessToken });
 }
+
+/**
+ * @param {string} accessToken
+ * @param {string} [refreshToken]
+ */
+export function logout(accessToken, refreshToken) {
+  return apiRequest("/api/v1/auth/logout", {
+    method: "POST",
+    token: accessToken,
+    json: refreshToken ? { refreshToken } : {},
+  });
+}

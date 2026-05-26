@@ -14,8 +14,8 @@ export default function PlannerToolbar({
 }) {
   const navigate = useNavigate();
 
-  function handleContinue() {
-    const booking = onContinueToBooking?.();
+  async function handleContinue() {
+    const booking = await onContinueToBooking?.();
     navigate(
       buildBookingUrl(destinationId, {
         bookingId: booking?.id,

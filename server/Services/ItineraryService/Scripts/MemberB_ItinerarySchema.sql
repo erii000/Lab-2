@@ -15,6 +15,9 @@ END;
 IF COL_LENGTH(N'dbo.Itineraries', N'Country') IS NULL
     ALTER TABLE dbo.Itineraries ADD Country NVARCHAR(100) NULL;
 
+IF COL_LENGTH(N'dbo.Itineraries', N'TimelineJson') IS NULL
+    ALTER TABLE dbo.Itineraries ADD TimelineJson NVARCHAR(MAX) NULL;
+
 DECLARE @descMax INT = (
     SELECT CHARACTER_MAXIMUM_LENGTH
     FROM INFORMATION_SCHEMA.COLUMNS

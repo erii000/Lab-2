@@ -11,6 +11,7 @@ public sealed class ItineraryDetailResponse
     public DateOnly StartDate { get; init; }
     public DateOnly EndDate { get; init; }
     public IReadOnlyList<ItineraryDayDto> Days { get; init; } = Array.Empty<ItineraryDayDto>();
+    public string? TimelineJson { get; init; }
     public TravelPreferenceSnapshotDto? PreferencesUsed { get; init; }
 }
 

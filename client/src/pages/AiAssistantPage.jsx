@@ -1,7 +1,9 @@
 import { Box, Button, Container } from "@mui/material";
 import { alpha } from "@mui/material/styles";
 import { useRef, useState } from "react";
-import { Link as RouterLink } from "react-router-dom";
+import { Link as RouterLink, useNavigate } from "react-router-dom";
+import * as itinerariesApi from "../api/itinerariesApi.js";
+import { useAuthStore } from "../store/authStore.js";
 import AssistantBudgetSummary from "../components/assistant/AssistantBudgetSummary.jsx";
 import AssistantHero from "../components/assistant/AssistantHero.jsx";
 import AssistantHowItWorks from "../components/assistant/AssistantHowItWorks.jsx";
@@ -16,6 +18,8 @@ import { designTokens } from "../theme/theme.js";
 const PLAN_DELAY_MS = loadingSteps.length * 700 + 400;
 
 export default function AiAssistantPage() {
+  const navigate = useNavigate();
+  const session = useAuthStore((s) => s.session);
   const inputRef = useRef(null);
   const resultsRef = useRef(null);
   const query = useAssistantStore((s) => s.query);
@@ -63,8 +67,32 @@ export default function AiAssistantPage() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
-  function handleSave() {
-    showToast({ message: "Trip saved to your itinerary.", severity: "success" });
+  async function handleSave() {
+    if (!plan) return;
+    const token = session?.accessToken ?? (await useAuthStore.getState().ensureAccessToken());
+    if (!token) {
+      showToast({ message: "Log in to save this plan to your itinerary.", severity: "info" });
+      navigate("/login");
+      return;
+    }
+    try {
+      const dest = plan.stops?.[0] ?? plan.title?.replace(/ trip/i, "") ?? "Paris";
+      const start = new Date();
+      const end = new Date(start);
+      end.setDate(end.getDate() + (plan.days?.length ?? 5));
+      await itinerariesApi.generateItinerary(token, {
+        destination: dest,
+        country: null,
+        startDate: start.toISOString().slice(0, 10),
+        endDate: end.toISOString().slice(0, 10),
+        tripTitle: plan.title,
+        budgetLevel: "custom",
+      });
+      showToast({ message: "Trip saved to your account. Open the planner to customize.", severity: "success" });
+      navigate(`/itinerary?destination=${encodeURIComponent(dest)}&start=${start.toISOString().slice(0, 10)}&end=${end.toISOString().slice(0, 10)}`);
+    } catch (err) {
+      showToast({ message: err?.message ?? "Could not save itinerary.", severity: "error" });
+    }
   }
 
   async function handleShare() {

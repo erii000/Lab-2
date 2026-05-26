@@ -1,6 +1,7 @@
 import { CssBaseline, ThemeProvider } from "@mui/material";
 import { useEffect } from "react";
 import { LoadingProvider } from "./context/LoadingContext.jsx";
+import { NotificationsProvider } from "./context/NotificationsContext.jsx";
 import { ToastProvider } from "./context/ToastContext.jsx";
 import { useCatalogStore } from "./store/catalogStore.js";
 import { appTheme } from "./theme/theme.js";
@@ -14,7 +15,9 @@ export default function AppProviders({ children }) {
     <ThemeProvider theme={appTheme}>
       <CssBaseline />
       <ToastProvider>
-        <LoadingProvider>{children}</LoadingProvider>
+        <LoadingProvider>
+          <NotificationsProvider>{children}</NotificationsProvider>
+        </LoadingProvider>
       </ToastProvider>
     </ThemeProvider>
   );

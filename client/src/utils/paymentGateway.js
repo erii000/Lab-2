@@ -4,7 +4,8 @@
  */
 
 export function luhnCheck(cardNumber) {
-  const digits = cardNumber.replace(/\D/g, "");
+  const digits = String(cardNumber ?? "").replace(/\D/g, "");
+  if (!digits) return false;
   if (digits.length < 13 || digits.length > 19) return false;
   let sum = 0;
   let alt = false;
@@ -20,11 +21,12 @@ export function luhnCheck(cardNumber) {
   return sum % 10 === 0;
 }
 
-export function validateCardPayload({ cardNumber, expiry, cvc, name }) {
+export function validateCardPayload({ cardNumber, expiry, cvc, name } = {}) {
   const errors = {};
-  const num = cardNumber.replace(/\s/g, "");
+  const num = String(cardNumber ?? "").replace(/\s/g, "");
   if (!name?.trim()) errors.name = "Cardholder name is required";
-  if (!luhnCheck(num)) errors.cardNumber = "Invalid card number";
+  if (!num) errors.cardNumber = "Card number is required";
+  else if (!luhnCheck(num)) errors.cardNumber = "Invalid card number";
   if (!/^\d{2}\/\d{2}$/.test(expiry ?? "")) errors.expiry = "Use MM/YY format";
   else {
     const [mm, yy] = expiry.split("/").map((x) => parseInt(x, 10));
@@ -37,7 +39,7 @@ export function validateCardPayload({ cardNumber, expiry, cvc, name }) {
 }
 
 export function maskCardNumber(cardNumber) {
-  const digits = cardNumber.replace(/\D/g, "");
+  const digits = String(cardNumber ?? "").replace(/\D/g, "");
   if (digits.length < 4) return "••••";
   return `•••• •••• •••• ${digits.slice(-4)}`;
 }
@@ -93,7 +95,13 @@ function delay(ms) {
 }
 
 export function getCheckoutCardPayload(card, method) {
-  if (method !== "card") return { valid: true, card: null };
-  const errors = validateCardPayload(card);
-  return { valid: Object.keys(errors).length === 0, errors, card };
+  if (method !== "card") return { valid: true, card: null, errors: {} };
+  const payload = {
+    cardNumber: card?.cardNumber ?? "",
+    expiry: card?.expiry ?? "",
+    cvc: card?.cvc ?? "",
+    name: card?.name ?? "",
+  };
+  const errors = validateCardPayload(payload);
+  return { valid: Object.keys(errors).length === 0, errors, card: payload };
 }

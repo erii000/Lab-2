@@ -16,7 +16,10 @@ import {
 import { alpha } from "@mui/material/styles";
 import { useMemo, useState } from "react";
 import { useToast } from "../../context/ToastContext.jsx";
-import { useAdminBookingsStore } from "../../store/adminBookingsStore.js";
+import {
+  filterAdminVisibleBookings,
+  useAdminBookingsStore,
+} from "../../store/adminBookingsStore.js";
 import { useAdminTripsStore } from "../../store/adminTripsStore.js";
 import { useAdminUsersStore } from "../../store/adminUsersStore.js";
 import {
@@ -50,6 +53,7 @@ const STATUS_BY_TYPE = {
 export default function AdminReportsBuilder() {
   const { showToast } = useToast();
   const bookings = useAdminBookingsStore((s) => s.bookings);
+  const visibleBookings = useMemo(() => filterAdminVisibleBookings(bookings), [bookings]);
   const trips = useAdminTripsStore((s) => s.trips);
   const users = useAdminUsersStore((s) => s.users);
 
@@ -64,8 +68,8 @@ export default function AdminReportsBuilder() {
   );
 
   const rows = useMemo(
-    () => buildReportRows(reportType, { bookings, trips, users }, criteria),
-    [reportType, bookings, trips, users, criteria],
+    () => buildReportRows(reportType, { bookings: visibleBookings, trips, users }, criteria),
+    [reportType, visibleBookings, trips, users, criteria],
   );
 
   const meta = REPORT_TYPES.find((r) => r.id === reportType);
