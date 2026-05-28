@@ -51,6 +51,13 @@ async function persistBookingToApi(booking) {
 }
 
 const defaultUser = sessionToAuthUser(null);
+const emptyTravelerProfile = {
+  fullName: "",
+  passport: "",
+  nationality: "",
+  email: "",
+  phone: "",
+};
 
 export const useBookingStore = create(
   persist(
@@ -60,6 +67,7 @@ export const useBookingStore = create(
       currentBookingId: null,
       bookingDrafts: [],
       savedDestinations: [],
+      travelerProfile: emptyTravelerProfile,
       /** Local ids and server ids the user removed (survives re-sync). */
       deletedBookingKeys: [],
 
@@ -191,9 +199,11 @@ export const useBookingStore = create(
 
       updateTraveler: (bookingId, travelerPatch) =>
         set((state) => {
+          let savedTraveler = null;
           const bookingDrafts = state.bookingDrafts.map((b) => {
             if (b.id !== bookingId) return b;
             const traveler = { ...b.traveler, ...travelerPatch };
+            savedTraveler = traveler;
             const updated = {
               ...b,
               traveler,
@@ -209,7 +219,19 @@ export const useBookingStore = create(
             updated.progress = calculateBookingProgress(updated);
             return updated;
           });
-          return { bookingDrafts };
+          if (!savedTraveler) return { bookingDrafts };
+          return {
+            bookingDrafts,
+            travelerProfile: {
+              fullName: savedTraveler.fullName?.trim() ? savedTraveler.fullName : state.travelerProfile.fullName,
+              passport: savedTraveler.passport?.trim() ? savedTraveler.passport : state.travelerProfile.passport,
+              nationality: savedTraveler.nationality?.trim()
+                ? savedTraveler.nationality
+                : state.travelerProfile.nationality,
+              email: savedTraveler.email?.trim() ? savedTraveler.email : state.travelerProfile.email,
+              phone: savedTraveler.phone?.trim() ? savedTraveler.phone : state.travelerProfile.phone,
+            },
+          };
         }),
 
       setPendingPayment: (bookingId) =>
@@ -278,18 +300,22 @@ export const useBookingStore = create(
     }),
     {
       name: "sta-bookings-v1",
-      version: 2,
+      version: 3,
       partialize: (state) => ({
         authUser: state.authUser,
         bookingDrafts: state.bookingDrafts,
         savedDestinations: state.savedDestinations,
         currentBookingId: state.currentBookingId,
         deletedBookingKeys: state.deletedBookingKeys,
+        travelerProfile: state.travelerProfile,
       }),
       migrate: (persisted, version) => {
         if (!persisted || typeof persisted !== "object") return persisted;
         if (version < 2) {
-          return { ...persisted, deletedBookingKeys: [] };
+          return { ...persisted, deletedBookingKeys: [], travelerProfile: emptyTravelerProfile };
+        }
+        if (version < 3) {
+          return { ...persisted, travelerProfile: persisted.travelerProfile ?? emptyTravelerProfile };
         }
         return persisted;
       },

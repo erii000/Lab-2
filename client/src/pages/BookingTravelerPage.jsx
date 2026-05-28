@@ -36,6 +36,7 @@ export default function BookingTravelerPage() {
   const { runWithLoader } = useLoading();
 
   const getBookingById = useBookingStore((s) => s.getBookingById);
+  const travelerProfile = useBookingStore((s) => s.travelerProfile);
   const updateTraveler = useBookingStore((s) => s.updateTraveler);
   const setPendingPayment = useBookingStore((s) => s.setPendingPayment);
   const confirmPayment = useBookingStore((s) => s.confirmPayment);
@@ -52,9 +53,28 @@ export default function BookingTravelerPage() {
   const [payError, setPayError] = useState("");
 
   useEffect(() => {
-    if (booking?.traveler) setTraveler(booking.traveler);
+    if (booking?.traveler) {
+      setTraveler({
+        ...booking.traveler,
+        fullName: booking.traveler.fullName?.trim()
+          ? booking.traveler.fullName
+          : (travelerProfile.fullName ?? session?.name ?? ""),
+        email: booking.traveler.email?.trim()
+          ? booking.traveler.email
+          : (travelerProfile.email ?? session?.email ?? ""),
+        passport: booking.traveler.passport?.trim()
+          ? booking.traveler.passport
+          : (travelerProfile.passport ?? ""),
+        nationality: booking.traveler.nationality?.trim()
+          ? booking.traveler.nationality
+          : (travelerProfile.nationality ?? ""),
+        phone: booking.traveler.phone?.trim()
+          ? booking.traveler.phone
+          : (travelerProfile.phone ?? ""),
+      });
+    }
     if (booking?.id) setCurrentBooking(booking.id);
-  }, [booking?.id, booking?.traveler, setCurrentBooking]);
+  }, [booking?.id, booking?.traveler, setCurrentBooking, session?.name, session?.email, travelerProfile]);
 
   const isValid = useMemo(() => {
     const t = traveler;

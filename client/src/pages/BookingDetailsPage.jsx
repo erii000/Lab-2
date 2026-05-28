@@ -18,6 +18,7 @@ import BookingStatusChip from "../components/bookings/BookingStatusChip.jsx";
 import AppModal from "../components/common/AppModal.jsx";
 import SectionHeading from "../components/common/SectionHeading.jsx";
 import { useToast } from "../context/ToastContext.jsx";
+import { useAuthStore } from "../store/authStore.js";
 import { useBookingStore } from "../store/bookingStore.js";
 import { BOOKING_STATUS, isDraftStatus } from "../utils/bookingConstants.js";
 import { buildResumeDestinationUrl, formatBookingDates } from "../utils/bookingFactory.js";
@@ -49,16 +50,51 @@ export default function BookingDetailsPage() {
   const navigate = useNavigate();
   const { showToast } = useToast();
   const getBookingById = useBookingStore((s) => s.getBookingById);
+  const bookingDrafts = useBookingStore((s) => s.bookingDrafts);
+  const travelerProfile = useBookingStore((s) => s.travelerProfile);
   const updateTraveler = useBookingStore((s) => s.updateTraveler);
   const deleteBooking = useBookingStore((s) => s.deleteBooking);
+  const session = useAuthStore((s) => s.session);
 
   const booking = getBookingById(bookingId);
   const [traveler, setTraveler] = useState(booking?.traveler ?? {});
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const recentTravelerFallback = useMemo(() => {
+    const sorted = [...bookingDrafts].sort(
+      (a, b) => new Date(b.updatedAt ?? b.createdAt ?? 0) - new Date(a.updatedAt ?? a.createdAt ?? 0),
+    );
+    for (const draft of sorted) {
+      if (!draft?.traveler) continue;
+      if (draft.id === booking?.id) continue;
+      const t = draft.traveler;
+      if (t.fullName || t.email || t.passport || t.phone || t.nationality) {
+        return t;
+      }
+    }
+    return {};
+  }, [bookingDrafts, booking?.id]);
 
   useEffect(() => {
-    if (booking?.traveler) setTraveler(booking.traveler);
-  }, [booking?.id, booking?.traveler]);
+    if (!booking?.traveler) return;
+    setTraveler({
+      ...booking.traveler,
+      fullName: booking.traveler.fullName?.trim()
+        ? booking.traveler.fullName
+        : (travelerProfile.fullName ?? recentTravelerFallback.fullName ?? session?.name ?? ""),
+      email: booking.traveler.email?.trim()
+        ? booking.traveler.email
+        : (travelerProfile.email ?? recentTravelerFallback.email ?? session?.email ?? ""),
+      passport: booking.traveler.passport?.trim()
+        ? booking.traveler.passport
+        : (travelerProfile.passport ?? recentTravelerFallback.passport ?? ""),
+      nationality: booking.traveler.nationality?.trim()
+        ? booking.traveler.nationality
+        : (travelerProfile.nationality ?? recentTravelerFallback.nationality ?? ""),
+      phone: booking.traveler.phone?.trim()
+        ? booking.traveler.phone
+        : (travelerProfile.phone ?? recentTravelerFallback.phone ?? ""),
+    });
+  }, [booking?.id, booking?.traveler, recentTravelerFallback, session?.name, session?.email, travelerProfile]);
 
   const canPay = useMemo(() => {
     const t = traveler;

@@ -10,26 +10,30 @@ export { formatDisplayName };
 async function afterAuthSession(session) {
   syncSessionToBooking(session);
   if (!session?.accessToken) return;
-  const { pushLocalSavedDestinations, fetchSavedDestinationSlugs } = await import(
-    "../services/wishlistSync.js"
-  );
+  const token = session.accessToken;
   const bookingStore = useBookingStore.getState();
-  try {
-    await pushLocalSavedDestinations(session.accessToken, bookingStore.savedDestinations);
-    const slugs = await fetchSavedDestinationSlugs(session.accessToken);
-    if (slugs.length) {
-      useBookingStore.setState({ savedDestinations: slugs });
-    }
-  } catch {
+  const wishlistTask = import("../services/wishlistSync.js")
+    .then(async ({ pushLocalSavedDestinations, fetchSavedDestinationSlugs }) => {
+      await pushLocalSavedDestinations(token, bookingStore.savedDestinations);
+      const slugs = await fetchSavedDestinationSlugs(token);
+      if (slugs.length) {
+        useBookingStore.setState({ savedDestinations: slugs });
+      }
+    })
+    .catch(() => {
+      /* offline */
+    });
+
+  const bookingTask = bookingStore.syncFromApi(token).catch(() => {
     /* offline */
-  }
-  await bookingStore.syncFromApi(session.accessToken);
+  });
+
+  await Promise.all([wishlistTask, bookingTask]);
   if (session.role === "admin") {
     const { useAdminBookingsStore } = await import("./adminBookingsStore.js");
     const { useAdminTripsStore } = await import("./adminTripsStore.js");
     const { useAdminUsersStore } = await import("./adminUsersStore.js");
     const { useAdminNotificationsStore } = await import("./adminNotificationsStore.js");
-    const token = session.accessToken;
     await Promise.all([
       useAdminBookingsStore.getState().hydrateFromApi(token),
       useAdminTripsStore.getState().hydrateFromApi(token),
@@ -104,7 +108,7 @@ export const useAuthStore = create(
             session.name = options.name.trim();
           }
           set({ session });
-          await afterAuthSession(session);
+          void afterAuthSession(session);
           return { ok: true, role: session.role };
         } catch (err) {
           const message =
@@ -132,7 +136,7 @@ export const useAuthStore = create(
           const profile = await authApi.getMe(tokens.accessToken);
           const session = profileToSession(profile, tokens);
           set({ session });
-          await afterAuthSession(session);
+          void afterAuthSession(session);
           return { ok: true, role: session.role };
         } catch (err) {
           const message =
@@ -178,7 +182,7 @@ export const useAuthStore = create(
             expiresAtUtc: tokens.expiresAtUtc,
           });
           set({ session: next });
-          await afterAuthSession(next);
+          void afterAuthSession(next);
           return next.accessToken;
         } catch {
           set({ session: null });
@@ -201,7 +205,7 @@ export const useAuthStore = create(
             expiresAtUtc: session.expiresAtUtc,
           });
           set({ session: next });
-          await afterAuthSession(next);
+          void afterAuthSession(next);
         } catch {
           set({ session: null });
           await afterAuthSession(null);
