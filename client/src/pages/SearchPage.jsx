@@ -15,7 +15,7 @@ import {
   Typography,
 } from "@mui/material";
 import { alpha } from "@mui/material/styles";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link as RouterLink, useNavigate, useSearchParams } from "react-router-dom";
 import AdvancedListToolbar from "../components/search/AdvancedListToolbar.jsx";
 import VisionUploadAnalyzer from "../components/search/VisionUploadAnalyzer.jsx";
@@ -25,6 +25,7 @@ import ExploreFiltersSidebar from "../components/explore/ExploreFiltersSidebar.j
 import ExploreSearchSummary from "../components/explore/ExploreSearchSummary.jsx";
 import ExploreTrending from "../components/explore/ExploreTrending.jsx";
 import { useBookingStore } from "../store/bookingStore.js";
+import { useCatalogStore } from "../store/catalogStore.js";
 import { useExploreStore } from "../store/exploreStore.js";
 import { buildDestinationUrl } from "../utils/destinationSearch.js";
 import { buildItineraryPlannerUrl } from "../utils/itineraryPlanner.js";
@@ -39,8 +40,24 @@ import {
   runExploreSearch,
   sortExploreResults,
 } from "../utils/exploreSearch.js";
-import { fullTextMatch } from "../utils/advancedSearch.js";
 import { designTokens } from "../theme/theme.js";
+
+function useDebouncedCallback(fn, delay) {
+  const timer = useRef(null);
+  const fnRef = useRef(fn);
+
+  useEffect(() => {
+    fnRef.current = fn;
+  }, [fn]);
+
+  return useCallback(
+    (...args) => {
+      if (timer.current) clearTimeout(timer.current);
+      timer.current = setTimeout(() => fnRef.current(...args), delay);
+    },
+    [delay],
+  );
+}
 
 export default function SearchPage() {
   const navigate = useNavigate();
@@ -55,7 +72,7 @@ export default function SearchPage() {
   const [view, setView] = useState("list");
   const [mobileFilters, setMobileFilters] = useState(false);
   const [filtersOpen, setFiltersOpen] = useState(true);
-  const [ftQuery, setFtQuery] = useState("");
+  const catalogDestinations = useCatalogStore((s) => s.destinations);
 
   useEffect(() => {
     const parsed = parseExploreParams(searchParams);
@@ -63,18 +80,16 @@ export default function SearchPage() {
     setSort(parsed.sort);
   }, [searchParams]);
 
-  const searchResult = useMemo(() => runExploreSearch(filters), [filters]);
+  const searchResult = useMemo(
+    () => runExploreSearch(filters, catalogDestinations),
+    [filters, catalogDestinations],
+  );
   const sortedResults = useMemo(
     () => sortExploreResults(searchResult.results, sort).map(mapDestinationToCard),
     [searchResult.results, sort],
   );
 
-  const displayResults = useMemo(() => {
-    if (!ftQuery.trim()) return sortedResults;
-    return sortedResults.filter((d) =>
-      fullTextMatch(d, ftQuery, (item) => `${item.title} ${item.country} ${item.badge ?? ""}`),
-    );
-  }, [sortedResults, ftQuery]);
+  const displayResults = sortedResults;
 
   const tripParams = useMemo(
     () => ({
@@ -98,23 +113,35 @@ export default function SearchPage() {
         const params = buildExploreSearchParams({ ...merged, sort });
         setSearchParams(params, { replace: true });
       }
-      pushRecentSearch(merged);
+      if (merged.destination?.trim()) {
+        pushRecentSearch(merged);
+      }
     },
     [filters, sort, setSearchParams],
   );
 
+  const debouncedApplyCriteria = useDebouncedCallback(
+    (next) => applyCriteria(next, { syncUrl: true }),
+    350,
+  );
+
   function handleFilterChange(next) {
     setFilters(next);
+    debouncedApplyCriteria(next);
+  }
+
+  function handleDestinationQueryChange(value) {
+    const next = { ...filters, destination: value };
+    setFilters(next);
+    debouncedApplyCriteria(next);
   }
 
   const countLabel =
-    searchResult.mode === "validation"
-      ? "Enter a destination"
+    searchResult.mode === "browse"
+      ? `${displayResults.length} trip${displayResults.length !== 1 ? "s" : ""} available`
       : searchResult.mode === "exact"
         ? `${displayResults.length} trip${displayResults.length !== 1 ? "s" : ""} found`
         : "No exact matches found";
-
-  const showValidationError = searchResult.mode === "validation" && searchResult.validationError;
 
   return (
     <Box sx={{ bgcolor: designTokens.brand.obsidian, minHeight: "100vh" }}>
@@ -146,8 +173,8 @@ export default function SearchPage() {
           <Grid size={{ xs: 12, md: filtersOpen ? 9 : 12 }}>
             <VisionUploadAnalyzer />
             <AdvancedListToolbar
-              query={ftQuery}
-              onQueryChange={setFtQuery}
+              query={filters.destination}
+              onQueryChange={handleDestinationQueryChange}
               sort={sort}
               onSortChange={setSort}
               sortOptions={[
@@ -159,17 +186,6 @@ export default function SearchPage() {
               resultCount={displayResults.length}
               placeholder="Full-text search destinations…"
             />
-            {showValidationError ? (
-              <Typography
-                variant="body2"
-                color="error"
-                sx={{ mb: 2, fontWeight: 600 }}
-                role="alert"
-              >
-                {searchResult.validationError}
-              </Typography>
-            ) : null}
-
             <Stack
               direction={{ xs: "column", sm: "row" }}
               justifyContent="space-between"

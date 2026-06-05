@@ -36,11 +36,10 @@ export function diffNights(start, end) {
   return Math.max(1, nights);
 }
 
-export function resolveDestinationId(query) {
+export function resolveDestinationId(query, destinations = getCatalogDestinations()) {
   const q = normalizeQuery(query);
   if (!q) return null;
 
-  const destinations = getCatalogDestinations();
   const exact = destinations.find(
     (d) =>
       normalizeQuery(d.title) === q ||
@@ -53,25 +52,40 @@ export function resolveDestinationId(query) {
     (d) =>
       normalizeQuery(d.title).includes(q) ||
       q.includes(normalizeQuery(d.title)) ||
-      d.aliases?.some((a) => a.includes(q) || q.includes(a)),
+      d.aliases?.some((a) => {
+        const alias = normalizeQuery(a);
+        return alias.includes(q) || q.includes(alias);
+      }),
   );
   return partial?.id ?? null;
 }
 
-export function searchDestinations({ query = "", budget, tripType, maxResults = 20 } = {}) {
+export function searchDestinations({
+  query = "",
+  budget,
+  tripType,
+  maxResults = 20,
+  destinations = getCatalogDestinations(),
+} = {}) {
   const q = normalizeQuery(query);
-  const destinations = getCatalogDestinations() ?? [];
 
   let results = destinations.filter((d) => {
     if (budget && d.priceFrom > Number(budget)) return false;
     if (tripType && !d.tripTypes?.includes(tripType)) return false;
     if (!q) return true;
-    return (
-      normalizeQuery(d.title).includes(q) ||
-      normalizeQuery(d.country).includes(q) ||
-      normalizeQuery(d.region).includes(q) ||
-      d.aliases?.some((a) => a.includes(q) || q.includes(a))
-    );
+    const haystack = [
+      d.title,
+      d.country,
+      d.region,
+      d.tag,
+      d.description,
+      ...(d.tripTypes ?? []),
+      ...(d.aliases ?? []),
+    ]
+      .filter(Boolean)
+      .map(normalizeQuery)
+      .join(" ");
+    return haystack.includes(q) || haystack.split(/\s+/).some((word) => word.startsWith(q));
   });
 
   if (q) {

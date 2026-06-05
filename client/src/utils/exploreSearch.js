@@ -92,9 +92,9 @@ function applySidebarFilters(list, filters) {
   });
 }
 
-function getAlternativeSuggestions(targetId, budget) {
-  const destinations = getCatalogDestinations();
-  const target = targetId ? getDestinationById(targetId) : null;
+function getAlternativeSuggestions(targetId, budget, catalog) {
+  const destinations = catalog;
+  const target = targetId ? destinations.find((d) => d.id === targetId) : null;
   const pool = destinations.filter((d) => d.id !== targetId);
   const suggestions = [];
 
@@ -143,22 +143,23 @@ function getAlternativeSuggestions(targetId, budget) {
   return suggestions.slice(0, 6);
 }
 
-export function runExploreSearch(filters) {
+export function runExploreSearch(filters, catalog = getCatalogDestinations()) {
   const query = filters.destination?.trim() || "";
 
   if (!query) {
+    const browse = applySidebarFilters(catalog, filters);
     return {
-      mode: "validation",
-      validationError: "Please enter a destination to search (e.g. Paris, Rome, or Tokyo).",
-      exact: [],
+      mode: "browse",
+      validationError: null,
+      exact: browse,
       alternatives: [],
-      results: [],
+      results: browse,
       resolvedId: null,
-      aiInsight: null,
+      aiInsight: "Explore curated trips worldwide. Refine filters anytime without leaving this page.",
     };
   }
 
-  const resolvedId = resolveDestinationId(query);
+  const resolvedId = resolveDestinationId(query, catalog);
   const budget = filters.budget;
 
   let exact = searchDestinations({
@@ -166,14 +167,16 @@ export function runExploreSearch(filters) {
     budget: budget ?? undefined,
     tripType: filters.tripType || undefined,
     maxResults: 24,
+    destinations: catalog,
   });
 
   exact = applySidebarFilters(exact, filters);
 
+  const resolvedDest = resolvedId ? catalog.find((d) => d.id === resolvedId) : null;
   const strictForCity =
     resolvedId &&
     exact.some((d) => d.id === resolvedId) &&
-    (!budget || getDestinationById(resolvedId)?.priceFrom <= budget);
+    (!budget || resolvedDest?.priceFrom <= budget);
 
   let mode = "exact";
   let results = exact;
@@ -181,12 +184,11 @@ export function runExploreSearch(filters) {
 
   if (!exact.length || (resolvedId && !strictForCity)) {
     mode = "alternatives";
-    alternatives = getAlternativeSuggestions(resolvedId, budget);
+    alternatives = getAlternativeSuggestions(resolvedId, budget, catalog);
     alternatives = applySidebarFilters(alternatives, { ...filters, budget: null });
     if (!alternatives.length) {
-      const destinations = getCatalogDestinations();
       alternatives = applySidebarFilters(
-        [...destinations].sort((a, b) => a.priceFrom - b.priceFrom),
+        [...catalog].sort((a, b) => a.priceFrom - b.priceFrom),
         { ...filters, budget: null },
       ).slice(0, 6);
     }
