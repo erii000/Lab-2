@@ -1,5 +1,27 @@
 # Travel Assistant — backend
 
+## Architecture (important)
+
+This repo uses **microservices**, not a monolith. The **ApiGateway** is deliberately thin (~10 files): it only runs YARP reverse-proxy routes from `appsettings.json`. All business logic lives in `server/Services/*`.
+
+```
+Browser / SPA  →  ApiGateway (:5161)  →  9 microservices  →  shared SQL (lab2DB)
+                      ↘ WebSockets: /hubs/notifications, /hubs/chat
+```
+
+### Folder guide — what is complete vs placeholder
+
+| Location | Status |
+|----------|--------|
+| `ApiGateway/` | **Complete** — YARP proxy + health probes. See `ApiGateway/README.md`. |
+| `Services/UserService` … `SupportService` (9 services) | **Complete** — run in Docker Compose |
+| `TravelAssistant.Common/` | **Complete** — shared audit, notifications, export, middleware |
+| `Scripts/lab2DB-memberb-bootstrap.sql` | **Complete** — shared DB schema bootstrap |
+| `Infrastructure/`, `Shared/` | **Placeholder** — team backlog scaffolding (Redis/logging/monitoring not wired yet) |
+| `Services/RolePermissionService`, `TravelPreferencesService` | **Placeholder** — roles live in UserService; travel preferences in ItineraryService |
+| `server/Repositories/` (root) | **Removed** — was leftover monolith code |
+| `redis`, `mongo` in Compose | Started for future use; no .NET service connects yet |
+
 ## Stack
 
 - .NET 9 microservices, SQL Server (MSSQL), YARP API Gateway, optional **Redis** and **MongoDB** in Docker for future caching/document features.

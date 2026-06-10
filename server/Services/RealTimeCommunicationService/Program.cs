@@ -131,7 +131,6 @@ app.UseAuthorization();
 
 app.MapControllers();
 app.MapHealthChecks("/health");
-app.MapHub<NotificationsHub>("/hubs/notifications");
 app.MapHub<ChatHub>("/hubs/chat");
 app.MapGet("/api/ping", () => Results.Ok(new { status = "ok", service = "RealTimeCommunicationService" }));
 

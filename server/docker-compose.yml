@@ -49,6 +49,16 @@ services:
       dockerfile: server/ApiGateway/Dockerfile
     ports:
       - "5161:8080"
+    depends_on:
+      - userservice
+      - itineraryservice
+      - bookingservice
+      - paymentservice
+      - notificationservice
+      - auditservice
+      - realtimecommunicationservice
+      - supportservice
+      - weatherexternaldataservice
     <<: *api_env_file
     environment: &service_env
       ASPNETCORE_ENVIRONMENT: "Development"
