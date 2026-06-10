@@ -19,6 +19,7 @@ import BookingProgressBar from "../components/bookings/BookingProgressBar.jsx";
 import SectionHeading from "../components/common/SectionHeading.jsx";
 import SecureCheckoutForm from "../components/payment/SecureCheckoutForm.jsx";
 import { useLoading } from "../context/LoadingContext.jsx";
+import { useNotifications } from "../context/useNotifications.js";
 import { useToast } from "../context/ToastContext.jsx";
 import { useBookingStore } from "../store/bookingStore.js";
 import { usePaymentLogStore } from "../store/paymentLogStore.js";
@@ -33,6 +34,7 @@ export default function BookingTravelerPage() {
   const { bookingId } = useParams();
   const navigate = useNavigate();
   const { showToast } = useToast();
+  const { refresh: refreshNotifications } = useNotifications();
   const { runWithLoader } = useLoading();
 
   const getBookingById = useBookingStore((s) => s.getBookingById);
@@ -124,8 +126,15 @@ export default function BookingTravelerPage() {
     }
 
     setPaying(true);
-    updateTraveler(booking.id, { ...traveler, paymentMethod });
+    const travelerPayload = { ...traveler, paymentMethod };
+    updateTraveler(booking.id, travelerPayload);
     setPendingPayment(booking.id);
+
+    const bookingForCheckout = {
+      ...booking,
+      traveler: { ...booking.traveler, ...travelerPayload },
+      paymentMethod,
+    };
 
     logTransaction({
       status: "pending",
@@ -140,7 +149,7 @@ export default function BookingTravelerPage() {
       const result = await runWithLoader(() =>
         checkoutBookingPayment({
           accessToken: session?.accessToken ?? null,
-          booking,
+          booking: bookingForCheckout,
           method: paymentMethod,
           cardNumber: cardPayload?.cardNumber,
           successUrl: `${window.location.origin}/bookings/${booking.id}/success`,
@@ -180,19 +189,28 @@ export default function BookingTravelerPage() {
       });
 
       if (result.syncedBooking?.serverId) {
+        const latest = getBookingById(booking.id) ?? bookingForCheckout;
         upsertBooking(
-          { ...booking, ...result.syncedBooking, serverId: result.syncedBooking.serverId },
+          {
+            ...latest,
+            ...result.syncedBooking,
+            traveler: latest.traveler ?? bookingForCheckout.traveler,
+            serverId: result.syncedBooking.serverId,
+          },
           { skipSync: true },
         );
       }
 
-      const ref = confirmPayment(booking.id, {
+      const ref = await confirmPayment(booking.id, {
         paymentMethod,
         paymentCardDisplay: cardDisplay,
         transactionId: result.transactionId,
         paymentId: result.paymentId,
         serverId: result.serverBookingId ?? result.syncedBooking?.serverId,
+        traveler: bookingForCheckout.traveler,
       });
+
+      void refreshNotifications();
 
       if (result.authFallback) {
         showToast({

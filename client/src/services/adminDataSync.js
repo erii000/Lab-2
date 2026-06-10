@@ -8,6 +8,7 @@ import { enrichUser } from "../utils/adminUsers.js";
 import { dedupeApiBookingRows } from "./bookingSync.js";
 import { buildCatalogAdminTrips, countBookingsByCatalogId } from "../utils/catalogAdminTrips.js";
 import { formatDisplayName } from "../utils/displayName.js";
+import { parseApiDate } from "../utils/parseApiDate.js";
 
 const PAID_BOOKING_STATUSES = new Set([
   "Confirmed",
@@ -126,6 +127,9 @@ function mapApiUser(row, metrics = null) {
   const userId = normalizeUserId(row.id ?? row.Id);
   const stats = userId != null ? metrics?.get(userId) : null;
 
+  const joinedAtMs = parseApiDate(row.createdAt ?? row.CreatedAt);
+  const lastActiveAtMs = stats?.lastActiveAt ?? joinedAtMs ?? 0;
+
   return enrichUser({
     id: String(userId ?? row.id ?? row.Id),
     name: formatDisplayName(first, last, email),
@@ -135,7 +139,9 @@ function mapApiUser(row, metrics = null) {
     trips: stats?.trips ?? 0,
     bookings: stats?.bookings ?? 0,
     totalSpent: stats?.totalSpent ?? 0,
-    lastActive: stats?.lastActiveAt ? formatLastActive(stats.lastActiveAt) : "—",
+    joinedAtMs,
+    lastActiveAtMs,
+    lastActive: lastActiveAtMs ? formatLastActive(lastActiveAtMs) : "—",
     favoriteDestination: stats?.favoriteDestination ?? "—",
     averageBudget: stats?.trips ? Math.round((stats.totalSpent ?? 0) / stats.trips) : 0,
     preferences: [],
@@ -154,19 +160,18 @@ export async function fetchAdminBookings(accessToken, hiddenBookingIds = []) {
   try {
     const usersData = await usersApi.listUsers(accessToken, { pageNumber: 1, pageSize: 500 });
     const users = usersData.items ?? usersData.Items ?? [];
-    usersById = new Map(
-      users.map((u) => {
-        const id = u.id ?? u.Id;
-        const email = u.email ?? u.Email ?? "";
-        return [
-          id,
-          {
-            name: formatDisplayName(u.firstName ?? u.FirstName, u.lastName ?? u.LastName, email),
-            email,
-          },
-        ];
-      }),
-    );
+    usersById = new Map();
+    for (const u of users) {
+      const id = u.id ?? u.Id;
+      const email = u.email ?? u.Email ?? "";
+      const entry = {
+        name: formatDisplayName(u.firstName ?? u.FirstName, u.lastName ?? u.LastName, email),
+        email,
+      };
+      usersById.set(id, entry);
+      usersById.set(String(id), entry);
+      if (Number.isFinite(Number(id))) usersById.set(Number(id), entry);
+    }
   } catch {
     /* users optional for labels */
   }

@@ -28,15 +28,19 @@ export default function MlPredictiveInsights({ bookings, trips, users }) {
       <Stack direction={{ xs: "column", md: "row" }} spacing={2} sx={{ mb: 2 }}>
         <MetricCard
           label="Next-week bookings"
-          value={ml.bookingForecast.forecast}
-          sub={`${Math.round(ml.bookingForecast.confidence * 100)}% confidence · ${ml.bookingForecast.trend}`}
-          progress={ml.bookingForecast.confidence * 100}
+          value={bookings.length ? ml.bookingForecast.forecast : "—"}
+          sub={
+            bookings.length
+              ? `${Math.round(ml.bookingForecast.confidence * 100)}% confidence · ${ml.bookingForecast.trend}`
+              : "Awaiting booking history"
+          }
+          progress={bookings.length ? ml.bookingForecast.confidence * 100 : 0}
         />
         <MetricCard
           label="Projected revenue"
-          value={`€${ml.revenue.nextWeekRevenue.toLocaleString()}`}
-          sub={`Avg ticket €${ml.revenue.avgTicket.toLocaleString()}`}
-          progress={ml.revenue.confidence * 100}
+          value={bookings.length ? `€${ml.revenue.nextWeekRevenue.toLocaleString()}` : "—"}
+          sub={bookings.length ? `Avg ticket €${ml.revenue.avgTicket.toLocaleString()}` : "Awaiting booking history"}
+          progress={bookings.length ? ml.revenue.confidence * 100 : 0}
         />
       </Stack>
 

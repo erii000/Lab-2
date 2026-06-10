@@ -23,7 +23,7 @@ import {
 import { alpha, useTheme } from "@mui/material/styles";
 import { useMemo, useState } from "react";
 import { Link as RouterLink, useLocation, useNavigate } from "react-router-dom";
-import { useNotifications } from "../../context/NotificationsContext.jsx";
+import { useNotifications } from "../../context/useNotifications.js";
 import { useAuthStore } from "../../store/authStore.js";
 import { useBookingStore } from "../../store/bookingStore.js";
 
@@ -121,6 +121,7 @@ function NavbarUserMenu({ theme, onNavigate, showWelcome = true, fullWidth = fal
   const session = useAuthStore((s) => s.session);
   const logout = useAuthStore((s) => s.logout);
   const navigate = useNavigate();
+  const isAdmin = session?.role === "admin";
   const { unreadCount, connected: notificationsLive } = useNotifications();
   const [anchor, setAnchor] = useState(null);
 
@@ -156,22 +157,24 @@ function NavbarUserMenu({ theme, onNavigate, showWelcome = true, fullWidth = fal
           Welcome, {displayName}
         </Typography>
       )}
-      <Tooltip title={notificationsLive ? "Notifications (live)" : "Notifications"}>
-        <IconButton
-          component={RouterLink}
-          to="/notifications"
-          onClick={onNavigate}
-          aria-label="Notifications"
-          sx={{
-            border: `1px solid ${alpha(theme.palette.primary.main, notificationsLive ? 0.55 : 0.25)}`,
-            boxShadow: notificationsLive ? `0 0 0 2px ${alpha(theme.palette.success.main, 0.35)}` : "none",
-          }}
-        >
-          <Badge badgeContent={unreadCount > 0 ? unreadCount : null} color="primary" variant={notificationsLive ? "dot" : "standard"}>
-            <NotificationsOutlined fontSize="small" />
-          </Badge>
-        </IconButton>
-      </Tooltip>
+      {!isAdmin ? (
+        <Tooltip title={notificationsLive ? "Notifications (live)" : "Notifications"}>
+          <IconButton
+            component={RouterLink}
+            to="/notifications"
+            onClick={onNavigate}
+            aria-label="Notifications"
+            sx={{
+              border: `1px solid ${alpha(theme.palette.primary.main, notificationsLive ? 0.55 : 0.25)}`,
+              boxShadow: notificationsLive ? `0 0 0 2px ${alpha(theme.palette.success.main, 0.35)}` : "none",
+            }}
+          >
+            <Badge badgeContent={unreadCount > 0 ? unreadCount : null} color="primary" variant={notificationsLive ? "dot" : "standard"}>
+              <NotificationsOutlined fontSize="small" />
+            </Badge>
+          </IconButton>
+        </Tooltip>
+      ) : null}
       <Tooltip title="Account">
         <IconButton
           onClick={(e) => setAnchor(e.currentTarget)}

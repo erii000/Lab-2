@@ -5,7 +5,7 @@ import { alpha } from "@mui/material/styles";
 import { useRef, useState } from "react";
 import ContactEmergency from "../components/contact/ContactEmergency.jsx";
 import ContactFaqPreview from "../components/contact/ContactFaqPreview.jsx";
-import ContactForm from "../components/contact/ContactForm.jsx";
+import ContactLiveChat from "../components/contact/ContactLiveChat.jsx";
 import ContactHero from "../components/contact/ContactHero.jsx";
 import ContactSupportChannels from "../components/contact/ContactSupportChannels.jsx";
 import { designTokens } from "../theme/theme.js";
@@ -36,11 +36,11 @@ function SectionTitle({ overline, title, subtitle, align = "left" }) {
 }
 
 export default function ContactPage() {
-  const formRef = useRef(null);
+  const chatRef = useRef(null);
   const [lightSurface, setLightSurface] = useState(false);
 
-  function scrollToForm() {
-    formRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  function scrollToChat() {
+    chatRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
   }
 
   return (
@@ -52,7 +52,7 @@ export default function ContactPage() {
         pb: 8,
       }}
     >
-      <ContactHero onEmailClick={scrollToForm} lightSurface={lightSurface} />
+      <ContactHero onChatClick={scrollToChat} lightSurface={lightSurface} />
 
       <Container
         maxWidth="md"
@@ -63,13 +63,15 @@ export default function ContactPage() {
           px: { xs: 2, sm: 3 },
         }}
       >
-        <SectionTitle
-          align="center"
-          overline="Get in touch"
-          title="Send us a message"
-          subtitle="Secure form · Encrypted in transit · Our team typically replies within one business day."
-        />
-        <ContactForm formRef={formRef} lightSurface={lightSurface} />
+        <Box ref={chatRef}>
+          <SectionTitle
+            align="center"
+            overline="Get in touch"
+            title="Live chat"
+            subtitle="Message our team in real time — we typically reply within minutes while you browse."
+          />
+          <ContactLiveChat lightSurface={lightSurface} />
+        </Box>
       </Container>
 
       <Container maxWidth="lg" sx={{ mt: { xs: 4, md: 5 } }}>

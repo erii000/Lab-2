@@ -4,6 +4,7 @@ import * as bookingsApi from "../api/bookingsApi.js";
 import { fetchAdminBookings } from "../services/adminDataSync.js";
 import { adminStatusToApi } from "../utils/bookingMappers.js";
 import { enrichBooking, formatActivityTimestamp } from "../utils/adminBookingActivity.js";
+import { calendarDayMs } from "../utils/parseApiDate.js";
 import { adminNotify } from "../utils/adminNotify.js";
 
 function readAccessToken() {
@@ -26,13 +27,14 @@ async function patchServerStatus(booking, statusKey) {
   }
 }
 
-const RECENT_IDS = ["BK-92841", "BK-92838", "BK-92835", "BK-92831", "BK-92828"];
-
 export function selectRecentBookings(bookings) {
-  const visible = filterAdminVisibleBookings(bookings);
-  const ordered = RECENT_IDS.map((id) => visible.find((b) => b.id === id)).filter(Boolean);
-  const base = ordered.length >= 3 ? ordered : visible;
-  return base.slice(0, 5);
+  return [...filterAdminVisibleBookings(bookings)]
+    .sort(
+      (a, b) =>
+        calendarDayMs(b.createdAtMs ?? b.updatedAtMs) -
+        calendarDayMs(a.createdAtMs ?? a.updatedAtMs),
+    )
+    .slice(0, 5);
 }
 
 export const BOOKING_STATUS_OPTIONS = [
@@ -101,10 +103,18 @@ export const useAdminBookingsStore = create(
 
   hydrateFromApi: async (accessToken) => {
     const token = accessToken ?? readAccessToken();
-    if (!token) return;
+    if (!token) {
+      set({ loadedFromApi: true });
+      return;
+    }
     try {
       const bookings = await fetchAdminBookings(token, get().hiddenBookingIds);
-      set({ bookings: filterAdminVisibleBookings(bookings), loadedFromApi: true });
+      const sorted = [...filterAdminVisibleBookings(bookings)].sort(
+        (a, b) =>
+          calendarDayMs(b.createdAtMs ?? b.updatedAtMs) -
+          calendarDayMs(a.createdAtMs ?? a.updatedAtMs),
+      );
+      set({ bookings: sorted, loadedFromApi: true });
     } catch {
       set({ bookings: [], loadedFromApi: true });
     }
@@ -259,15 +269,9 @@ export const useAdminBookingsStore = create(
     }),
     {
       name: "sta-admin-bookings-v1",
-      version: 2,
-      partialize: (s) => ({ bookings: s.bookings, hiddenBookingIds: s.hiddenBookingIds }),
-      migrate: (persisted, version) => {
-        if (!persisted || typeof persisted !== "object") return persisted;
-        if (version < 2) {
-          return { ...persisted, bookings: [], loadedFromApi: false };
-        }
-        return persisted;
-      },
+      version: 3,
+      partialize: (s) => ({ hiddenBookingIds: s.hiddenBookingIds }),
+      migrate: () => ({ bookings: [], hiddenBookingIds: [], loadedFromApi: false }),
     },
   ),
 );

@@ -11,7 +11,7 @@ import {
 } from "@mui/material";
 import { alpha } from "@mui/material/styles";
 import { useEffect, useState } from "react";
-import { loadChatHistory, pickAiReply, sendChatTurn } from "../../../services/chatSync.js";
+import { loadAiChatHistory, pickAiReply, sendChatTurn } from "../../../services/chatSync.js";
 import { connectChatHub } from "../../../services/realtimeChatHub.js";
 import { useAuthStore } from "../../../store/authStore.js";
 
@@ -29,7 +29,7 @@ export default function AiTripChatFab() {
     let cancelled = false;
     let hub;
 
-    loadChatHistory(session.accessToken)
+    loadAiChatHistory(session.accessToken)
       .then((history) => {
         if (!cancelled) setMessages(history);
       })

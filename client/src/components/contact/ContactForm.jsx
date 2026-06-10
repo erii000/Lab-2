@@ -22,6 +22,7 @@ import {
 import { alpha, keyframes } from "@mui/material/styles";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useLoading } from "../../context/LoadingContext.jsx";
+import { useNotifications } from "../../context/useNotifications.js";
 import { useToast } from "../../context/ToastContext.jsx";
 import { createContactTicket } from "../../api/supportApi.js";
 import { useAuthStore } from "../../store/authStore.js";
@@ -59,6 +60,7 @@ export default function ContactForm({ formRef, lightSurface }) {
   const resetDraft = useContactDraftStore((s) => s.resetDraft);
   const { runWithLoader } = useLoading();
   const { showToast } = useToast();
+  const { refresh: refreshNotifications } = useNotifications();
   const session = useAuthStore((s) => s.session);
   const [touched, setTouched] = useState({});
   const [errors, setErrors] = useState({});
@@ -137,6 +139,13 @@ export default function ContactForm({ formRef, lightSurface }) {
       });
       setSuccess(true);
       resetDraft();
+      void refreshNotifications();
+      showToast({
+        message: session?.accessToken
+          ? "Message sent — our team was notified in real time."
+          : "Message sent — we'll get back to you within one business day.",
+        severity: "success",
+      });
       setTimeout(() => {
         setSuccess(false);
         setTouched({});

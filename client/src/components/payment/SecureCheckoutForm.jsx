@@ -117,30 +117,33 @@ export default function SecureCheckoutForm({
         </Stack>
       ) : (
         <Alert severity="info" sx={{ borderRadius: 2 }}>
-          PayPal is processed through our secure checkout (demo mode completes here without leaving this page). Total: €
-          {amount?.toLocaleString()} {currency}.
+          You will sign in with your PayPal account on PayPal&apos;s site (sandbox in dev). In demo mode without PayPal
+          keys, payment completes here using your traveler email above. Total: €{amount?.toLocaleString()} {currency}.
         </Alert>
       )}
 
-      <Box
-        sx={{
-          mt: 2,
-          p: 1.5,
-          borderRadius: 2,
-          bgcolor: alpha(designTokens.brand.gold, 0.08),
-          border: `1px solid ${alpha(designTokens.brand.gold, 0.2)}`,
-        }}
-      >
-        <Typography variant="caption" color="text.secondary">
-          Demo test card: <strong>4242 4242 4242 4242</strong> (any future expiry, any CVC). Sequential numbers like{" "}
-          <strong>1234…</strong> fail the checksum and are rejected. Card ending <strong>0002</strong> simulates decline.
-        </Typography>
-        {card.cardNumber ? (
-          <Typography variant="body2" fontWeight={700} sx={{ mt: 0.5 }}>
-            {maskCardNumber(card.cardNumber)}
+      {method === "card" ? (
+        <Box
+          sx={{
+            mt: 2,
+            p: 1.5,
+            borderRadius: 2,
+            bgcolor: alpha(designTokens.brand.gold, 0.08),
+            border: `1px solid ${alpha(designTokens.brand.gold, 0.2)}`,
+          }}
+        >
+          <Typography variant="caption" color="text.secondary">
+            Demo test card: <strong>4242 4242 4242 4242</strong> (any future expiry, any CVC). Sequential numbers like{" "}
+            <strong>1234…</strong> fail the checksum and are rejected. Card ending <strong>0002</strong> simulates
+            decline.
           </Typography>
-        ) : null}
-      </Box>
+          {card.cardNumber ? (
+            <Typography variant="body2" fontWeight={700} sx={{ mt: 0.5 }}>
+              {maskCardNumber(card.cardNumber)}
+            </Typography>
+          ) : null}
+        </Box>
+      ) : null}
     </Box>
   );
 }

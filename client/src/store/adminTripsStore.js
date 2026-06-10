@@ -1,6 +1,5 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import { adminTrips as initialTrips } from "../data/adminData.js";
 import { fetchAdminTrips } from "../services/adminDataSync.js";
 import { appendAudit, createEmptyTrip, enrichTrip } from "../utils/adminTrips.js";
 import { adminNotify } from "../utils/adminNotify.js";
@@ -15,31 +14,23 @@ function readAccessToken() {
   }
 }
 
-function mapInitial() {
-  const statuses = ["active", "published", "draft", "pending_review", "fully_booked", "archived", "active", "published"];
-  return initialTrips.map((t, i) =>
-    enrichTrip({
-      ...t,
-      status: statuses[i % statuses.length],
-      destination: t.title?.replace(/ Escape| City Break| Holiday| Premium| Nights| Luxe/gi, "") ?? t.country,
-    }),
-  );
-}
-
 export const useAdminTripsStore = create(
   persist(
     (set, get) => ({
-      trips: mapInitial(),
+      trips: [],
       loadedFromApi: false,
 
       hydrateFromApi: async (accessToken) => {
         const token = accessToken ?? readAccessToken();
-        if (!token) return;
+        if (!token) {
+          set({ loadedFromApi: true });
+          return;
+        }
         try {
           const trips = await fetchAdminTrips(token);
           set({ trips, loadedFromApi: true });
         } catch {
-          set({ loadedFromApi: true });
+          set({ trips: [], loadedFromApi: true });
         }
       },
 
@@ -52,6 +43,7 @@ export const useAdminTripsStore = create(
           ...createEmptyTrip(),
           ...trip,
           createdAt: Date.now(),
+          updatedAt: Date.now(),
           ...appendAudit({ auditLog: [] }, "Trip created", trip.status ?? "draft"),
         });
         set((s) => ({ trips: [next, ...s.trips] }));
@@ -68,6 +60,7 @@ export const useAdminTripsStore = create(
       updateTrip: async (trip, auditAction = "Trip updated") => {
         const next = enrichTrip({
           ...trip,
+          updatedAt: Date.now(),
           ...appendAudit(trip, auditAction),
         });
         set((s) => ({
@@ -111,6 +104,8 @@ export const useAdminTripsStore = create(
           status: "draft",
           bookings: 0,
           slug: `${source.slug}-copy`,
+          createdAt: Date.now(),
+          updatedAt: Date.now(),
           ...appendAudit({ auditLog: [] }, "Duplicated from", source.title),
         });
         set((s) => ({ trips: [copy, ...s.trips] }));
@@ -168,6 +163,7 @@ export const useAdminTripsStore = create(
         const next = enrichTrip({
           ...trip,
           deletedAt: Date.now(),
+          updatedAt: Date.now(),
           ...appendAudit(trip, "Soft deleted"),
         });
         set((s) => ({ trips: s.trips.map((t) => (t.id === id ? next : t)) }));
@@ -188,6 +184,7 @@ export const useAdminTripsStore = create(
         const next = enrichTrip({
           ...trip,
           deletedAt: null,
+          updatedAt: Date.now(),
           ...appendAudit(trip, "Trip restored"),
         });
         set((s) => ({ trips: s.trips.map((t) => (t.id === id ? next : t)) }));
@@ -252,6 +249,11 @@ export const useAdminTripsStore = create(
         });
       },
     }),
-    { name: "sta-admin-trips-v1", partialize: (s) => ({ trips: s.trips }) },
+    {
+      name: "sta-admin-trips-v3",
+      version: 3,
+      partialize: () => ({}),
+      migrate: () => ({ trips: [], loadedFromApi: false }),
+    },
   ),
 );

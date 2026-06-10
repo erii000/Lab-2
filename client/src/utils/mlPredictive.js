@@ -5,7 +5,7 @@
 export function predictWeeklyBookings(bookings, { weeksAhead = 1 } = {}) {
   const byWeek = aggregateByWeek(bookings);
   const values = Object.values(byWeek);
-  if (!values.length) return { forecast: 42, confidence: 0.62, trend: "stable" };
+  if (!values.length) return { forecast: 0, confidence: 0, trend: "stable" };
 
   const n = values.length;
   const weights = values.map((_, i) => i + 1);

@@ -1,5 +1,5 @@
 import { AddRounded, AutoAwesomeRounded, ExploreRounded, SavingsRounded, StarRounded, TrendingUpRounded, ViewListRounded } from "../../ui/icons.jsx";
-import { Box, Button, Grid, Typography } from "@mui/material";
+import { Box, Button, CircularProgress, Grid, Stack, Typography } from "@mui/material";
 import { alpha } from "@mui/material/styles";
 import { useMemo, useState } from "react";
 import { Link as RouterLink } from "react-router-dom";
@@ -31,6 +31,7 @@ import {
 import { useAdminTripsStore } from "../../store/adminTripsStore.js";
 import { useAdminUsersStore } from "../../store/adminUsersStore.js";
 import { useToast } from "../../context/ToastContext.jsx";
+import { useAdminStoresReady } from "../../hooks/useAdminStoresReady.js";
 
 const headerActionSx = {
   fontWeight: 600,
@@ -38,8 +39,20 @@ const headerActionSx = {
   whiteSpace: "nowrap",
 };
 
+function DashboardLoading() {
+  return (
+    <Stack alignItems="center" justifyContent="center" sx={{ minHeight: 320, py: 6 }}>
+      <CircularProgress size={36} sx={{ color: adminColors.gold, mb: 2 }} />
+      <Typography variant="body2" sx={{ color: adminColors.textMuted }}>
+        Loading live operations data…
+      </Typography>
+    </Stack>
+  );
+}
+
 export default function AdminDashboardPage() {
   const { showToast } = useToast();
+  const dataReady = useAdminStoresReady();
 
   const bookings = useAdminBookingsStore((s) => s.bookings);
   const visibleBookings = useMemo(() => filterAdminVisibleBookings(bookings), [bookings]);
@@ -67,7 +80,10 @@ export default function AdminDashboardPage() {
     () => computeDashboardKpis(visibleBookings, users, trips),
     [visibleBookings, users, trips],
   );
-  const chartData = useMemo(() => buildChartSeries(chartPeriod), [chartPeriod]);
+  const chartData = useMemo(
+    () => (dataReady ? buildChartSeries(chartPeriod, visibleBookings) : []),
+    [chartPeriod, visibleBookings, dataReady],
+  );
   const insights = useMemo(
     () => generateSmartInsights(visibleBookings, trips, users),
     [visibleBookings, trips, users],
@@ -83,7 +99,10 @@ export default function AdminDashboardPage() {
   const topTrips = useMemo(() => computeTopTrips(trips), [trips]);
   const forecast = useMemo(() => forecastNextWeek(visibleBookings), [visibleBookings]);
 
-  const recentUsers = useMemo(() => users.slice(0, 4), [users]);
+  const recentUsers = useMemo(
+    () => [...users].sort((a, b) => (b.lastActiveAtMs ?? 0) - (a.lastActiveAtMs ?? 0)).slice(0, 4),
+    [users],
+  );
   const flaggedUsers = useMemo(
     () => users.filter((u) => u.accountStatus === "suspended" || u.travelerStatus === "inactive").slice(0, 3),
     [users],
@@ -150,7 +169,11 @@ export default function AdminDashboardPage() {
         Live operations — metrics sync with Trips, Bookings, and Users.
       </Typography>
 
-      <MlPredictiveInsights bookings={bookings} trips={trips} users={users} />
+      {!dataReady ? (
+        <DashboardLoading />
+      ) : (
+        <>
+      <MlPredictiveInsights bookings={visibleBookings} trips={trips} users={users} />
 
       <Grid container spacing={2.5} sx={{ mb: 2.5 }}>
         <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
@@ -196,6 +219,8 @@ export default function AdminDashboardPage() {
         recentUsers={recentUsers}
         flaggedUsers={flaggedUsers}
       />
+        </>
+      )}
 
       <BookingDetailDrawer
         booking={selectedBooking}

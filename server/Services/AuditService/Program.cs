@@ -8,6 +8,7 @@ using TravelAssistant.Services.AuditService.Data;
 using TravelAssistant.Services.AuditService.Interfaces;
 using TravelAssistant.Services.AuditService.Repositories;
 using TravelAssistant.Services.AuditService.Services;
+using TravelAssistant.Common.Database;
 using TravelAssistant.Common.Middleware;
 
 var rootEnvPath = Path.GetFullPath(Path.Combine(Directory.GetCurrentDirectory(), "..", "..", "global-settings.env"));
@@ -97,6 +98,13 @@ builder.Services.AddSwaggerGen(options =>
 });
 
 var app = builder.Build();
+
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+    var logger = scope.ServiceProvider.GetRequiredService<ILoggerFactory>().CreateLogger("AuditService");
+    await Lab2DbSchemaBootstrap.EnsureMemberBSchemaAsync(db, logger);
+}
 
 app.UseMiddleware<GlobalExceptionMiddleware>();
 

@@ -90,7 +90,7 @@ export default function BookingDetailDrawer({
                 {label}
               </Typography>
               <Typography variant="caption" sx={{ color: "#fff", fontWeight: 600 }}>
-                {val}
+                {val || "—"}
               </Typography>
             </Stack>
           ))}

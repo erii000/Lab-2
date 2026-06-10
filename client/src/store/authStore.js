@@ -33,12 +33,10 @@ async function afterAuthSession(session) {
     const { useAdminBookingsStore } = await import("./adminBookingsStore.js");
     const { useAdminTripsStore } = await import("./adminTripsStore.js");
     const { useAdminUsersStore } = await import("./adminUsersStore.js");
-    const { useAdminNotificationsStore } = await import("./adminNotificationsStore.js");
     await Promise.all([
       useAdminBookingsStore.getState().hydrateFromApi(token),
       useAdminTripsStore.getState().hydrateFromApi(token),
       useAdminUsersStore.getState().hydrateFromApi(token),
-      useAdminNotificationsStore.getState().hydrateFromApi(token),
     ]);
   }
 }

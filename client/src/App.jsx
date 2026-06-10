@@ -5,7 +5,7 @@ import AdminLayout from "./layouts/AdminLayout.jsx";
 import AuthLayout from "./layouts/AuthLayout.jsx";
 import MainLayout from "./layouts/MainLayout.jsx";
 import { LoadingProvider, useLoading } from "./context/LoadingContext.jsx";
-import { NotificationsProvider } from "./context/NotificationsContext.jsx";
+import { NotificationsProvider } from "./context/NotificationsProvider.jsx";
 import { ToastProvider } from "./context/ToastContext.jsx";
 import AboutHelpPage from "./pages/AboutHelpPage.jsx";
 import AdminDashboardPage from "./pages/AdminDashboardPage.jsx";

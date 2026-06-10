@@ -1,5 +1,6 @@
 import { BOOKING_STATUS } from "./bookingConstants.js";
 import { getDestinationById } from "../data/destinations.js";
+import { parseApiDate, parseTravelStartMs } from "./parseApiDate.js";
 
 const API_TO_CLIENT_STATUS = {
   Pending: BOOKING_STATUS.PENDING_PAYMENT,
@@ -22,6 +23,8 @@ const ADMIN_API_TO_STORE = {
   Confirmed: "confirmed",
   Completed: "confirmed",
   Cancelled: "cancelled",
+  Refunded: "refunded",
+  PartiallyRefunded: "partially_refunded",
 };
 
 const ADMIN_STORE_TO_API = {
@@ -29,8 +32,8 @@ const ADMIN_STORE_TO_API = {
   confirmed: "Confirmed",
   paid: "Confirmed",
   cancelled: "Cancelled",
-  refunded: "Cancelled",
-  partially_refunded: "Cancelled",
+  refunded: "Refunded",
+  partially_refunded: "PartiallyRefunded",
 };
 
 export function clientStatusToApi(status) {
@@ -56,6 +59,14 @@ function parseMetadata(json) {
   } catch {
     return null;
   }
+}
+
+function firstNonEmpty(...values) {
+  for (const value of values) {
+    const text = String(value ?? "").trim();
+    if (text) return text;
+  }
+  return "";
 }
 
 /** @param {object} api row from BookingService */
@@ -100,6 +111,24 @@ function truncateField(value, maxLen, fallback = "") {
   return text.length <= maxLen ? text : text.slice(0, maxLen);
 }
 
+/** Canonical metadata blob — always includes traveler passport/phone for admin. */
+export function bookingToMetadataJson(booking, extras = {}) {
+  const traveler = booking?.traveler ?? {};
+  return JSON.stringify({
+    ...booking,
+    ...extras,
+    traveler: {
+      fullName: traveler.fullName ?? "",
+      passport: traveler.passport ?? "",
+      nationality: traveler.nationality ?? "",
+      email: traveler.email ?? "",
+      phone: traveler.phone ?? "",
+    },
+    paymentMethod: extras.paymentMethod ?? booking?.paymentMethod ?? "",
+    paymentCardDisplay: extras.paymentCardDisplay ?? booking?.paymentCardDisplay ?? "",
+  });
+}
+
 /** @param {object} booking local draft */
 export function localBookingToCreatePayload(booking) {
   return {
@@ -113,7 +142,7 @@ export function localBookingToCreatePayload(booking) {
     amount: booking.total ?? 0,
     currency: "EUR",
     itineraryId: booking.itineraryId ?? null,
-    metadataJson: JSON.stringify(booking),
+    metadataJson: bookingToMetadataJson(booking),
   };
 }
 
@@ -125,23 +154,40 @@ export function apiBookingToAdmin(api, usersById = new Map()) {
   const traveler = meta?.traveler ?? {};
   const id = api.id ?? api.Id;
 
+  const createdAtMs =
+    parseApiDate(api.createdAt ?? api.CreatedAt) ??
+    parseApiDate(api.bookingDate ?? api.BookingDate) ??
+    0;
+  const updatedAtMs =
+    parseApiDate(api.updatedAt ?? api.UpdatedAt) ?? createdAtMs ?? Date.now();
+  const travelDates =
+    meta?.startLabel && meta?.endLabel ? `${meta.startLabel} → ${meta.endLabel}` : "—";
+  const travelStartMs = parseTravelStartMs(meta, travelDates);
+
   return {
     id: `BK-${id}`,
     serverId: id,
+    updatedAtMs,
+    createdAtMs: createdAtMs || updatedAtMs,
+    travelStartMs,
     user: userFromMap?.name ?? traveler.fullName ?? `User #${userId}`,
     email: userFromMap?.email ?? traveler.email ?? "",
     destination: meta?.destinationTitle ?? api.bookingType ?? api.BookingType ?? "—",
-    travelDates: meta?.startLabel && meta?.endLabel ? `${meta.startLabel} → ${meta.endLabel}` : "—",
+    travelDates,
     travelers: meta?.guests ?? 2,
     amount: Number(api.amount ?? api.Amount ?? meta?.total ?? 0),
     status: apiStatusToAdminStore(api.status ?? api.Status),
     paymentMethod: meta?.paymentMethod ?? "card",
+    paymentCardDisplay: firstNonEmpty(
+      meta?.paymentCardDisplay,
+      meta?.paymentMethod === "paypal" ? "PayPal" : "",
+    ),
     invoice: `INV-${id}`,
     traveler: {
-      fullName: traveler.fullName ?? userFromMap?.name ?? "",
-      passport: traveler.passport ?? "",
-      email: traveler.email ?? userFromMap?.email ?? "",
-      phone: traveler.phone ?? "",
+      fullName: firstNonEmpty(traveler.fullName, userFromMap?.name),
+      passport: firstNonEmpty(traveler.passport),
+      email: firstNonEmpty(traveler.email, userFromMap?.email),
+      phone: firstNonEmpty(traveler.phone),
     },
     itinerarySummary: meta?.packageTitle ?? api.bookingType ?? "",
   };

@@ -6,6 +6,7 @@ namespace TravelAssistant.Services.RealTimeCommunicationService.Interfaces
     {
         Task<IEnumerable<ChatMessage>> GetAllAsync(CancellationToken cancellationToken = default);
         Task<IEnumerable<ChatMessage>> GetForUserAsync(int userId, CancellationToken cancellationToken = default);
+        Task<IEnumerable<ChatThreadSummary>> GetThreadsAsync(CancellationToken cancellationToken = default);
         Task<ChatMessage> CreateAsync(ChatMessage chatMessage, CancellationToken cancellationToken = default);
     }
 }

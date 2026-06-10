@@ -9,7 +9,9 @@ using TravelAssistant.Services.SupportService.Data;
 using TravelAssistant.Services.SupportService.Interfaces;
 using TravelAssistant.Services.SupportService.Repositories;
 using TravelAssistant.Services.SupportService.Services;
+using TravelAssistant.Common.Database;
 using TravelAssistant.Common.Middleware;
+using TravelAssistant.Common.Notifications;
 
 var rootEnvPath = Path.GetFullPath(Path.Combine(Directory.GetCurrentDirectory(), "..", "..", "global-settings.env"));
 var envPath = Path.Combine(Directory.GetCurrentDirectory(), ".env");
@@ -26,6 +28,7 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 
 builder.Services.AddScoped<ISupportTicketRepository, EfSupportTicketRepository>();
 builder.Services.AddScoped<ISupportTicketService, SupportTicketService>();
+builder.Services.AddTravelUpdatePublisher(builder.Configuration);
 builder.Services.AddHealthChecks();
 
 builder.Services.Configure<JwtOptions>(builder.Configuration.GetSection(JwtOptions.SectionName));
@@ -62,6 +65,13 @@ builder.Services.AddSwaggerGen(options =>
 });
 
 var app = builder.Build();
+
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+    var logger = scope.ServiceProvider.GetRequiredService<ILoggerFactory>().CreateLogger("SupportService");
+    await Lab2DbSchemaBootstrap.EnsureMemberBSchemaAsync(db, logger);
+}
 
 app.UseMiddleware<GlobalExceptionMiddleware>();
 

@@ -1,13 +1,15 @@
 import { ApiError } from "../api/client.js";
 import * as bookingsApi from "../api/bookingsApi.js";
-import * as notificationsApi from "../api/notificationsApi.js";
 import * as paymentsApi from "../api/paymentsApi.js";
 import { pushBookingToApi } from "./bookingSync.js";
+import { bookingToMetadataJson } from "../utils/bookingMappers.js";
 import { useAuthStore } from "../store/authStore.js";
 import { processPayment } from "../utils/paymentGateway.js";
 
-/** Lab checkout is the default when Stripe/PayPal keys are not configured. */
-function paymentProviderForMethod(_method) {
+/** Backend falls back to Lab checkout when Stripe/PayPal keys are not configured. */
+function paymentProviderForMethod(method) {
+  if (method === "paypal") return "PayPal";
+  if (method === "card") return "Stripe";
   return "Lab";
 }
 
@@ -27,7 +29,7 @@ export async function ensureServerBooking(accessToken, booking) {
       itineraryId: booking.itineraryId ?? null,
       amount: booking.total ?? 0,
       currency: "EUR",
-      metadataJson: JSON.stringify(booking),
+      metadataJson: bookingToMetadataJson(booking),
     });
     return booking;
   }
@@ -68,19 +70,19 @@ async function runServerCheckout(accessToken, booking, method, successUrl, cance
   const checkoutUrl = session.checkoutUrl ?? session.CheckoutUrl;
 
   if (status === "Completed" || provider === "Lab" || !checkoutUrl) {
+    await bookingsApi.patchBooking(accessToken, serverBookingId, {
+      itineraryId: synced.itineraryId ?? booking.itineraryId ?? null,
+      amount: synced.total ?? booking.total,
+      currency: "EUR",
+      metadataJson: bookingToMetadataJson(
+        { ...synced, traveler: synced.traveler ?? booking.traveler },
+        {
+          paymentMethod: method,
+          paymentCardDisplay: method === "paypal" ? "PayPal" : synced.paymentCardDisplay,
+        },
+      ),
+    });
     await bookingsApi.confirmBookingPayment(accessToken, serverBookingId);
-    const session = useAuthStore.getState().session;
-    if (session?.userId) {
-      notificationsApi
-        .createNotification(accessToken, {
-          userId: session.userId,
-          title: "Booking confirmed",
-          message: `Your trip to ${booking.destinationTitle ?? "your destination"} is confirmed.`,
-          type: "booking",
-          isRead: false,
-        })
-        .catch(() => null);
-    }
     return {
       ok: true,
       provider: provider.toLowerCase(),

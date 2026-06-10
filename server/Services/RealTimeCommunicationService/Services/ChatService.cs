@@ -16,6 +16,9 @@ public sealed class ChatService : IChatService
     public async Task<IEnumerable<ChatMessage>> GetForUserAsync(int userId, CancellationToken cancellationToken = default) =>
         await _repository.GetForUserAsync(userId, cancellationToken);
 
+    public async Task<IEnumerable<ChatThreadSummary>> GetThreadsAsync(CancellationToken cancellationToken = default) =>
+        await _repository.GetThreadsAsync(cancellationToken);
+
     public Task<ChatMessage> CreateAsync(ChatMessage chatMessage, CancellationToken cancellationToken = default) =>
         _repository.AddAsync(chatMessage, cancellationToken);
 }

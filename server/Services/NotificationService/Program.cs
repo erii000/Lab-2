@@ -10,6 +10,7 @@ using TravelAssistant.Services.NotificationService.Services;
 using TravelAssistant.Services.NotificationService.Repositories;
 using TravelAssistant.Services.NotificationService.Services.Interfaces;
 using TravelAssistant.Services.RealTimeCommunicationService.Hubs;
+using TravelAssistant.Common.Database;
 using TravelAssistant.Common.Middleware;
 using TravelAssistant.Common.SignalR;
 
@@ -128,6 +129,13 @@ builder.Services.AddSwaggerGen(options =>
 });
 
 var app = builder.Build();
+
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+    var logger = scope.ServiceProvider.GetRequiredService<ILoggerFactory>().CreateLogger("NotificationService");
+    await Lab2DbSchemaBootstrap.EnsureMemberBSchemaAsync(db, logger);
+}
 
 app.UseMiddleware<GlobalExceptionMiddleware>();
 app.UseMiddleware<SecurityHeadersMiddleware>();

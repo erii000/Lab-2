@@ -27,6 +27,7 @@ const typeIcons = {
   booking: ViewListRounded,
   trip: ExploreRounded,
   user: StarRounded,
+  support: NotificationsOutlined,
   system: NotificationsOutlined,
 };
 
@@ -50,9 +51,19 @@ export default function AdminNotificationsMenu() {
   }
 
   function openNotification(item) {
-    markRead(item.id);
+    void markRead(item.id);
     handleClose();
-    if (item.link) navigate(item.link);
+    if (item.type === "support" && (item.chatUserId || item.entityId?.startsWith("user-"))) {
+      const userId = item.chatUserId ?? item.entityId.replace("user-", "");
+      navigate(`/admin/messages?user=${encodeURIComponent(userId)}`);
+      return;
+    }
+    if (item.link) {
+      const url = item.entityId?.startsWith("BK-")
+        ? `${item.link}?booking=${encodeURIComponent(item.entityId)}`
+        : item.link;
+      navigate(url);
+    }
   }
 
   return (
@@ -115,13 +126,17 @@ export default function AdminNotificationsMenu() {
               Notifications
             </Typography>
             <Typography variant="caption" sx={{ color: adminColors.textMuted }}>
-              {unread > 0 ? `${unread} unread` : "All caught up"}
+              {unread > 0 ? `${unread} unread · live` : "Live via WebSocket"}
             </Typography>
           </Box>
           {items.length > 0 ? (
             <Box sx={{ display: "flex", gap: 0.5 }}>
               {unread > 0 ? (
-                <Button size="small" onClick={markAllRead} sx={{ minWidth: 0, fontSize: "0.7rem", color: adminColors.gold }}>
+                <Button
+                  size="small"
+                  onClick={() => void markAllRead()}
+                  sx={{ minWidth: 0, fontSize: "0.7rem", color: adminColors.gold }}
+                >
                   Mark read
                 </Button>
               ) : null}

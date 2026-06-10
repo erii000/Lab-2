@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using TravelAssistant.Common.Notifications;
 using TravelAssistant.Services.SupportService.Contracts;
 using TravelAssistant.Services.SupportService.Interfaces;
 using TravelAssistant.Services.SupportService.Models;
@@ -13,10 +14,14 @@ namespace TravelAssistant.Services.SupportService.Controllers;
 public sealed class SupportTicketsController : ControllerBase
 {
     private readonly ISupportTicketService _supportTicketService;
+    private readonly ITravelUpdatePublisher _travelUpdatePublisher;
 
-    public SupportTicketsController(ISupportTicketService supportTicketService)
+    public SupportTicketsController(
+        ISupportTicketService supportTicketService,
+        ITravelUpdatePublisher travelUpdatePublisher)
     {
         _supportTicketService = supportTicketService;
+        _travelUpdatePublisher = travelUpdatePublisher;
     }
 
     [Authorize]
@@ -48,6 +53,7 @@ public sealed class SupportTicketsController : ControllerBase
     public async Task<IActionResult> Create([FromBody] SupportTicket ticket, CancellationToken cancellationToken)
     {
         var created = await _supportTicketService.CreateAsync(ticket, cancellationToken);
+        await PublishSupportAlertsAsync(created.UserId, created.Subject, created.Description, cancellationToken);
         return Created(string.Empty, created);
     }
 
@@ -85,7 +91,35 @@ public sealed class SupportTicketsController : ControllerBase
         };
 
         var created = await _supportTicketService.CreateAsync(ticket, cancellationToken);
+        await PublishSupportAlertsAsync(userId, created.Subject, request.Message.Trim(), cancellationToken, name);
         return Created(string.Empty, created);
+    }
+
+    private async Task PublishSupportAlertsAsync(
+        int userId,
+        string subject,
+        string preview,
+        CancellationToken cancellationToken,
+        string? senderName = null)
+    {
+        var who = string.IsNullOrWhiteSpace(senderName) ? (userId > 0 ? $"User #{userId}" : "Guest") : senderName.Trim();
+        var snippet = preview.Length > 120 ? preview[..117] + "…" : preview;
+
+        if (userId > 0)
+        {
+            await _travelUpdatePublisher.NotifyUserAsync(
+                userId,
+                "Message received",
+                $"We received your support request “{subject}”. Our team will reply soon.",
+                "support",
+                cancellationToken: cancellationToken);
+        }
+
+        await _travelUpdatePublisher.BroadcastAsync(
+            "New support message",
+            $"{who} · {subject} — {snippet}",
+            "support",
+            cancellationToken: cancellationToken);
     }
 
     [Authorize]

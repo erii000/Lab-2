@@ -1,7 +1,7 @@
 import { CssBaseline, ThemeProvider } from "@mui/material";
 import { useEffect } from "react";
 import { LoadingProvider } from "./context/LoadingContext.jsx";
-import { NotificationsProvider } from "./context/NotificationsContext.jsx";
+import { NotificationsProvider } from "./context/NotificationsProvider.jsx";
 import { ToastProvider } from "./context/ToastContext.jsx";
 import { useCatalogStore } from "./store/catalogStore.js";
 import { appTheme } from "./theme/theme.js";

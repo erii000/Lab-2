@@ -27,7 +27,22 @@ export function computeDashboardKpis(bookings, users, trips) {
   };
 }
 
-export function buildChartSeries(period = "daily") {
+export function buildChartSeries(period = "daily", bookings = []) {
+  if (period === "daily" && bookings.length > 0) {
+    const dayLabels = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+    const buckets = dayLabels.map((label) => ({ label, bookings: 0, revenue: 0 }));
+    for (const b of bookings) {
+      const ms = b.updatedAtMs ?? b.createdAtMs;
+      if (!ms) continue;
+      const d = new Date(ms);
+      const idx = d.getDay();
+      buckets[idx].bookings += 1;
+      buckets[idx].revenue += b.amount ?? 0;
+    }
+    const ordered = [...buckets.slice(1), buckets[0]];
+    if (ordered.some((row) => row.bookings > 0)) return ordered;
+  }
+
   if (period === "daily") {
     return seedChart.map((d) => ({ ...d }));
   }

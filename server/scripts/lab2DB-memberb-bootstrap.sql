@@ -350,6 +350,111 @@ BEGIN
     CREATE INDEX IX_ChatMessages_SenderUserId ON dbo.ChatMessages (SenderUserId);
     CREATE INDEX IX_ChatMessages_ReceiverUserId ON dbo.ChatMessages (ReceiverUserId);
 END;
+GO
+
+/* Upgrade legacy ChatMessages (separate batch — SQL Server validates both IF/ELSE branches). */
+IF OBJECT_ID(N'dbo.ChatMessages', N'U') IS NOT NULL
+   AND COL_LENGTH(N'dbo.ChatMessages', N'SenderUserId') IS NULL
+BEGIN
+    ALTER TABLE dbo.ChatMessages ADD SenderUserId INT NULL;
+    IF COL_LENGTH(N'dbo.ChatMessages', N'UserId') IS NOT NULL
+        EXEC(N'UPDATE dbo.ChatMessages SET SenderUserId = UserId WHERE SenderUserId IS NULL');
+    IF COL_LENGTH(N'dbo.ChatMessages', N'FromUserId') IS NOT NULL
+        EXEC(N'UPDATE dbo.ChatMessages SET SenderUserId = FromUserId WHERE SenderUserId IS NULL');
+    EXEC(N'UPDATE dbo.ChatMessages SET SenderUserId = 0 WHERE SenderUserId IS NULL');
+    EXEC(N'ALTER TABLE dbo.ChatMessages ALTER COLUMN SenderUserId INT NOT NULL');
+END;
+GO
+
+IF OBJECT_ID(N'dbo.ChatMessages', N'U') IS NOT NULL
+   AND COL_LENGTH(N'dbo.ChatMessages', N'ReceiverUserId') IS NULL
+BEGIN
+    ALTER TABLE dbo.ChatMessages ADD ReceiverUserId INT NULL;
+    IF COL_LENGTH(N'dbo.ChatMessages', N'ToUserId') IS NOT NULL
+        EXEC(N'UPDATE dbo.ChatMessages SET ReceiverUserId = ToUserId WHERE ReceiverUserId IS NULL');
+    ELSE
+        EXEC(N'UPDATE dbo.ChatMessages SET ReceiverUserId = 0 WHERE ReceiverUserId IS NULL');
+    EXEC(N'ALTER TABLE dbo.ChatMessages ALTER COLUMN ReceiverUserId INT NOT NULL');
+END;
+GO
+
+IF OBJECT_ID(N'dbo.ChatMessages', N'U') IS NOT NULL
+   AND COL_LENGTH(N'dbo.ChatMessages', N'Message') IS NULL
+BEGIN
+    ALTER TABLE dbo.ChatMessages ADD Message NVARCHAR(2000) NULL;
+    IF COL_LENGTH(N'dbo.ChatMessages', N'Content') IS NOT NULL
+        EXEC(N'UPDATE dbo.ChatMessages SET Message = Content WHERE Message IS NULL');
+    IF COL_LENGTH(N'dbo.ChatMessages', N'Text') IS NOT NULL
+        EXEC(N'UPDATE dbo.ChatMessages SET Message = Text WHERE Message IS NULL');
+    IF COL_LENGTH(N'dbo.ChatMessages', N'Body') IS NOT NULL
+        EXEC(N'UPDATE dbo.ChatMessages SET Message = Body WHERE Message IS NULL');
+    EXEC(N'UPDATE dbo.ChatMessages SET Message = N'''' WHERE Message IS NULL');
+    EXEC(N'ALTER TABLE dbo.ChatMessages ALTER COLUMN Message NVARCHAR(2000) NOT NULL');
+END;
+GO
+
+IF OBJECT_ID(N'dbo.ChatMessages', N'U') IS NOT NULL
+   AND COL_LENGTH(N'dbo.ChatMessages', N'SentAt') IS NULL
+BEGIN
+    ALTER TABLE dbo.ChatMessages ADD SentAt DATETIME2 NULL;
+    IF COL_LENGTH(N'dbo.ChatMessages', N'CreatedAt') IS NOT NULL
+        EXEC(N'UPDATE dbo.ChatMessages SET SentAt = CreatedAt WHERE SentAt IS NULL');
+    EXEC(N'UPDATE dbo.ChatMessages SET SentAt = SYSUTCDATETIME() WHERE SentAt IS NULL');
+    EXEC(N'ALTER TABLE dbo.ChatMessages ALTER COLUMN SentAt DATETIME2 NOT NULL');
+END;
+GO
+
+IF OBJECT_ID(N'dbo.ChatMessages', N'U') IS NOT NULL
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_ChatMessages_SenderUserId' AND object_id = OBJECT_ID(N'dbo.ChatMessages'))
+        CREATE INDEX IX_ChatMessages_SenderUserId ON dbo.ChatMessages (SenderUserId);
+    IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_ChatMessages_ReceiverUserId' AND object_id = OBJECT_ID(N'dbo.ChatMessages'))
+        CREATE INDEX IX_ChatMessages_ReceiverUserId ON dbo.ChatMessages (ReceiverUserId);
+END;
+GO
+
+/* Keep legacy UserId in sync with SenderUserId (shared lab DB retains NOT NULL UserId + FK). */
+IF OBJECT_ID(N'dbo.ChatMessages', N'U') IS NOT NULL
+   AND COL_LENGTH(N'dbo.ChatMessages', N'SenderUserId') IS NOT NULL
+   AND COL_LENGTH(N'dbo.ChatMessages', N'UserId') IS NOT NULL
+    EXEC(N'UPDATE dbo.ChatMessages SET SenderUserId = UserId, UserId = SenderUserId WHERE SenderUserId = 0 OR UserId = 0');
+GO
+
+IF OBJECT_ID(N'dbo.ChatMessages', N'U') IS NOT NULL
+   AND COL_LENGTH(N'dbo.ChatMessages', N'Message') IS NOT NULL
+   AND COL_LENGTH(N'dbo.ChatMessages', N'Content') IS NOT NULL
+    EXEC(N'ALTER TABLE dbo.ChatMessages DROP COLUMN Content');
+GO
+
+IF OBJECT_ID(N'dbo.ChatMessages', N'U') IS NOT NULL
+   AND COL_LENGTH(N'dbo.ChatMessages', N'Message') IS NOT NULL
+   AND COL_LENGTH(N'dbo.ChatMessages', N'Text') IS NOT NULL
+    EXEC(N'ALTER TABLE dbo.ChatMessages DROP COLUMN Text');
+GO
+
+IF OBJECT_ID(N'dbo.ChatMessages', N'U') IS NOT NULL
+   AND COL_LENGTH(N'dbo.ChatMessages', N'Message') IS NOT NULL
+   AND COL_LENGTH(N'dbo.ChatMessages', N'Body') IS NOT NULL
+    EXEC(N'ALTER TABLE dbo.ChatMessages DROP COLUMN Body');
+GO
+
+IF OBJECT_ID(N'dbo.ChatMessages', N'U') IS NOT NULL
+   AND COL_LENGTH(N'dbo.ChatMessages', N'SentAt') IS NOT NULL
+   AND COL_LENGTH(N'dbo.ChatMessages', N'CreatedAt') IS NOT NULL
+    EXEC(N'ALTER TABLE dbo.ChatMessages DROP COLUMN CreatedAt');
+GO
+
+IF OBJECT_ID(N'dbo.ChatMessages', N'U') IS NOT NULL
+   AND COL_LENGTH(N'dbo.ChatMessages', N'ReceiverUserId') IS NOT NULL
+   AND COL_LENGTH(N'dbo.ChatMessages', N'ToUserId') IS NOT NULL
+    EXEC(N'ALTER TABLE dbo.ChatMessages DROP COLUMN ToUserId');
+GO
+
+IF OBJECT_ID(N'dbo.ChatMessages', N'U') IS NOT NULL
+   AND COL_LENGTH(N'dbo.ChatMessages', N'SenderUserId') IS NOT NULL
+   AND COL_LENGTH(N'dbo.ChatMessages', N'FromUserId') IS NOT NULL
+    EXEC(N'ALTER TABLE dbo.ChatMessages DROP COLUMN FromUserId');
+GO
 
 /* ---- Support: tickets (contact form) ---- */
 IF OBJECT_ID(N'dbo.SupportTickets', N'U') IS NULL
@@ -364,6 +469,24 @@ BEGIN
         CreatedAt DATETIME2 NOT NULL CONSTRAINT DF_SupportTickets_CreatedAt DEFAULT (SYSUTCDATETIME())
     );
     CREATE INDEX IX_SupportTickets_UserId ON dbo.SupportTickets (UserId);
+END
+ELSE
+BEGIN
+    IF COL_LENGTH(N'dbo.SupportTickets', N'Description') IS NULL
+       AND COL_LENGTH(N'dbo.SupportTickets', N'Message') IS NOT NULL
+        EXEC sp_rename N'dbo.SupportTickets.Message', N'Description', N'COLUMN';
+    IF COL_LENGTH(N'dbo.SupportTickets', N'Description') IS NULL
+        ALTER TABLE dbo.SupportTickets ADD Description NVARCHAR(MAX) NOT NULL CONSTRAINT DF_SupportTickets_Description DEFAULT (N'');
+    IF COL_LENGTH(N'dbo.SupportTickets', N'Message') IS NOT NULL
+       AND COL_LENGTH(N'dbo.SupportTickets', N'Description') IS NOT NULL
+    BEGIN
+        EXEC(N'UPDATE dbo.SupportTickets SET Description = Message WHERE (Description IS NULL OR Description = N'''') AND Message IS NOT NULL');
+        ALTER TABLE dbo.SupportTickets DROP COLUMN Message;
+    END;
+    IF COL_LENGTH(N'dbo.SupportTickets', N'Status') IS NULL
+        ALTER TABLE dbo.SupportTickets ADD Status NVARCHAR(50) NOT NULL CONSTRAINT DF_SupportTickets_Status2 DEFAULT (N'Open');
+    IF COL_LENGTH(N'dbo.SupportTickets', N'CreatedAt') IS NULL
+        ALTER TABLE dbo.SupportTickets ADD CreatedAt DATETIME2 NOT NULL CONSTRAINT DF_SupportTickets_CreatedAt2 DEFAULT (SYSUTCDATETIME());
 END;
 
 /* ---- Notifications (in-app alerts) ---- */
@@ -380,6 +503,74 @@ BEGIN
         CreatedAt DATETIME2 NOT NULL CONSTRAINT DF_Notifications_CreatedAt DEFAULT (SYSUTCDATETIME())
     );
     CREATE INDEX IX_Notifications_UserId ON dbo.Notifications (UserId);
+END
+ELSE
+BEGIN
+    IF COL_LENGTH(N'dbo.Notifications', N'Type') IS NULL
+        ALTER TABLE dbo.Notifications ADD Type NVARCHAR(50) NOT NULL CONSTRAINT DF_Notifications_Type DEFAULT (N'system');
+    IF COL_LENGTH(N'dbo.Notifications', N'IsRead') IS NULL
+        ALTER TABLE dbo.Notifications ADD IsRead BIT NOT NULL CONSTRAINT DF_Notifications_IsRead2 DEFAULT (0);
+    IF COL_LENGTH(N'dbo.Notifications', N'CreatedAt') IS NULL
+        ALTER TABLE dbo.Notifications ADD CreatedAt DATETIME2 NOT NULL CONSTRAINT DF_Notifications_CreatedAt2 DEFAULT (SYSUTCDATETIME());
+    IF COL_LENGTH(N'dbo.Notifications', N'Audience') IS NULL
+        ALTER TABLE dbo.Notifications ADD Audience NVARCHAR(20) NULL;
+    IF EXISTS (
+        SELECT 1 FROM sys.columns
+        WHERE object_id = OBJECT_ID(N'dbo.Notifications') AND name = N'UserId' AND is_nullable = 0)
+        ALTER TABLE dbo.Notifications ALTER COLUMN UserId INT NULL;
+END;
+
+/* Admin ops feed rows use Audience='admin' with NULL UserId (no FK to Users). */
+IF COL_LENGTH(N'dbo.Notifications', N'Audience') IS NULL
+    ALTER TABLE dbo.Notifications ADD Audience NVARCHAR(20) NULL;
+
+IF EXISTS (SELECT 1 FROM sys.foreign_keys WHERE name = N'FK_Notifications_Users' AND parent_object_id = OBJECT_ID(N'dbo.Notifications'))
+    ALTER TABLE dbo.Notifications DROP CONSTRAINT FK_Notifications_Users;
+
+IF EXISTS (
+    SELECT 1 FROM sys.columns
+    WHERE object_id = OBJECT_ID(N'dbo.Notifications') AND name = N'UserId' AND is_nullable = 0)
+    ALTER TABLE dbo.Notifications ALTER COLUMN UserId INT NULL;
+
+IF NOT EXISTS (SELECT 1 FROM sys.foreign_keys WHERE name = N'FK_Notifications_Users' AND parent_object_id = OBJECT_ID(N'dbo.Notifications'))
+   AND OBJECT_ID(N'dbo.Users', N'U') IS NOT NULL
+    ALTER TABLE dbo.Notifications WITH NOCHECK
+        ADD CONSTRAINT FK_Notifications_Users FOREIGN KEY (UserId) REFERENCES dbo.Users (Id);
+
+/* ---- Audit: immutable action log ---- */
+IF OBJECT_ID(N'dbo.AuditLogs', N'U') IS NULL
+BEGIN
+    CREATE TABLE dbo.AuditLogs
+    (
+        Id INT IDENTITY(1, 1) NOT NULL PRIMARY KEY,
+        UserId INT NULL,
+        Action NVARCHAR(100) NOT NULL,
+        EntityName NVARCHAR(100) NOT NULL,
+        Details NVARCHAR(2000) NOT NULL CONSTRAINT DF_AuditLogs_Details DEFAULT (N''),
+        CreatedAt DATETIME NOT NULL CONSTRAINT DF_AuditLogs_CreatedAt DEFAULT (SYSUTCDATETIME())
+    );
+    CREATE INDEX IX_AuditLogs_UserId ON dbo.AuditLogs (UserId);
+    CREATE INDEX IX_AuditLogs_EntityName ON dbo.AuditLogs (EntityName);
+    CREATE INDEX IX_AuditLogs_CreatedAt ON dbo.AuditLogs (CreatedAt);
+END
+ELSE
+BEGIN
+    IF COL_LENGTH(N'dbo.AuditLogs', N'Details') IS NULL
+        ALTER TABLE dbo.AuditLogs ADD Details NVARCHAR(2000) NOT NULL CONSTRAINT DF_AuditLogs_Details2 DEFAULT (N'');
+    IF COL_LENGTH(N'dbo.AuditLogs', N'EntityName') IS NULL AND COL_LENGTH(N'dbo.AuditLogs', N'Entity') IS NOT NULL
+        EXEC sp_rename N'dbo.AuditLogs.Entity', N'EntityName', N'COLUMN';
+    IF COL_LENGTH(N'dbo.AuditLogs', N'EntityName') IS NULL
+        ALTER TABLE dbo.AuditLogs ADD EntityName NVARCHAR(100) NOT NULL CONSTRAINT DF_AuditLogs_EntityName DEFAULT (N'');
+    IF COL_LENGTH(N'dbo.AuditLogs', N'Entity') IS NOT NULL AND COL_LENGTH(N'dbo.AuditLogs', N'EntityName') IS NOT NULL
+    BEGIN
+        EXEC(N'UPDATE dbo.AuditLogs SET EntityName = Entity WHERE (EntityName IS NULL OR EntityName = N'''') AND Entity IS NOT NULL');
+        DECLARE @dropAuditEntity NVARCHAR(400) = N'ALTER TABLE dbo.AuditLogs DROP COLUMN Entity';
+        EXEC sp_executesql @dropAuditEntity;
+    END;
+    IF COL_LENGTH(N'dbo.AuditLogs', N'Action') IS NULL
+        ALTER TABLE dbo.AuditLogs ADD Action NVARCHAR(100) NOT NULL CONSTRAINT DF_AuditLogs_Action DEFAULT (N'');
+    IF COL_LENGTH(N'dbo.AuditLogs', N'CreatedAt') IS NULL
+        ALTER TABLE dbo.AuditLogs ADD CreatedAt DATETIME NOT NULL CONSTRAINT DF_AuditLogs_CreatedAt2 DEFAULT (SYSUTCDATETIME());
 END;
 
 /* ---- Payment: webhook / audit log ---- */

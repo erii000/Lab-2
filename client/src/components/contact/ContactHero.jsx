@@ -15,7 +15,7 @@ const perks = [
   { icon: AutoAwesomeRoundedIcon, label: "AI-powered travel assistance" },
 ];
 
-export default function ContactHero({ onEmailClick, lightSurface }) {
+export default function ContactHero({ onChatClick, lightSurface }) {
   return (
     <Box
       sx={{
@@ -84,12 +84,11 @@ export default function ContactHero({ onEmailClick, lightSurface }) {
 
           <Stack direction={{ xs: "column", sm: "row" }} spacing={1.5} sx={{ pt: 0.5 }}>
             <Button
-              component={RouterLink}
-              to="/assistant"
               variant="contained"
               color="primary"
               size="large"
               startIcon={<ForumRoundedIcon />}
+              onClick={onChatClick}
               sx={{
                 fontWeight: 800,
                 px: 3,
@@ -100,10 +99,11 @@ export default function ContactHero({ onEmailClick, lightSurface }) {
               Start Live Chat
             </Button>
             <Button
+              component={RouterLink}
+              to="/assistant"
               variant="outlined"
               size="large"
               startIcon={<EmailOutlinedIcon />}
-              onClick={onEmailClick}
               sx={{
                 borderColor: alpha(designTokens.brand.gold, 0.5),
                 color: designTokens.brand.champagne,
@@ -111,7 +111,7 @@ export default function ContactHero({ onEmailClick, lightSurface }) {
                 "&:hover": { borderColor: designTokens.brand.gold, bgcolor: alpha(designTokens.brand.gold, 0.1) },
               }}
             >
-              Email Support
+              AI Assistant
             </Button>
           </Stack>
         </Stack>

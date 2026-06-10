@@ -12,6 +12,7 @@ import {
   isDraftStatus,
   shouldSyncBookingToApi,
 } from "../utils/bookingConstants.js";
+import { bookingToMetadataJson } from "../utils/bookingMappers.js";
 import { createBookingFromConfigurator } from "../utils/bookingFactory.js";
 import { createBookingFromPlanner } from "../utils/bookingFromPlanner.js";
 import { sessionToAuthUser } from "./sessionUser.js";
@@ -251,21 +252,46 @@ export const useBookingStore = create(
           ),
         })),
 
-      confirmPayment: (bookingId, paymentMeta = {}) => {
+      confirmPayment: async (bookingId, paymentMeta = {}) => {
         const booking = get().getBookingById(bookingId);
         const ref = booking?.bookingReference ?? `STA-${String(bookingId).slice(-6).toUpperCase()}`;
-        if (booking) {
-          get().upsertBooking({
-            ...booking,
-            status: BOOKING_STATUS.CONFIRMED,
-            serverId: paymentMeta.serverId ?? booking.serverId,
-            bookingReference: ref,
-            paymentMethod: paymentMeta.paymentMethod ?? booking.paymentMethod,
-            paymentCardDisplay: paymentMeta.paymentCardDisplay ?? booking.paymentCardDisplay,
-            paymentTransactionId: paymentMeta.transactionId ?? booking.paymentTransactionId,
-          });
+        const serverId = paymentMeta.serverId ?? booking?.serverId;
+        const confirmed = booking
+          ? {
+              ...booking,
+              status: BOOKING_STATUS.CONFIRMED,
+              serverId,
+              bookingReference: ref,
+              paymentMethod: paymentMeta.paymentMethod ?? booking.paymentMethod,
+              paymentCardDisplay: paymentMeta.paymentCardDisplay ?? booking.paymentCardDisplay,
+              paymentTransactionId: paymentMeta.transactionId ?? booking.paymentTransactionId,
+              traveler: paymentMeta.traveler ?? booking.traveler,
+            }
+          : null;
+
+        if (confirmed) {
+          get().upsertBooking(confirmed, { skipSync: true });
         }
+
         const token = readAccessToken();
+        if (token && serverId && confirmed) {
+          try {
+            const { patchBooking, confirmBookingPayment } = await import("../api/bookingsApi.js");
+            await patchBooking(token, serverId, {
+              itineraryId: confirmed.itineraryId ?? null,
+              amount: confirmed.total ?? 0,
+              currency: "EUR",
+              metadataJson: bookingToMetadataJson(confirmed, {
+                paymentMethod: confirmed.paymentMethod,
+                paymentCardDisplay: confirmed.paymentCardDisplay,
+              }),
+            });
+            await confirmBookingPayment(token, serverId);
+          } catch {
+            /* local state still confirmed */
+          }
+        }
+
         if (token) {
           void import("./adminBookingsStore.js").then(({ useAdminBookingsStore }) => {
             useAdminBookingsStore.getState().hydrateFromApi(token);

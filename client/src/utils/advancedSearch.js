@@ -28,7 +28,9 @@ export function compareValues(a, b, type = "string") {
   if (a == null && b == null) return 0;
   if (a == null) return 1;
   if (b == null) return -1;
-  if (type === "number") return Number(a) - Number(b);
+  if (type === "number" || (typeof a === "number" && typeof b === "number")) {
+    return Number(a) - Number(b);
+  }
   if (type === "date") return new Date(a).getTime() - new Date(b).getTime();
   return String(a).localeCompare(String(b), undefined, { sensitivity: "base" });
 }
@@ -85,20 +87,32 @@ export const BOOKING_SORT_OPTIONS = [
 ];
 
 export const ADMIN_BOOKING_SORT_OPTIONS = [
-  { value: "id-desc", label: "Booking ID" },
+  { value: "calendar-desc", label: "Date (latest day first)" },
+  { value: "calendar-asc", label: "Date (oldest day first)" },
+  { value: "travel-date-desc", label: "Travel date (latest first)" },
+  { value: "travel-date-asc", label: "Travel date (earliest first)" },
+  { value: "date-desc", label: "Recently updated" },
+  { value: "date-asc", label: "Oldest update" },
   { value: "amount-desc", label: "Amount" },
   { value: "user-asc", label: "Traveler name" },
   { value: "destination-asc", label: "Destination" },
+  { value: "id-desc", label: "Booking ID" },
 ];
 
 export const ADMIN_USER_SORT_OPTIONS = [
+  { value: "calendar-desc", label: "Date (latest day first)" },
+  { value: "calendar-asc", label: "Date (oldest day first)" },
+  { value: "date-desc", label: "Recently active" },
+  { value: "joined-desc", label: "Newest members" },
   { value: "spent-desc", label: "Lifetime value" },
   { value: "trips-desc", label: "Most trips" },
   { value: "name-asc", label: "Name A → Z" },
-  { value: "active-desc", label: "Recently active" },
 ];
 
 export const ADMIN_TRIP_SORT_OPTIONS = [
+  { value: "calendar-desc", label: "Date (latest day first)" },
+  { value: "calendar-asc", label: "Date (oldest day first)" },
+  { value: "date-desc", label: "Recently updated" },
   { value: "bookings-desc", label: "Most bookings" },
   { value: "price-asc", label: "Price: low to high" },
   { value: "title-asc", label: "Title A → Z" },

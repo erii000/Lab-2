@@ -3,7 +3,8 @@ const HOUR = 3_600_000;
 const DAY = 86_400_000;
 
 export function formatNotificationTime(timestamp) {
-  const diff = Date.now() - timestamp;
+  if (!timestamp || !Number.isFinite(timestamp)) return "Just now";
+  const diff = Math.max(0, Date.now() - timestamp);
   if (diff < MINUTE) return "Just now";
   if (diff < HOUR) return `${Math.floor(diff / MINUTE)}m ago`;
   if (diff < DAY) return `${Math.floor(diff / HOUR)}h ago`;
@@ -15,5 +16,6 @@ export const NOTIFICATION_TYPE_LABELS = {
   booking: "Booking",
   trip: "Trip",
   user: "User",
+  support: "Support",
   system: "System",
 };

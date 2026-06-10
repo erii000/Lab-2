@@ -9,7 +9,9 @@ using TravelAssistant.Services.RealTimeCommunicationService.Hubs;
 using TravelAssistant.Services.RealTimeCommunicationService.Interfaces;
 using TravelAssistant.Services.RealTimeCommunicationService.Repositories;
 using TravelAssistant.Services.RealTimeCommunicationService.Services;
+using TravelAssistant.Common.Database;
 using TravelAssistant.Common.Middleware;
+using TravelAssistant.Common.Notifications;
 using TravelAssistant.Common.SignalR;
 
 var rootEnvPath = Path.GetFullPath(Path.Combine(Directory.GetCurrentDirectory(), "..", "..", "global-settings.env"));
@@ -43,6 +45,7 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(connectionString));
 
 builder.Services.AddScoped<IChatService, ChatService>();
+builder.Services.AddTravelUpdatePublisher(builder.Configuration);
 
 builder.Services
     .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
@@ -83,6 +86,16 @@ builder.Services.AddSingleton<Microsoft.AspNetCore.SignalR.IUserIdProvider, JwtU
 builder.Services.AddScoped<IChatRepository, EfChatRepository>();
 builder.Services.AddHealthChecks();
 
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("FrontendPolicy", policy =>
+    {
+        var origins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>()
+            ?? new[] { "http://localhost:5173", "http://localhost:5174" };
+        policy.WithOrigins(origins).AllowAnyHeader().AllowAnyMethod().AllowCredentials();
+    });
+});
+
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
@@ -96,6 +109,13 @@ builder.Services.AddSwaggerGen(options =>
 
 var app = builder.Build();
 
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+    var logger = scope.ServiceProvider.GetRequiredService<ILoggerFactory>().CreateLogger("RealTimeCommunicationService");
+    await Lab2DbSchemaBootstrap.EnsureMemberBSchemaAsync(db, logger);
+}
+
 app.UseMiddleware<GlobalExceptionMiddleware>();
 
 if (app.Environment.IsDevelopment())
@@ -105,6 +125,7 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+app.UseCors("FrontendPolicy");
 app.UseAuthentication();
 app.UseAuthorization();
 

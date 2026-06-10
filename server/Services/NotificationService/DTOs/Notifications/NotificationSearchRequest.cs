@@ -6,6 +6,7 @@ public sealed class NotificationSearchRequest
     public string? Type { get; set; }
     public bool? IsRead { get; set; }
     public int? UserId { get; set; }
+    public string? Audience { get; set; }
     public DateTime? CreatedFromUtc { get; set; }
     public DateTime? CreatedToUtc { get; set; }
     public string SortBy { get; set; } = "createdAt";

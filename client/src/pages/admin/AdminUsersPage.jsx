@@ -42,6 +42,7 @@ import {
   USER_FILTER_CHIPS,
 } from "../../utils/adminUsers.js";
 import { ADMIN_USER_SORT_OPTIONS, applyAdvancedListQuery } from "../../utils/advancedSearch.js";
+import { calendarDayMs } from "../../utils/parseApiDate.js";
 
 export default function AdminUsersPage() {
   const location = useLocation();
@@ -61,7 +62,7 @@ export default function AdminUsersPage() {
 
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
-  const [sortKey, setSortKey] = useState("spent-desc");
+  const [sortKey, setSortKey] = useState("calendar-desc");
   const [selectedId, setSelectedId] = useState(null);
   const [checked, setChecked] = useState(new Set());
   const [hoveredId, setHoveredId] = useState(null);
@@ -84,10 +85,15 @@ export default function AdminUsersPage() {
       sortKey,
       sortDir: sortKey.includes("desc") ? "desc" : "asc",
       getSortValue: (u, key) => {
+        if (key.startsWith("calendar")) {
+          return calendarDayMs(u.lastActiveAtMs ?? u.joinedAtMs ?? 0);
+        }
+        if (key === "date-desc") return u.lastActiveAtMs ?? 0;
+        if (key === "joined-desc") return u.joinedAtMs ?? 0;
         if (key === "spent-desc") return u.totalSpent ?? 0;
         if (key === "trips-desc") return u.trips ?? 0;
         if (key === "name-asc") return u.name;
-        return u.lastActive ?? "";
+        return u.lastActiveAtMs ?? 0;
       },
     });
   }, [users, query, statusFilter, sortKey]);

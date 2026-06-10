@@ -33,7 +33,8 @@ export const useAdminUsersStore = create(
         if (!token) return;
         try {
           const users = await fetchAdminUsers(token);
-          set({ users, loadedFromApi: true });
+          const sorted = [...users].sort((a, b) => (b.lastActiveAtMs ?? 0) - (a.lastActiveAtMs ?? 0));
+          set({ users: sorted, loadedFromApi: true });
         } catch {
           set({ users: [], loadedFromApi: true });
         }

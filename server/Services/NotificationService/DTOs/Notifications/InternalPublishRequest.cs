@@ -8,4 +8,8 @@ public sealed class InternalPublishRequest
     public string Type { get; init; } = "system";
     public bool Broadcast { get; init; }
     public bool Persist { get; init; } = true;
+    public int? BookingId { get; init; }
+    public string? TravelerName { get; init; }
+    public string? Destination { get; init; }
+    public int? TargetUserId { get; init; }
 }

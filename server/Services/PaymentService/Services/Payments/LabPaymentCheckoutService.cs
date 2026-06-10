@@ -1,5 +1,4 @@
 using TravelAssistant.Common.Audit;
-using TravelAssistant.Common.Notifications;
 using TravelAssistant.Services.PaymentService.DTOs.Payments;
 using TravelAssistant.Services.PaymentService.Models.Entities;
 using TravelAssistant.Services.PaymentService.Repositories;
@@ -13,16 +12,12 @@ public sealed class LabPaymentCheckoutService
 {
     private readonly IPaymentRepository _paymentRepository;
     private readonly IAuditWriter _auditWriter;
-    private readonly ITravelUpdatePublisher _travelUpdatePublisher;
-
     public LabPaymentCheckoutService(
         IPaymentRepository paymentRepository,
-        IAuditWriter auditWriter,
-        ITravelUpdatePublisher travelUpdatePublisher)
+        IAuditWriter auditWriter)
     {
         _paymentRepository = paymentRepository;
         _auditWriter = auditWriter;
-        _travelUpdatePublisher = travelUpdatePublisher;
     }
 
     public async Task<CreateCheckoutSessionResponse> CreateCheckoutAsync(
@@ -54,17 +49,6 @@ public sealed class LabPaymentCheckoutService
         await _paymentRepository.AddAsync(payment, cancellationToken);
         await _paymentRepository.SaveChangesAsync(cancellationToken);
         await _auditWriter.WriteAsync(userId, "CheckoutCompleted", "Payment", $"Payment {payment.Id} lab {amount} {currency}", cancellationToken);
-        await _travelUpdatePublisher.NotifyUserAsync(
-            userId,
-            "Payment received",
-            $"Payment of {amount} {currency} completed.",
-            "payment",
-            cancellationToken);
-        await _travelUpdatePublisher.BroadcastAsync(
-            "Payment received",
-            $"Booking {request.BookingId} paid ({amount} {currency}).",
-            "payment",
-            cancellationToken);
 
         return new CreateCheckoutSessionResponse
         {

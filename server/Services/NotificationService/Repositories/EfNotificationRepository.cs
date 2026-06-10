@@ -55,6 +55,9 @@ public sealed class EfNotificationRepository : INotificationRepository
         if (request.UserId.HasValue)
             query = query.Where(x => x.UserId == request.UserId.Value);
 
+        if (!string.IsNullOrWhiteSpace(request.Audience))
+            query = query.Where(x => x.Audience == request.Audience.Trim());
+
         if (request.CreatedFromUtc.HasValue)
             query = query.Where(x => x.CreatedAt >= request.CreatedFromUtc.Value);
 

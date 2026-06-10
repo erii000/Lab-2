@@ -27,6 +27,7 @@ const AdminUsersPage = lazy(() => import("./pages/admin/AdminUsersPage.jsx"));
 const AdminReportsPage = lazy(() => import("./pages/admin/AdminReportsPage.jsx"));
 const AdminDataExchangePage = lazy(() => import("./pages/admin/AdminDataExchangePage.jsx"));
 const AdminSettingsPage = lazy(() => import("./pages/admin/AdminSettingsPage.jsx"));
+const AdminMessagesPage = lazy(() => import("./pages/admin/AdminMessagesPage.jsx"));
 const NotificationsPage = lazy(() => import("./pages/NotificationsPage.jsx"));
 
 export const router = createBrowserRouter([
@@ -69,6 +70,7 @@ export const router = createBrowserRouter([
           { path: "admin/trips", element: <AdminTripsPage /> },
           { path: "admin/trips/:tripId", element: <Navigate to="/admin/trips" replace /> },
           { path: "admin/bookings", element: <AdminBookingsPage /> },
+          { path: "admin/messages", element: <AdminMessagesPage /> },
           { path: "admin/users", element: <AdminUsersPage /> },
           { path: "admin/reports", element: <AdminReportsPage /> },
           { path: "admin/data", element: <AdminDataExchangePage /> },

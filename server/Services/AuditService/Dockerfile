@@ -16,4 +16,5 @@ ENV ASPNETCORE_URLS=http://+:8080
 EXPOSE 8080
 
 COPY --from=build /app/publish .
+COPY --from=build /src/server/Scripts/lab2DB-memberb-bootstrap.sql ./Scripts/lab2DB-memberb-bootstrap.sql
 ENTRYPOINT ["dotnet", "AuditService.dll"]

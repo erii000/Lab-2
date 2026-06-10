@@ -18,6 +18,7 @@ import { useAdminTripsStore } from "../../store/adminTripsStore.js";
 import { useCatalogStore } from "../../store/catalogStore.js";
 import { filterTripsWorkspace, TRIP_FILTER_PILLS } from "../../utils/adminTrips.js";
 import { ADMIN_TRIP_SORT_OPTIONS, applyAdvancedListQuery } from "../../utils/advancedSearch.js";
+import { calendarDayMs } from "../../utils/parseApiDate.js";
 
 export default function AdminTripsPage() {
   const location = useLocation();
@@ -36,7 +37,7 @@ export default function AdminTripsPage() {
 
   const [query, setQuery] = useState("");
   const [pill, setPill] = useState("all");
-  const [sortKey, setSortKey] = useState("bookings-desc");
+  const [sortKey, setSortKey] = useState("calendar-desc");
   const [selected, setSelected] = useState(new Set());
   const [hoveredId, setHoveredId] = useState(null);
   const [workspaceId, setWorkspaceId] = useState(null);
@@ -57,6 +58,10 @@ export default function AdminTripsPage() {
       sortKey,
       sortDir: sortKey.includes("desc") ? "desc" : "asc",
       getSortValue: (t, key) => {
+        if (key.startsWith("calendar")) {
+          return calendarDayMs(t.updatedAt ?? t.createdAt ?? 0);
+        }
+        if (key.startsWith("date")) return t.updatedAt ?? t.createdAt ?? 0;
         if (key === "bookings-desc") return t.bookings ?? 0;
         if (key === "price-asc") return t.priceFrom;
         if (key === "title-asc") return t.title;

@@ -7,11 +7,13 @@ public interface ITravelUpdatePublisher
         string title,
         string message,
         string type = "system",
+        TravelUpdateContext? context = null,
         CancellationToken cancellationToken = default);
 
     Task BroadcastAsync(
         string title,
         string message,
         string type = "system",
+        TravelUpdateContext? context = null,
         CancellationToken cancellationToken = default);
 }

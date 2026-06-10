@@ -7,7 +7,7 @@ import {
   TableHead,
   TableRow,
 } from "@mui/material";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import AdminDataExchangeBar from "../../components/admin/AdminDataExchangeBar.jsx";
 import AdvancedListToolbar from "../../components/search/AdvancedListToolbar.jsx";
 import AdminTopBar from "../../components/admin/AdminTopBar.jsx";
@@ -32,6 +32,7 @@ import {
   ADMIN_BOOKING_SORT_OPTIONS,
   applyAdvancedListQuery,
 } from "../../utils/advancedSearch.js";
+import { calendarDayMs } from "../../utils/parseApiDate.js";
 
 export default function AdminBookingsPage() {
   const { showToast } = useToast();
@@ -46,10 +47,22 @@ export default function AdminBookingsPage() {
 
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
-  const [sortKey, setSortKey] = useState("id-desc");
+  const [sortKey, setSortKey] = useState("calendar-desc");
   const [selectedId, setSelectedId] = useState(null);
   const [cancelTarget, setCancelTarget] = useState(null);
   const [refundTarget, setRefundTarget] = useState(null);
+
+  useEffect(() => {
+    const entityId = new URLSearchParams(window.location.search).get("booking");
+    if (entityId) setSelectedId(entityId);
+  }, []);
+
+  useEffect(() => {
+    void (async () => {
+      const token = await ensureAccessToken();
+      if (token) await hydrateFromApi(token);
+    })();
+  }, [ensureAccessToken, hydrateFromApi]);
 
   const selected = useMemo(
     () => (selectedId ? visibleBookings.find((b) => b.id === selectedId) : null),
@@ -69,6 +82,11 @@ export default function AdminBookingsPage() {
       sortKey,
       sortDir: sortKey.includes("desc") ? "desc" : "asc",
       getSortValue: (b, key) => {
+        if (key.startsWith("calendar")) {
+          return calendarDayMs(b.createdAtMs ?? b.updatedAtMs ?? 0);
+        }
+        if (key.startsWith("travel-date")) return b.travelStartMs ?? 0;
+        if (key.startsWith("date")) return b.updatedAtMs ?? b.createdAtMs ?? 0;
         if (key === "amount-desc") return b.amount;
         if (key === "user-asc") return b.user;
         if (key === "destination-asc") return b.destination;

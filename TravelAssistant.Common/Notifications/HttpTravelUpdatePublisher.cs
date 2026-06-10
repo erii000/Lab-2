@@ -28,15 +28,38 @@ public sealed class HttpTravelUpdatePublisher : ITravelUpdatePublisher
         string title,
         string message,
         string type = "system",
+        TravelUpdateContext? context = null,
         CancellationToken cancellationToken = default) =>
-        PublishAsync(new { userId, title, message, type, broadcast = false }, cancellationToken);
+        PublishAsync(new
+        {
+            userId,
+            title,
+            message,
+            type,
+            broadcast = false,
+            bookingId = context?.BookingId,
+            travelerName = context?.TravelerName,
+            destination = context?.Destination,
+            targetUserId = context?.TargetUserId,
+        }, cancellationToken);
 
     public Task BroadcastAsync(
         string title,
         string message,
         string type = "system",
+        TravelUpdateContext? context = null,
         CancellationToken cancellationToken = default) =>
-        PublishAsync(new { title, message, type, broadcast = true }, cancellationToken);
+        PublishAsync(new
+        {
+            title,
+            message,
+            type,
+            broadcast = true,
+            bookingId = context?.BookingId,
+            travelerName = context?.TravelerName,
+            destination = context?.Destination,
+            targetUserId = context?.TargetUserId,
+        }, cancellationToken);
 
     private async Task PublishAsync(object payload, CancellationToken cancellationToken)
     {

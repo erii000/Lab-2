@@ -4,9 +4,9 @@ import { useAuthStore } from "../store/authStore.js";
 import { useAdminBookingsStore } from "../store/adminBookingsStore.js";
 import { useAdminTripsStore } from "../store/adminTripsStore.js";
 import { useAdminUsersStore } from "../store/adminUsersStore.js";
-import { useAdminNotificationsStore } from "../store/adminNotificationsStore.js";
 /**
- * Keeps admin stores in sync when the server pushes SignalR travel updates.
+ * Refreshes admin data stores when SignalR pushes a travelUpdate (event-driven, not polling).
+ * Notifications are pushed live by AdminNotificationsProvider — not refetched here.
  */
 export function useAdminRealtimeRefresh() {
   const session = useAuthStore((s) => s.session);
@@ -22,7 +22,6 @@ export function useAdminRealtimeRefresh() {
         useAdminBookingsStore.getState().hydrateFromApi(token),
         useAdminTripsStore.getState().hydrateFromApi(token),
         useAdminUsersStore.getState().hydrateFromApi(token),
-        useAdminNotificationsStore.getState().hydrateFromApi(token),
       ]);
     });
   }, [session?.role, session?.accessToken]);

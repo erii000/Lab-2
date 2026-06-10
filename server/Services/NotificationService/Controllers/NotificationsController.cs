@@ -49,6 +49,22 @@ public sealed class NotificationsController : ControllerBase
         return Ok(data);
     }
 
+    /// <summary>Admin ops feed — persisted broadcast alerts (UserId = 0).</summary>
+    [HttpGet("ops")]
+    [Authorize(Roles = "Admin")]
+    public async Task<IActionResult> GetOpsFeed([FromQuery] int pageSize = 50, CancellationToken cancellationToken = default)
+    {
+        var data = await _notificationService.SearchAsync(new NotificationSearchRequest
+        {
+            Audience = "admin",
+            Page = 1,
+            PageSize = pageSize < 1 ? 50 : Math.Min(pageSize, 100),
+            SortBy = "createdAt",
+            SortOrder = "desc"
+        }, cancellationToken);
+        return Ok(data.Items);
+    }
+
     [HttpGet("search")]
     [Authorize(Roles = "Admin")]
     public async Task<IActionResult> Search([FromQuery] NotificationSearchRequest request, CancellationToken cancellationToken)
@@ -173,12 +189,15 @@ public sealed class NotificationsController : ControllerBase
     public async Task<IActionResult> Create([FromBody] Notification notification, CancellationToken cancellationToken)
     {
         var created = await _notificationService.CreateAsync(notification, cancellationToken);
-        await _realtimeNotificationService.SendUserTravelUpdateAsync(
-            created.UserId,
-            created.Title,
-            created.Message,
-            created.Type,
-            cancellationToken);
+        if (created.UserId is > 0)
+        {
+            await _realtimeNotificationService.SendUserTravelUpdateAsync(
+                created.UserId.Value,
+                created.Title,
+                created.Message,
+                created.Type,
+                cancellationToken: cancellationToken);
+        }
 
         return CreatedAtAction(nameof(GetByUserId), new { userId = created.UserId }, created);
     }
@@ -195,39 +214,93 @@ public sealed class NotificationsController : ControllerBase
 
         if (request.Broadcast)
         {
+            var title = request.Title.Trim();
+            var message = request.Message?.Trim() ?? "";
+            var type = string.IsNullOrWhiteSpace(request.Type) ? "system" : request.Type.Trim();
+
+            try
+            {
+                await _notificationService.CreateAsync(new Notification
+                {
+                    UserId = null,
+                    Audience = "admin",
+                    Title = title,
+                    Message = message,
+                    Type = type,
+                    IsRead = false
+                }, cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                // Log but still push live to connected admins via SignalR.
+                Console.WriteLine($"Admin ops notification persist failed: {ex.Message}");
+            }
+
             await _realtimeNotificationService.BroadcastTravelUpdateAsync(
-                request.Title,
-                request.Message,
-                request.Type,
+                title,
+                message,
+                type,
+                request.BookingId,
+                request.TravelerName,
+                request.Destination,
+                request.TargetUserId,
                 cancellationToken);
         }
         else if (request.UserId is > 0)
         {
+            var title = request.Title.Trim();
+            var message = request.Message?.Trim() ?? "";
+            var type = string.IsNullOrWhiteSpace(request.Type) ? "system" : request.Type.Trim();
+
             if (request.Persist)
             {
-                var created = await _notificationService.CreateAsync(new Notification
+                try
                 {
-                    UserId = request.UserId.Value,
-                    Title = request.Title.Trim(),
-                    Message = request.Message?.Trim() ?? "",
-                    Type = string.IsNullOrWhiteSpace(request.Type) ? "system" : request.Type.Trim(),
-                    IsRead = false
-                }, cancellationToken);
+                    var created = await _notificationService.CreateAsync(new Notification
+                    {
+                        UserId = request.UserId.Value,
+                        Title = title,
+                        Message = message,
+                        Type = type,
+                        IsRead = false
+                    }, cancellationToken);
 
-                await _realtimeNotificationService.SendUserTravelUpdateAsync(
-                    created.UserId,
-                    created.Title,
-                    created.Message,
-                    created.Type,
-                    cancellationToken);
+                    await _realtimeNotificationService.SendUserTravelUpdateAsync(
+                        created.UserId!.Value,
+                        created.Title,
+                        created.Message,
+                        created.Type,
+                        request.BookingId,
+                        request.TravelerName,
+                        request.Destination,
+                        request.TargetUserId,
+                        cancellationToken);
+                }
+                catch
+                {
+                    await _realtimeNotificationService.SendUserTravelUpdateAsync(
+                        request.UserId.Value,
+                        title,
+                        message,
+                        type,
+                        request.BookingId,
+                        request.TravelerName,
+                        request.Destination,
+                        request.TargetUserId,
+                        cancellationToken);
+                }
             }
             else
             {
                 await _realtimeNotificationService.SendUserTravelUpdateAsync(
                     request.UserId.Value,
-                    request.Title,
-                    request.Message,
-                    request.Type,
+                    title,
+                    message,
+                    type,
+                    request.BookingId,
+                    request.TravelerName,
+                    request.Destination,
+                    request.TargetUserId,
                     cancellationToken);
             }
         }
@@ -243,7 +316,7 @@ public sealed class NotificationsController : ControllerBase
             request.Title,
             request.Message,
             request.Type,
-            cancellationToken);
+            cancellationToken: cancellationToken);
 
         return Accepted(new
         {
@@ -254,15 +327,16 @@ public sealed class NotificationsController : ControllerBase
         });
     }
 
-    private bool CanAccessUserNotifications(int userId)
+    private bool CanAccessUserNotifications(int? userId)
     {
         if (User.IsInRole("Admin"))
-        {
             return true;
-        }
+
+        if (userId is null or <= 0)
+            return false;
 
         var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        return int.TryParse(currentUserId, out var parsedUserId) && parsedUserId == userId;
+        return int.TryParse(currentUserId, out var parsedUserId) && parsedUserId == userId.Value;
     }
 
     private bool IsInternalNotificationCaller()

@@ -23,6 +23,7 @@ import AssessmentRoundedIcon from "@mui/icons-material/AssessmentRounded";
 import ImportExportRoundedIcon from "@mui/icons-material/ImportExportRounded";
 import PeopleOutlineRoundedIcon from "@mui/icons-material/PeopleOutlineRounded";
 import SettingsOutlinedIcon from "@mui/icons-material/SettingsOutlined";
+import ChatBubbleOutlineRoundedIcon from "@mui/icons-material/ChatBubbleOutlineRounded";
 import { Navigate, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { Link as RouterLink } from "react-router-dom";
@@ -34,7 +35,8 @@ import { useAdminTripsStore } from "../store/adminTripsStore.js";
 import { useAdminUsersStore } from "../store/adminUsersStore.js";
 import { useCatalogStore } from "../store/catalogStore.js";
 import { useAdminRealtimeRefresh } from "../hooks/useAdminRealtimeRefresh.js";
-import { useNotifications } from "../context/NotificationsContext.jsx";
+import { AdminNotificationsProvider } from "../context/AdminNotificationsProvider.jsx";
+import { useAdminNotificationsLive } from "../context/adminNotificationsContext.js";
 
 const drawerWidth = 248;
 
@@ -42,6 +44,7 @@ const menuItems = [
   { label: "Dashboard", icon: DashboardRounded, path: "/admin" },
   { label: "Trips", icon: ExploreRounded, path: "/admin/trips" },
   { label: "Bookings", icon: ViewListRounded, path: "/admin/bookings" },
+  { label: "Messages", icon: ChatBubbleOutlineRoundedIcon, path: "/admin/messages" },
   { label: "Users", icon: PeopleOutlineRoundedIcon, path: "/admin/users" },
   { label: "Reports", icon: AssessmentRoundedIcon, path: "/admin/reports" },
   { label: "Data exchange", icon: ImportExportRoundedIcon, path: "/admin/data" },
@@ -95,15 +98,14 @@ function NavList({ onNavigate }) {
   );
 }
 
-export default function AdminLayout() {
+function AdminLayoutShell() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const session = useAuthStore((s) => s.session);
-  const isAdmin = session?.role === "admin";
-  const { connected: liveConnected } = useNotifications();
+  const { connected: liveConnected } = useAdminNotificationsLive();
   useAdminRealtimeRefresh();
 
   useEffect(() => {
-    if (!session?.accessToken || !isAdmin) return;
+    if (!session?.accessToken) return;
     (async () => {
       await useCatalogStore.getState().hydrate();
       const token = session.accessToken;
@@ -111,11 +113,7 @@ export default function AdminLayout() {
       useAdminTripsStore.getState().hydrateFromApi(token);
       useAdminUsersStore.getState().hydrateFromApi(token);
     })();
-  }, [session?.accessToken, isAdmin]);
-
-  if (!isAdmin) {
-    return <Navigate to="/login" replace />;
-  }
+  }, [session?.accessToken]);
 
   const sidebar = (
     <Box sx={{ height: "100%", display: "flex", flexDirection: "column" }}>
@@ -215,5 +213,20 @@ export default function AdminLayout() {
         </Box>
       </Box>
     </Box>
+  );
+}
+
+export default function AdminLayout() {
+  const session = useAuthStore((s) => s.session);
+  const isAdmin = session?.role === "admin";
+
+  if (!isAdmin) {
+    return <Navigate to="/login" replace />;
+  }
+
+  return (
+    <AdminNotificationsProvider>
+      <AdminLayoutShell />
+    </AdminNotificationsProvider>
   );
 }
