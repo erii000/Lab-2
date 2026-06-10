@@ -186,7 +186,7 @@ export default function ContactLiveChat({ lightSurface }) {
 
       await sendSupportMessage(session.accessToken, question);
 
-    } catch (err) {
+    } catch {
 
       setMessages((prev) =>
 
