@@ -13,8 +13,11 @@ using TravelAssistant.Services.PaymentService.Services.Payments;
 using TravelAssistant.Common.Audit;
 using TravelAssistant.Common.Notifications;
 using TravelAssistant.Services.PaymentService.Validation;
+using MongoDB.Driver;
 using TravelAssistant.Common.Database;
 using TravelAssistant.Common.Middleware;
+using TravelAssistant.Common.Mongo;
+using TravelAssistant.Services.PaymentService.Infrastructure;
 
 var rootEnvPath = Path.GetFullPath(Path.Combine(Directory.GetCurrentDirectory(), "..", "..", "global-settings.env"));
 var envPath = Path.Combine(Directory.GetCurrentDirectory(), ".env");
@@ -83,6 +86,9 @@ if (string.IsNullOrWhiteSpace(connectionString))
     throw new InvalidOperationException("ConnectionStrings:DefaultConnection is missing for PaymentService.");
 
 builder.Services.AddDbContext<ApplicationDbContext>(options => options.UseSqlServer(connectionString));
+builder.Services.AddTravelAssistantMongoDb(builder.Configuration);
+builder.Services.AddSingleton<IPaymentTransactionLogStore>(sp =>
+    new MongoPaymentTransactionLogStore(sp.GetRequiredService<IMongoDatabase>()));
 builder.Services.AddHealthChecks();
 builder.Services.AddScoped<IPaymentRepository, EfPaymentRepository>();
 builder.Services.AddScoped<StripePaymentCheckoutService>();
@@ -114,6 +120,9 @@ var app = builder.Build();
 
 using (var scope = app.Services.CreateScope())
 {
+    var mongoDatabase = scope.ServiceProvider.GetRequiredService<IMongoDatabase>();
+    await MongoIndexInitializer.EnsureIndexesAsync(mongoDatabase);
+
     var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
     var logger = scope.ServiceProvider.GetRequiredService<ILoggerFactory>().CreateLogger("PaymentService");
     await Lab2DbSchemaBootstrap.EnsureMemberBSchemaAsync(db, logger);
@@ -146,6 +155,13 @@ app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
 app.MapHealthChecks("/health");
-app.MapGet("/api/ping", () => Results.Ok(new { status = "ok", service = "PaymentService" }));
+app.MapGet("/api/ping", () => Results.Ok(new
+{
+    status = "ok",
+    service = "PaymentService",
+    payments = "sqlserver",
+    transactionLogs = "mongodb",
+    collection = MongoPaymentTransactionLogStore.CollectionName
+}));
 
 app.Run();

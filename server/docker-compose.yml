@@ -108,9 +108,13 @@ services:
     build:
       context: ..
       dockerfile: server/Services/ItineraryService/Dockerfile
+    depends_on:
+      - redis
     ports:
       - "63189:8080"
-    environment: *service_env
+    environment:
+      <<: *service_env
+      Redis__ConnectionString: "${REDIS__CONNECTIONSTRING:-redis:6379}"
 
   bookingservice:
     <<: *api_env_file
@@ -126,10 +130,14 @@ services:
     build:
       context: ..
       dockerfile: server/Services/PaymentService/Dockerfile
+    depends_on:
+      - mongo
     ports:
       - "63187:8080"
     environment:
       <<: *service_env
+      MongoDb__ConnectionString: "mongodb://${MONGO_ROOT_USERNAME:-root}:${MONGO_ROOT_PASSWORD:-changeme}@mongo:27017/?authSource=admin"
+      MongoDb__Database: "${MONGODB__DATABASE:-travel_assistant}"
       Stripe__SecretKey: "${STRIPE__SECRETKEY:-}"
       Stripe__WebhookSecret: "${STRIPE__WEBHOOKSECRET:-}"
       PayPal__BaseUrl: "${PAYPAL__BASEURL:-https://api-m.sandbox.paypal.com/}"
@@ -151,9 +159,14 @@ services:
     build:
       context: ..
       dockerfile: server/Services/AuditService/Dockerfile
+    depends_on:
+      - mongo
     ports:
       - "65486:8080"
-    environment: *service_env
+    environment:
+      <<: *service_env
+      MongoDb__ConnectionString: "mongodb://${MONGO_ROOT_USERNAME:-root}:${MONGO_ROOT_PASSWORD:-changeme}@mongo:27017/?authSource=admin"
+      MongoDb__Database: "${MONGODB__DATABASE:-travel_assistant}"
 
   realtimecommunicationservice:
     <<: *api_env_file
@@ -178,10 +191,13 @@ services:
     build:
       context: ..
       dockerfile: server/Services/WeatherExternalDataService/Dockerfile
+    depends_on:
+      - redis
     ports:
       - "61219:8080"
     environment:
       <<: *service_env
+      Redis__ConnectionString: "${REDIS__CONNECTIONSTRING:-redis:6379}"
       ExternalApis__AviationStack__AccessKey: "${EXTERNALAPIS__AVIATIONSTACK__ACCESSKEY:-}"
       ExternalApis__Transport__BaseUrl: "${EXTERNALAPIS__TRANSPORT__BASEURL:-}"
       ExternalApis__Transport__ApiKey: "${EXTERNALAPIS__TRANSPORT__APIKEY:-}"

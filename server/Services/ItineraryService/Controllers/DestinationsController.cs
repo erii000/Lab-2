@@ -3,6 +3,7 @@ using System.Text.Json.Nodes;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using TravelAssistant.Common.Caching;
 using TravelAssistant.Services.ItineraryService.Data;
 using TravelAssistant.Services.ItineraryService.DTOs.Destinations;
 
@@ -18,11 +19,15 @@ public sealed class DestinationsController : ControllerBase
         PropertyNameCaseInsensitive = true
     };
 
-    private readonly ApplicationDbContext _db;
+    private static readonly TimeSpan CatalogCacheTtl = TimeSpan.FromMinutes(10);
 
-    public DestinationsController(ApplicationDbContext db)
+    private readonly ApplicationDbContext _db;
+    private readonly IResponseCache _cache;
+
+    public DestinationsController(ApplicationDbContext db, IResponseCache cache)
     {
         _db = db;
+        _cache = cache;
     }
 
     /// <summary>Full destination catalog for search, home, and booking flows.</summary>
@@ -30,14 +35,18 @@ public sealed class DestinationsController : ControllerBase
     [HttpGet]
     public async Task<IActionResult> List(CancellationToken ct)
     {
-        var rows = await _db.Destinations
-            .AsNoTracking()
-            .OrderBy(d => d.Name)
-            .Select(d => d.CatalogJson)
-            .ToListAsync(ct);
+        const string cacheKey = "destinations:catalog:all";
+        var rows = await _cache.GetOrCreateAsync(
+            cacheKey,
+            async token => await _db.Destinations
+                .AsNoTracking()
+                .OrderBy(d => d.Name)
+                .Select(d => d.CatalogJson)
+                .ToListAsync(token),
+            CatalogCacheTtl,
+            ct);
 
-        var catalog = ParseCatalogList(rows);
-        return Ok(catalog);
+        return Ok(ParseCatalogList(rows));
     }
 
     [AllowAnonymous]
@@ -45,6 +54,14 @@ public sealed class DestinationsController : ControllerBase
     public async Task<IActionResult> GetBySlug(string slug, CancellationToken ct)
     {
         var normalized = slug.Trim().ToLowerInvariant();
+        var cacheKey = $"destinations:catalog:{normalized}";
+        var cachedJson = await _cache.GetAsync<string>(cacheKey, ct);
+        if (!string.IsNullOrEmpty(cachedJson))
+        {
+            var cachedItem = ParseCatalogItem(cachedJson);
+            return cachedItem is null ? NotFound() : Ok(cachedItem);
+        }
+
         var json = await _db.Destinations
             .AsNoTracking()
             .Where(d => d.Slug == normalized)
@@ -55,7 +72,11 @@ public sealed class DestinationsController : ControllerBase
             return NotFound();
 
         var item = ParseCatalogItem(json);
-        return item is null ? NotFound() : Ok(item);
+        if (item is null)
+            return NotFound();
+
+        await _cache.SetAsync(cacheKey, json, CatalogCacheTtl, ct);
+        return Ok(item);
     }
 
     /// <summary>Merges admin trip/catalog overrides into <c>CatalogJson.adminMeta</c>.</summary>
@@ -146,6 +167,9 @@ public sealed class DestinationsController : ControllerBase
         row.CatalogJson = root.ToJsonString(CatalogJsonOptions);
         row.UpdatedAt = DateTime.UtcNow;
         await _db.SaveChangesAsync(ct);
+
+        await _cache.RemoveAsync("destinations:catalog:all", ct);
+        await _cache.RemoveAsync($"destinations:catalog:{normalized}", ct);
 
         var item = ParseCatalogItem(row.CatalogJson);
         return item is null ? Ok(adminMeta) : Ok(item);

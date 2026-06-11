@@ -8,6 +8,7 @@ using TravelAssistant.Services.WeatherExternalDataService.Configuration;
 using TravelAssistant.Services.WeatherExternalDataService.Services.Flights;
 using TravelAssistant.Services.WeatherExternalDataService.Services.Transport;
 using TravelAssistant.Services.WeatherExternalDataService.Services.Weather;
+using TravelAssistant.Common.Caching;
 using TravelAssistant.Common.Middleware;
 
 var envPath = Path.Combine(Directory.GetCurrentDirectory(), ".env");
@@ -132,7 +133,9 @@ builder.Services
     })
     .AddStandardResilienceHandler();
 
-builder.Services.AddScoped<IWeatherClient, OpenMeteoWeatherClient>();
+builder.Services.AddTravelAssistantRedisCache(builder.Configuration);
+builder.Services.AddScoped<OpenMeteoWeatherClient>();
+builder.Services.AddScoped<IWeatherClient, CachedWeatherClient>();
 
 builder.Services.AddHealthChecks();
 
@@ -158,7 +161,8 @@ app.MapHealthChecks("/health");
 app.MapGet("/api/ping", () => Results.Ok(new
 {
     status = "ok",
-    service = "WeatherExternalDataService"
+    service = "WeatherExternalDataService",
+    cache = "redis"
 }));
 
 app.Run();

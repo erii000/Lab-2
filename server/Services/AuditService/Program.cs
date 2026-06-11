@@ -1,15 +1,15 @@
 using System.Text;
 using DotNetEnv;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
-using TravelAssistant.Services.AuditService.Data;
+using MongoDB.Driver;
+using TravelAssistant.Services.AuditService.Infrastructure;
 using TravelAssistant.Services.AuditService.Interfaces;
 using TravelAssistant.Services.AuditService.Repositories;
 using TravelAssistant.Services.AuditService.Services;
-using TravelAssistant.Common.Database;
 using TravelAssistant.Common.Middleware;
+using TravelAssistant.Common.Mongo;
 
 var rootEnvPath = Path.GetFullPath(Path.Combine(Directory.GetCurrentDirectory(), "..", "..", "global-settings.env"));
 var envPath = Path.Combine(Directory.GetCurrentDirectory(), ".env");
@@ -20,12 +20,6 @@ if (envFiles.Length > 0)
 }
 
 var builder = WebApplication.CreateBuilder(args);
-
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
-if (string.IsNullOrWhiteSpace(connectionString))
-{
-    throw new InvalidOperationException("ConnectionStrings:DefaultConnection is missing for AuditService.");
-}
 
 var jwtIssuer = builder.Configuration["Jwt:Issuer"];
 var jwtAudience = builder.Configuration["Jwt:Audience"];
@@ -38,8 +32,9 @@ if (string.IsNullOrWhiteSpace(jwtIssuer) ||
     throw new InvalidOperationException("Jwt configuration is missing for AuditService.");
 }
 
-builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseSqlServer(connectionString));
+builder.Services.AddTravelAssistantMongoDb(builder.Configuration);
+builder.Services.AddSingleton<IAuditLogRepository>(sp =>
+    new MongoAuditLogRepository(sp.GetRequiredService<IMongoDatabase>()));
 
 builder.Services
     .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
@@ -58,7 +53,6 @@ builder.Services
     });
 
 builder.Services.AddAuthorization();
-builder.Services.AddScoped<IAuditLogRepository, EfAuditLogRepository>();
 builder.Services.AddScoped<IAuditLogService, AuditLogService>();
 builder.Services.AddHealthChecks();
 builder.Services.AddControllers();
@@ -101,9 +95,8 @@ var app = builder.Build();
 
 using (var scope = app.Services.CreateScope())
 {
-    var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-    var logger = scope.ServiceProvider.GetRequiredService<ILoggerFactory>().CreateLogger("AuditService");
-    await Lab2DbSchemaBootstrap.EnsureMemberBSchemaAsync(db, logger);
+    var database = scope.ServiceProvider.GetRequiredService<IMongoDatabase>();
+    await MongoIndexInitializer.EnsureIndexesAsync(database);
 }
 
 app.UseMiddleware<GlobalExceptionMiddleware>();
@@ -119,6 +112,12 @@ app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
 app.MapHealthChecks("/health");
-app.MapGet("/api/ping", () => Results.Ok(new { status = "ok", service = "AuditService" }));
+app.MapGet("/api/ping", () => Results.Ok(new
+{
+    status = "ok",
+    service = "AuditService",
+    storage = "mongodb",
+    collection = MongoAuditLogRepository.CollectionName
+}));
 
 app.Run();

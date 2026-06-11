@@ -133,6 +133,34 @@ erDiagram
 | NotificationService | Notifications |
 | SupportService | SupportTickets |
 | RealTimeCommunicationService | ChatMessages |
-| AuditService | AuditLogs |
+| AuditService | *(MongoDB)* `audit_logs` — see below |
+| PaymentService (logs only) | *(MongoDB)* `payment_transaction_logs` — see below |
 
 Schema bootstrap: `server/Scripts/lab2DB-memberb-bootstrap.sql`
+
+## Polyglot persistence (NoSQL)
+
+Transactional data (users, bookings, payments, itineraries) stays in **SQL Server** for ACID guarantees. High-volume append-only and cache workloads use **MongoDB** and **Redis**.
+
+### MongoDB (`travel_assistant` database)
+
+| Collection | Service | Purpose |
+|------------|---------|---------|
+| `audit_logs` | AuditService | Who did what, when — searchable admin audit trail |
+| `payment_transaction_logs` | PaymentService | Stripe/PayPal webhook payloads and idempotency (`ExternalEventId` unique index) |
+| `counters` | Audit + Payment | Auto-increment sequence for API-facing numeric ids |
+
+Connection: `MongoDb__ConnectionString` in `global-settings.env` (Docker: `mongo:27017`).
+
+### Redis
+
+| Key pattern | Service | TTL | Purpose |
+|-------------|---------|-----|---------|
+| `weather:current:{city}:{country}` | WeatherExternalDataService | 15 min | Cache Open-Meteo current weather |
+| `weather:forecast:{days}:{city}:{country}` | WeatherExternalDataService | 30 min | Cache forecast responses |
+| `destinations:catalog:all` | ItineraryService | 10 min | Cache full destination catalog JSON rows |
+| `destinations:catalog:{slug}` | ItineraryService | 10 min | Cache single destination by slug |
+
+Connection: `Redis__ConnectionString` in `global-settings.env` (Docker: `redis:6379`).
+
+**Verify at runtime:** `GET /api/ping` on AuditService, PaymentService, WeatherExternalDataService, or ItineraryService reports `storage`, `transactionLogs`, `cache`, or `destinationCatalogCache`.

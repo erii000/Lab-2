@@ -8,8 +8,13 @@ namespace TravelAssistant.Services.PaymentService.Repositories;
 public sealed class EfPaymentRepository : IPaymentRepository
 {
     private readonly ApplicationDbContext _dbContext;
+    private readonly IPaymentTransactionLogStore _transactionLogStore;
 
-    public EfPaymentRepository(ApplicationDbContext dbContext) => _dbContext = dbContext;
+    public EfPaymentRepository(ApplicationDbContext dbContext, IPaymentTransactionLogStore transactionLogStore)
+    {
+        _dbContext = dbContext;
+        _transactionLogStore = transactionLogStore;
+    }
 
     public Task<Payment?> GetByIdAsync(int id, CancellationToken cancellationToken = default) =>
         _dbContext.Payments.AsNoTracking().FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
@@ -35,14 +40,11 @@ public sealed class EfPaymentRepository : IPaymentRepository
         return Task.CompletedTask;
     }
 
-    public Task AddLogAsync(PaymentTransactionLog log, CancellationToken cancellationToken = default)
-    {
-        _dbContext.PaymentTransactionLogs.Add(log);
-        return Task.CompletedTask;
-    }
+    public Task AddLogAsync(PaymentTransactionLog log, CancellationToken cancellationToken = default) =>
+        _transactionLogStore.AddAsync(log, cancellationToken);
 
     public Task<bool> LogExistsForEventAsync(string externalEventId, CancellationToken cancellationToken = default) =>
-        _dbContext.PaymentTransactionLogs.AnyAsync(x => x.ExternalEventId == externalEventId, cancellationToken);
+        _transactionLogStore.ExistsForEventAsync(externalEventId, cancellationToken);
 
     public Task SaveChangesAsync(CancellationToken cancellationToken = default) =>
         _dbContext.SaveChangesAsync(cancellationToken);

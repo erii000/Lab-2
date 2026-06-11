@@ -13,6 +13,7 @@ using TravelAssistant.Services.ItineraryService.Services;
 using TravelAssistant.Services.ItineraryService.Services.Interfaces;
 using TravelAssistant.Services.ItineraryService.Services.ItineraryPlanning;
 using TravelAssistant.Services.ItineraryService.Validation;
+using TravelAssistant.Common.Caching;
 using TravelAssistant.Common.Middleware;
 using TravelAssistant.Common.Database;
 
@@ -86,6 +87,7 @@ if (string.IsNullOrWhiteSpace(connectionString))
     throw new InvalidOperationException("ConnectionStrings:DefaultConnection is missing for ItineraryService.");
 
 builder.Services.AddDbContext<ApplicationDbContext>(options => options.UseSqlServer(connectionString));
+builder.Services.AddTravelAssistantRedisCache(builder.Configuration);
 builder.Services.AddHealthChecks();
 builder.Services.AddScoped<IItineraryRepository, EfItineraryRepository>();
 builder.Services.AddScoped<ITravelPreferenceReader, EfTravelPreferenceReader>();
@@ -138,6 +140,11 @@ app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
 app.MapHealthChecks("/health");
-app.MapGet("/api/ping", () => Results.Ok(new { status = "ok", service = "ItineraryService" }));
+app.MapGet("/api/ping", () => Results.Ok(new
+{
+    status = "ok",
+    service = "ItineraryService",
+    destinationCatalogCache = "redis"
+}));
 
 app.Run();
